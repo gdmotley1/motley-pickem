@@ -279,3 +279,34 @@ sheet look stuck when it was not.
 **How to apply:** When a timing-dependent check looks wrong, read `document.hidden` first.
 Front the tab, use generous waits, and keep browser scripts short: long ones hit the
 45-second tool cap once timers are throttled.
+
+## Named "Motley Pick'em", served from gdmotley1.github.io/motley-pickem
+
+Repo `gdmotley1/motley-pickem`, public. Deployed by pushing the built `dist/` to the
+`gh-pages` branch with `bash deploy.sh`.
+
+**Why:** GitHub Actions would be the nicer path, but the `gh` CLI token on this machine
+lacks the `workflow` scope and the push is rejected with "refusing to allow an OAuth App
+to create or update workflow". The branch deploy needs no extra scope and matches the
+pattern already used by motley-tech and comvoy-fire.
+
+**How to apply:** `bash deploy.sh` after any change. To move to CI later, run
+`gh auth refresh -s workflow`, move `docs/github-pages-workflow.yml.example` to
+`.github/workflows/deploy.yml`, push, and switch the Pages source to "GitHub Actions".
+The workflow already reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from repo
+variables. The repo is public and holds no secrets: with no VITE_ vars set, the build
+ships in local mock mode, and the anon key is public by design once added.
+
+## Repeated rows must be pixel-identical, chip or no chip
+
+Any badge inside a list row is fixed at 18px tall and its meta line is fixed to match.
+
+**Why:** Grant spotted uneven rows on the slate builder. Measured: rows without a badge
+were 61px and rows with the "ESPN top" badge were 67px, because the chip's vertical
+padding grew the line box. The fix keeps the badge, which carries real information.
+
+**How to apply:** `.chip` has `height: 18px` and no vertical padding. `.arow__meta` and
+`.grow__meta` set `height` and `line-height` to 18px. When adding any new badge, measure
+a list with and without it rather than eyeballing: the difference was only 6px and was
+invisible in a screenshot until measured. The Board goes further and renders a row for
+every claimed player, so a game card's height never depends on how many people picked.

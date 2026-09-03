@@ -1,4 +1,7 @@
-# cfb-pickem
+# Motley Pick'em (repo folder: cfb-pickem)
+
+Live: https://gdmotley1.github.io/motley-pickem/ · repo `gdmotley1/motley-pickem`
+Deploy with `bash deploy.sh`, which publishes `dist/` to the `gh-pages` branch.
 
 A college football confidence pool for Grant's family. Four people, 20 games a week,
 straight-up winners, confidence points 1 to 20 each used exactly once. Replaces writing
