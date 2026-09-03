@@ -1,0 +1,365 @@
+{
+ "count": 20,
+ "games": [
+  {
+   "raw": "W GA vs KENN ST",
+   "espn_id": "401864425",
+   "short_name": "WES @ KENN",
+   "name": "West Georgia Wolves at Kennesaw State Owls",
+   "kickoff_utc": "2026-09-03T23:00Z",
+   "odds": {
+    "details": "KENN -22.5",
+    "favorite": "KENN",
+    "underdog": "WES",
+    "line": 22.5,
+    "over_under": 50.5
+   },
+   "tv": "ESPN+",
+   "home": "KENN",
+   "away": "WES",
+   "interest": -46.95
+  },
+  {
+   "raw": "COLO vs GT",
+   "espn_id": "401856776",
+   "short_name": "COLO @ GT",
+   "name": "Colorado Buffaloes at Georgia Tech Yellow Jackets",
+   "kickoff_utc": "2026-09-04T00:00Z",
+   "odds": {
+    "details": "GT -6.5",
+    "favorite": "GT",
+    "underdog": "COLO",
+    "line": 6.5,
+    "over_under": 51.5
+   },
+   "tv": "ESPN",
+   "home": "GT",
+   "away": "COLO",
+   "interest": 32.4
+  },
+  {
+   "raw": "UTEP vs OK",
+   "espn_id": "401856664",
+   "short_name": "UTEP @ OU",
+   "name": "UTEP Miners at Oklahoma Sooners",
+   "kickoff_utc": "2026-09-05T00:00Z",
+   "odds": {
+    "details": "OU -40.5",
+    "favorite": "OU",
+    "underdog": "UTEP",
+    "line": 40.5,
+    "over_under": 51.5
+   },
+   "tv": "SECN+",
+   "home": "OU",
+   "away": "UTEP",
+   "interest": -16.39
+  },
+  {
+   "raw": "MIA vs STAN",
+   "espn_id": "401858206",
+   "short_name": "MIA @ STAN",
+   "name": "Miami Hurricanes at Stanford Cardinal",
+   "kickoff_utc": "2026-09-05T01:00Z",
+   "odds": {
+    "details": "MIA -24.5",
+    "favorite": "MIA",
+    "underdog": "STAN",
+    "line": 24.5,
+    "over_under": 48.5
+   },
+   "tv": "ESPN",
+   "home": "STAN",
+   "away": "MIA",
+   "interest": 42.79
+  },
+  {
+   "raw": "N TX vs IND",
+   "espn_id": "401858425",
+   "short_name": "UNT @ IU",
+   "name": "North Texas Mean Green at Indiana Hoosiers",
+   "kickoff_utc": "2026-09-05T16:00Z",
+   "odds": {
+    "details": "IU -40.5",
+    "favorite": "IU",
+    "underdog": "UNT",
+    "line": 40.5,
+    "over_under": 56.5
+   },
+   "tv": "FOX",
+   "home": "IU",
+   "away": "UNT",
+   "interest": 12.01
+  },
+  {
+   "raw": "ECU vs ALA",
+   "espn_id": "401856634",
+   "short_name": "ECU @ ALA",
+   "name": "East Carolina Pirates at Alabama Crimson Tide",
+   "kickoff_utc": "2026-09-05T16:00Z",
+   "odds": {
+    "details": "ALA -28.5",
+    "favorite": "ALA",
+    "underdog": "ECU",
+    "line": 28.5,
+    "over_under": 52.5
+   },
+   "tv": "ABC",
+   "home": "ALA",
+   "away": "ECU",
+   "interest": 20.3
+  },
+  {
+   "raw": "ORE ST vs HOU",
+   "espn_id": "401856778",
+   "short_name": "ORST @ HOU",
+   "name": "Oregon State Beavers at Houston Cougars",
+   "kickoff_utc": "2026-09-05T16:00Z",
+   "odds": {
+    "details": "HOU -21",
+    "favorite": "HOU",
+    "underdog": "ORST",
+    "line": 21.0,
+    "over_under": 49.5
+   },
+   "tv": "ESPN",
+   "home": "HOU",
+   "away": "ORST",
+   "interest": 9.74
+  },
+  {
+   "raw": "TENN ST vs UGA",
+   "espn_id": "401856658",
+   "short_name": "TNST @ UGA",
+   "name": "Tennessee State Tigers at Georgia Bulldogs",
+   "kickoff_utc": "2026-09-05T19:00Z",
+   "odds": {
+    "details": "UGA -46.5",
+    "favorite": "UGA",
+    "underdog": "TNST",
+    "line": 46.5,
+    "over_under": 55.5
+   },
+   "tv": "SECN+",
+   "home": "UGA",
+   "away": "TNST",
+   "interest": -49.8
+  },
+  {
+   "raw": "BOISE ST vs ORE",
+   "espn_id": "401858433",
+   "short_name": "BOIS @ ORE",
+   "name": "Boise State Broncos at Oregon Ducks",
+   "kickoff_utc": "2026-09-05T19:30Z",
+   "odds": {
+    "details": "ORE -24.5",
+    "favorite": "ORE",
+    "underdog": "BOIS",
+    "line": 24.5,
+    "over_under": 51.5
+   },
+   "tv": "CBS",
+   "home": "ORE",
+   "away": "BOIS",
+   "interest": 44.79
+  },
+  {
+   "raw": "TEX ST vs TEX",
+   "espn_id": "401856667",
+   "short_name": "TXST @ TEX",
+   "name": "Texas State Bobcats at Texas Longhorns",
+   "kickoff_utc": "2026-09-05T19:30Z",
+   "odds": {
+    "details": "TEX -29.5",
+    "favorite": "TEX",
+    "underdog": "TXST",
+    "line": 29.5,
+    "over_under": 59.5
+   },
+   "tv": "ESPN",
+   "home": "TEX",
+   "away": "TXST",
+   "interest": 23.44
+  },
+  {
+   "raw": "BAY vs AUB",
+   "espn_id": "401856636",
+   "short_name": "BAY VS AUB",
+   "name": "Baylor Bears at Auburn Tigers",
+   "kickoff_utc": "2026-09-05T19:30Z",
+   "odds": {
+    "details": "AUB -7.5",
+    "favorite": "AUB",
+    "underdog": "BAY",
+    "line": 7.5,
+    "over_under": 58.5
+   },
+   "tv": "ABC",
+   "home": "AUB",
+   "away": "BAY",
+   "interest": 43.2
+  },
+  {
+   "raw": "BC vs CIN",
+   "espn_id": "401856777",
+   "short_name": "BC @ CIN",
+   "name": "Boston College Eagles at Cincinnati Bearcats",
+   "kickoff_utc": "2026-09-05T19:30Z",
+   "odds": {
+    "details": "CIN -7.5",
+    "favorite": "CIN",
+    "underdog": "BC",
+    "line": 7.5,
+    "over_under": 49.5
+   },
+   "tv": "FOX",
+   "home": "CIN",
+   "away": "BC",
+   "interest": 37.2
+  },
+  {
+   "raw": "TULANE vs DUKE",
+   "espn_id": "401858209",
+   "short_name": "TULN @ DUKE",
+   "name": "Tulane Green Wave at Duke Blue Devils",
+   "kickoff_utc": "2026-09-05T19:30Z",
+   "odds": {
+    "details": "DUKE -7.5",
+    "favorite": "DUKE",
+    "underdog": "TULN",
+    "line": 7.5,
+    "over_under": 51.5
+   },
+   "tv": "ACC Network",
+   "home": "DUKE",
+   "away": "TULN",
+   "interest": 21.2
+  },
+  {
+   "raw": "OK ST vs TULSA",
+   "espn_id": "401856772",
+   "short_name": "OKST @ TLSA",
+   "name": "Oklahoma State Cowboys at Tulsa Golden Hurricane",
+   "kickoff_utc": "2026-09-05T19:45Z",
+   "odds": {
+    "details": "OKST -13.5",
+    "favorite": "OKST",
+    "underdog": "TLSA",
+    "line": 13.5,
+    "over_under": 59.5
+   },
+   "tv": "ESPNU",
+   "home": "TLSA",
+   "away": "OKST",
+   "interest": 15.88
+  },
+  {
+   "raw": "WYO vs COLO ST",
+   "espn_id": "401860878",
+   "short_name": "WYO @ CSU",
+   "name": "Wyoming Cowboys at Colorado State Rams",
+   "kickoff_utc": "2026-09-05T22:00Z",
+   "odds": {
+    "details": "CSU -3",
+    "favorite": "CSU",
+    "underdog": "WYO",
+    "line": 3.0,
+    "over_under": 46.5
+   },
+   "tv": "USA Net",
+   "home": "CSU",
+   "away": "WYO",
+   "interest": 37.11
+  },
+  {
+   "raw": "CLEM vs LSU",
+   "espn_id": "401856660",
+   "short_name": "CLEM @ LSU",
+   "name": "Clemson Tigers at LSU Tigers",
+   "kickoff_utc": "2026-09-05T23:30Z",
+   "odds": {
+    "details": "LSU -10",
+    "favorite": "LSU",
+    "underdog": "CLEM",
+    "line": 10.0,
+    "over_under": 50.5
+   },
+   "tv": "ABC",
+   "home": "LSU",
+   "away": "CLEM",
+   "interest": 54.44
+  },
+  {
+   "raw": "FAU vs FLA",
+   "espn_id": "401856637",
+   "short_name": "FAU @ FLA",
+   "name": "Florida Atlantic Owls at Florida Gators",
+   "kickoff_utc": "2026-09-05T23:45Z",
+   "odds": {
+    "details": "FLA -26.5",
+    "favorite": "FLA",
+    "underdog": "FAU",
+    "line": 26.5,
+    "over_under": 59.5
+   },
+   "tv": "SEC Network",
+   "home": "FLA",
+   "away": "FAU",
+   "interest": -13.11
+  },
+  {
+   "raw": "S DAK ST vs NW",
+   "espn_id": "401858431",
+   "short_name": "SDST @ NU",
+   "name": "South Dakota State Jackrabbits at Northwestern Wildcats",
+   "kickoff_utc": "2026-09-06T00:00Z",
+   "odds": {
+    "details": "NU -13.5",
+    "favorite": "NU",
+    "underdog": "SDST",
+    "line": 13.5,
+    "over_under": 46.5
+   },
+   "tv": "BTN",
+   "home": "NU",
+   "away": "SDST",
+   "interest": -19.12
+  },
+  {
+   "raw": "UCLA vs CAL",
+   "espn_id": "401858210",
+   "short_name": "UCLA @ CAL",
+   "name": "UCLA Bruins at California Golden Bears",
+   "kickoff_utc": "2026-09-06T02:30Z",
+   "odds": {
+    "details": "UCLA -1.5",
+    "favorite": "UCLA",
+    "underdog": "CAL",
+    "line": 1.5,
+    "over_under": 53.5
+   },
+   "tv": "ESPN",
+   "home": "CAL",
+   "away": "UCLA",
+   "interest": 50.4
+  },
+  {
+   "raw": "WKY vs NEV",
+   "espn_id": "401864432",
+   "short_name": "WKU @ NEV",
+   "name": "Western Kentucky Hilltoppers at Nevada Wolf Pack",
+   "kickoff_utc": "2026-09-06T02:30Z",
+   "odds": {
+    "details": "WKU -1.5",
+    "favorite": "WKU",
+    "underdog": "NEV",
+    "line": 1.5,
+    "over_under": 52.5
+   },
+   "tv": "CBSSN",
+   "home": "NEV",
+   "away": "WKU",
+   "interest": 58.4
+  }
+ ]
+}

@@ -1,0 +1,188 @@
+/* Saturday broadcast, second pass.
+   Warm, editorial, print-adjacent. Deep field green for chrome, a warm off-white page,
+   one amber accent. Mobile only.
+
+   v1 painted repeating yard lines behind the sign-in screen. On a real phone they read
+   as wireframe banding rather than texture, so they are gone. Depth now comes from
+   layered surfaces and soft warm shadows instead of drawn-on lines. */
+
+:root {
+  /* --- green scale, the chrome ------------------------------------------ */
+  --g-900: #06241b;
+  --g-800: #0a3327;
+  --g-700: #0f4433;
+  --g-600: #165741;
+  --g-500: #1f7053;
+  --g-400: #38906d;
+  --g-100: #e4efe9;
+  --g-050: #f0f7f3;
+
+  /* --- warm neutrals, the page ------------------------------------------ */
+  --n-000: #ffffff;
+  --n-050: #fdfbf7; /* cards */
+  --n-100: #f6f2ea; /* page */
+  --n-200: #ece6da; /* hairlines, wells */
+  --n-300: #ddd5c5;
+  --n-500: #9a9382;
+  --n-700: #5c5648;
+  --n-900: #1e1a13;
+
+  /* --- amber accent ------------------------------------------------------ */
+  --a-600: #a8660f;
+  --a-500: #c07d1c;
+  --a-400: #dc9c3a;
+  --a-100: #fbeed8;
+
+  /* --- red, for live and locked ------------------------------------------ */
+  --r-600: #9c2f1b;
+  --r-100: #fbe8e3;
+
+  /* --- semantic ---------------------------------------------------------- */
+  --field: var(--g-700);
+  --field-deep: var(--g-900);
+  --page: var(--n-100);
+  --card: var(--n-050);
+  --line: var(--n-200);
+  --ink: var(--n-900);
+  --ink-2: var(--n-700);
+  --ink-3: var(--n-500);
+  --on-field: #eef5f1;
+  --on-field-2: #9dbcac;
+  --accent: var(--a-500);
+  --accent-deep: var(--a-600);
+  --accent-wash: var(--a-100);
+  --good: var(--g-500);
+  --good-wash: var(--g-100);
+  --bad: var(--r-600);
+  --bad-wash: var(--r-100);
+
+  /* --- type -------------------------------------------------------------- */
+  --display: 'Bitter', Georgia, 'Times New Roman', serif;
+  --ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* --- radii ------------------------------------------------------------- */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --r-pill: 999px;
+
+  /* --- elevation, warm rather than grey ---------------------------------- */
+  --sh-1: 0 1px 1px rgba(30, 26, 19, 0.04), 0 1px 3px rgba(30, 26, 19, 0.05);
+  --sh-2: 0 2px 4px rgba(30, 26, 19, 0.05), 0 6px 16px rgba(30, 26, 19, 0.07);
+  --sh-3: 0 6px 12px rgba(30, 26, 19, 0.08), 0 18px 40px rgba(30, 26, 19, 0.12);
+  --sh-4: 0 10px 20px rgba(30, 26, 19, 0.12), 0 32px 64px rgba(30, 26, 19, 0.2);
+
+  --tap: 44px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--page);
+}
+
+body {
+  font-family: var(--ui);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.45;
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  margin: 0;
+  line-height: 1.15;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  min-height: var(--tap);
+  padding: 0;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* Keyboard focus stays visible; pointer focus does not draw a ring. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* Scores, spreads and point values use lining tabular figures so columns of numbers
+   never jitter as they update. */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
