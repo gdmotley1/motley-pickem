@@ -1,0 +1,68 @@
+# Keeps Motley Pick'em fed with no one having to remember anything.
+#
+# Repo secrets required (already set): SUPABASE_URL, SUPABASE_SERVICE_KEY.
+# The service key bypasses RLS, so it lives only in secrets and never in a VITE_ var.
+#
+# Times are UTC. GitHub runs cron a few minutes late, which does not matter here.
+
+name: Sync games
+
+on:
+  schedule:
+    # 12:00 UTC = 8am ET, Tuesday / Wednesday / Thursday.
+    # Builds the week whose games are THIS coming weekend, refreshes spreads daily so
+    # the pool is current when Dad opens it Thursday morning, and auto-publishes 18
+    # hours before the first kickoff if nobody has. Running three days gives two
+    # spare attempts before Thursday night.
+    - cron: '0 12 * * 2,3,4'
+    # Scores, finals and the underdog auto-picks, every 15 minutes Thursday through
+    # Sunday. Phones read live scores straight from ESPN, so this only has to be
+    # timely enough to grade results and fill missed picks at kickoff.
+    - cron: '*/15 * * * 4,5,6,0'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'slate or scores'
+        required: true
+        default: 'slate'
+        type: choice
+        options: [slate, scores]
+      week:
+        description: 'CFB week number (blank = the current week)'
+        required: false
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build this week's pool
+        if: github.event.schedule == '0 12 * * 2,3,4' || inputs.mode == 'slate'
+        run: |
+          python scripts/sync_supabase.py --mode slate \
+            ${{ inputs.week && format('--week {0}', inputs.week) || '--current' }}
+
+      - name: Get a head start on next week
+        # Best effort only. Lines are often unposted this far out, so the slate cannot
+        # be built yet and a failure here must not fail the run.
+        if: github.event.schedule == '0 12 * * 2,3,4'
+        continue-on-error: true
+        run: python scripts/sync_supabase.py --mode slate --next
+
+      - name: Refresh scores, grade finals, auto-pick
+        if: github.event.schedule == '*/15 * * * 4,5,6,0' || inputs.mode == 'scores'
+        run: |
+          python scripts/sync_supabase.py --mode scores \
+            ${{ inputs.week && format('--week {0}', inputs.week) || '--current' }}
