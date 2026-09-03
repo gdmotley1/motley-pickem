@@ -247,3 +247,28 @@ def test_search_path_is_always_pinned():
         if "security definer" in head.lower():
             assert "set search_path" in head.lower(), \
                 "%s is SECURITY DEFINER with no pinned search_path" % name
+
+
+def test_no_read_only_function_writes():
+    """A STABLE or IMMUTABLE function that writes is accepted at creation and then
+    fails at call time with "UPDATE is not allowed in a non-volatile function".
+
+    whoami shipped this way and broke sign-in on the live database: the seat was
+    claimed, whoami failed, and no session could start. Pattern tests cannot catch a
+    semantic error like this, so this one checks volatility against the body.
+    """
+    sql = _all_migration_sql()
+    offenders = []
+    for m in re.finditer(r"create or replace function\s+(\w+)(.*?)\$\$(.*?)\$\$",
+                         sql, re.S | re.I):
+        name, head, body = m.group(1), m.group(2), m.group(3)
+        read_only = re.search(r"\b(stable|immutable)\b", head, re.I)
+        # No trailing \b: "update\s+\w\b" only matches a one-letter table name, so
+        # "update sessions set" slipped straight through the first version of this test
+        # and it passed while the bug was still live.
+        writes = re.search(
+            r"\b(?:insert\s+into|update\s+[a-z_.\"]+\s+set|delete\s+from)", body, re.I)
+        if read_only and writes:
+            offenders.append("%s is %s but writes: %r"
+                             % (name, read_only.group(1).upper(), writes.group(0)))
+    assert not offenders, "; ".join(offenders)

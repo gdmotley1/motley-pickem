@@ -201,9 +201,12 @@ begin
   raise exception 'Wrong PIN';
 end $$;
 
+-- NOT stable: it touches sessions.last_seen. A STABLE function that writes is accepted
+-- at creation and then fails at call time with "UPDATE is not allowed in a non-volatile
+-- function", which breaks sign-in completely.
 create or replace function whoami(p_token text)
 returns table (id smallint, name text, is_admin boolean, color text)
-language plpgsql stable security definer set search_path = public, extensions as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
