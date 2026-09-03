@@ -15,7 +15,7 @@ returns table (
   neutral_site boolean, tv text, spread_line numeric,
   favorite_abbr text, underdog_abbr text, tier text,
   interest numeric, featured boolean
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);

@@ -10,6 +10,17 @@
 --   2. you cannot see another player's pick until that game has kicked off
 -- The anon key ships in the browser bundle, so anything not enforced here is not enforced.
 
+-- pgcrypto supplies crypt, gen_salt, digest and gen_random_bytes, which hash the PINs
+-- and the session tokens.
+--
+-- Supabase installs extensions into the `extensions` schema, not `public`. Every
+-- function below therefore pins `search_path = public, extensions`. Pinning it to
+-- `public` alone fails at creation with:
+--     ERROR: function digest(text, unknown) does not exist
+-- A SECURITY DEFINER function still needs an explicit search_path so it cannot be
+-- hijacked by a caller's, so the fix is to name both schemas rather than drop the pin.
+-- On a plain Postgres where pgcrypto lands in `public`, a missing `extensions` schema in
+-- the search path is simply ignored, so the same line works there too.
 create extension if not exists pgcrypto;
 
 -- ---------------------------------------------------------------- tables
@@ -115,13 +126,13 @@ on conflict (id) do nothing;
 -- ---------------------------------------------------------------- helpers
 
 create or replace function _player_for(p_token text)
-returns players language sql stable security definer set search_path = public as $$
+returns players language sql stable security definer set search_path = public, extensions as $$
   select p.* from sessions s join players p on p.id = s.player_id
   where s.token_hash = encode(digest(p_token, 'sha256'), 'hex')
 $$;
 
 create or replace function _new_session(p_player smallint)
-returns text language plpgsql security definer set search_path = public as $$
+returns text language plpgsql security definer set search_path = public, extensions as $$
 declare tok text;
 begin
   tok := encode(gen_random_bytes(32), 'hex');
@@ -135,13 +146,13 @@ end $$;
 -- Public. Never returns pin_hash.
 create or replace function list_seats()
 returns table (id smallint, name text, is_admin boolean, claimed boolean, color text)
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select p.id, p.name, p.is_admin, (p.name is not null), p.color
   from players p order by p.id
 $$;
 
 create or replace function claim_seat(p_seat smallint, p_name text, p_pin text)
-returns text language plpgsql security definer set search_path = public as $$
+returns text language plpgsql security definer set search_path = public, extensions as $$
 declare updated smallint;
 begin
   if p_pin !~ '^[0-9]{4}$' then
@@ -166,7 +177,7 @@ begin
 end $$;
 
 create or replace function sign_in(p_seat smallint, p_pin text)
-returns text language plpgsql security definer set search_path = public as $$
+returns text language plpgsql security definer set search_path = public, extensions as $$
 declare rec players;
 begin
   select * into rec from players where id = p_seat;
@@ -192,7 +203,7 @@ end $$;
 
 create or replace function whoami(p_token text)
 returns table (id smallint, name text, is_admin boolean, color text)
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
@@ -203,7 +214,7 @@ begin
 end $$;
 
 create or replace function sign_out(p_token text)
-returns void language sql security definer set search_path = public as $$
+returns void language sql security definer set search_path = public, extensions as $$
   delete from sessions where token_hash = encode(digest(p_token, 'sha256'), 'hex')
 $$;
 
@@ -218,7 +229,7 @@ returns table (
   neutral_site boolean, tv text, spread_line numeric, favorite_abbr text,
   underdog_abbr text, tier text, state text, status_detail text, winner_abbr text,
   my_pick text, my_confidence smallint, my_auto boolean
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
@@ -242,7 +253,7 @@ create or replace function get_board(p_token text, p_week int)
 returns table (
   game_id bigint, player_id smallint, player_name text, player_color text,
   pick_abbr text, confidence smallint, auto boolean, correct boolean, points smallint
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
@@ -267,7 +278,7 @@ create or replace function get_standings(p_token text)
 returns table (
   player_id smallint, player_name text, player_color text,
   weeks_played bigint, correct bigint, games bigint, points bigint
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
@@ -294,7 +305,7 @@ end $$;
 -- fail loudly instead of silently dropping a pick.
 create or replace function save_picks(p_token text, p_week int, p_picks jsonb)
 returns table (saved int, locked int) language plpgsql
-security definer set search_path = public as $$
+security definer set search_path = public, extensions as $$
 declare
   me players;
   n_slate  int;
@@ -396,7 +407,7 @@ end $$;
 -- Any claimed player with no pick on a game that has started gets the UNDERDOG at the
 -- lowest confidence value they have not spent that week. Run from the sync job.
 create or replace function apply_auto_picks()
-returns int language plpgsql security definer set search_path = public as $$
+returns int language plpgsql security definer set search_path = public, extensions as $$
 declare r record; v_conf smallint; n int := 0;
 begin
   for r in
@@ -426,7 +437,7 @@ end $$;
 -- ---------------------------------------------------------------- admin
 
 create or replace function publish_slate(p_token text, p_week int, p_game_ids bigint[])
-returns int language plpgsql security definer set search_path = public as $$
+returns int language plpgsql security definer set search_path = public, extensions as $$
 declare me players; n int;
 begin
   me := _player_for(p_token);

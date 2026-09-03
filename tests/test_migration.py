@@ -218,3 +218,32 @@ def test_combined_migration_parses_as_one_script():
     path = os.path.join(ROOT, "migrations", "ALL.sql")
     with open(path, encoding="utf-8") as f:
         pglast.parse_sql(f.read())
+
+
+def test_security_definer_functions_can_reach_pgcrypto():
+    """Supabase puts pgcrypto in `extensions`, not `public`.
+
+    Pinning search_path to `public` alone made the whole migration fail on the very
+    first function with "function digest(text, unknown) does not exist".
+    """
+    sql = _all_migration_sql()
+    bare = re.findall(r"set search_path = public(?!\s*,)", sql)
+    assert not bare, (
+        "%d function(s) pin search_path to public alone; pgcrypto lives in "
+        "extensions on Supabase" % len(bare)
+    )
+    defined = re.findall(r"security definer set search_path = ([a-z, ]+?) as", sql)
+    assert defined, "no SECURITY DEFINER functions found"
+    for path in defined:
+        assert "extensions" in path, "search_path '%s' cannot reach pgcrypto" % path
+
+
+def test_search_path_is_always_pinned():
+    """An unpinned SECURITY DEFINER function is a privilege-escalation footgun."""
+    sql = _all_migration_sql()
+    for match in re.finditer(r"create or replace function\s+(\w+)(.{0,400}?)\$\$",
+                             sql, re.S | re.I):
+        name, head = match.group(1), match.group(2)
+        if "security definer" in head.lower():
+            assert "set search_path" in head.lower(), \
+                "%s is SECURITY DEFINER with no pinned search_path" % name

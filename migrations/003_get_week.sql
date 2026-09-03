@@ -14,7 +14,7 @@ returns table (
   id int, season smallint, week_no smallint, label text,
   published boolean, starts_at timestamptz, ends_at timestamptz,
   slate_size bigint
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
@@ -32,7 +32,7 @@ returns table (
   id int, season smallint, week_no smallint, label text,
   published boolean, starts_at timestamptz, ends_at timestamptz,
   slate_size bigint
-) language plpgsql stable security definer set search_path = public as $$
+) language plpgsql stable security definer set search_path = public, extensions as $$
 declare me players;
 begin
   me := _player_for(p_token);
