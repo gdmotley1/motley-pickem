@@ -1,4 +1,7 @@
-# Motley Pick'em (repo folder: cfb-pickem)
+# Motley Pick'em
+
+> Local folder is `cfb-pickem/`; the app, repo and URL are all `motley-pickem`. Only
+> `../.claude/launch.json` depends on the folder name. Rename both together or neither.
 
 Live: https://gdmotley1.github.io/motley-pickem/ · repo `gdmotley1/motley-pickem`
 Backend is REAL as of 2026-09-03: Supabase project `lugxthfaksdjmvxepryt`, migrations
@@ -99,9 +102,11 @@ cfb-pickem/
   outputs/       <- generated, disposable
 ```
 
-Data flows one way: inputs to scripts to outputs. Deleting outputs must never break a
-build. Source data is never edited in place.
-
 ## Detailed reference
 
 @memory/decisions.md
+
+Read on demand, not loaded every session:
+
+- `memory/ui-patterns.md` — how each screen behaves, and the libraries that failed here
+- `memory/traps.md` — bugs that already cost time, and the guard that now catches each
