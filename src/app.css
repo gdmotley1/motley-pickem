@@ -985,39 +985,80 @@
 }
 
 .rankrow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 11px;
   border-radius: var(--r-md);
   background: var(--card);
   border: 1px solid var(--line);
   box-shadow: var(--sh-1);
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
+  transition: border-color 0.16s ease, background 0.16s ease, opacity 0.16s ease;
 }
 
-.rankrow.is-dragging {
-  box-shadow: var(--sh-3);
+/* The whole row is the tap target: 56px tall, edge to edge, no small handles. */
+.rankrow__hit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 11px;
+  min-height: 56px;
+  text-align: left;
+  border-radius: var(--r-md);
+}
+
+.rankrow__hit:active {
+  transform: scale(0.99);
+}
+
+/* The game you picked up. Stays in place so the list never jumps under your thumb. */
+.rankrow.is-lifted {
   border-color: var(--g-500);
-  position: relative;
-  z-index: 5;
+  border-width: 2px;
+  background: var(--g-050);
+  box-shadow: var(--sh-3);
+}
+
+/* Every other row becomes a destination, with its points number as the label. */
+.rankrow.is-target .rankrow__pts {
+  color: var(--accent-deep);
+}
+
+.rankrow.is-target {
+  border-style: dashed;
+  border-color: var(--n-300);
+}
+
+.rankrow.is-target:active {
+  background: var(--accent-wash);
+  border-color: var(--a-400);
+}
+
+.rank__list.is-moving .rankrow:not(.is-lifted):not(.is-target) {
+  opacity: 0.4;
+}
+
+/* Room for the floating Moving bar so the bottom games stay tappable. */
+.rank__list.is-moving {
+  padding-bottom: 76px;
 }
 
 .rankrow--locked {
   background: var(--n-200);
   box-shadow: none;
   opacity: 0.8;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  min-height: 56px;
 }
 
 .rankrow__pts {
-  min-width: 30px;
+  min-width: 32px;
   font-family: var(--display);
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--g-600);
   text-align: center;
+  transition: color 0.16s ease;
 }
 
 .rankrow__team {
@@ -1043,11 +1084,84 @@
   color: var(--ink-3);
 }
 
-.rankrow__grip {
+/* One fixed-width slot so a text cue never changes the row height. */
+.rankrow__cue {
+  flex: none;
+  width: 54px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   color: var(--n-300);
-  display: grid;
-  place-items: center;
-  padding-left: 2px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rankrow.is-lifted .rankrow__cue {
+  color: var(--g-600);
+}
+.rankrow.is-target .rankrow__cue {
+  color: var(--accent);
+}
+
+/* Always on screen while a game is in hand, so you can see what you are moving and
+   back out from anywhere in the list. */
+.liftbar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(84px + var(--safe-bottom));
+  z-index: 45;
+  width: calc(100% - 28px);
+  max-width: 432px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px 11px 16px;
+  border-radius: var(--r-md);
+  background: var(--g-800);
+  color: var(--on-field);
+  box-shadow: var(--sh-3);
+  /* Rises without fading. A hidden or throttled tab pauses CSS animations, and an
+     opacity keyframe can leave this bar frozen half-transparent over the list. */
+  animation: liftbarIn 0.2s var(--ease) both;
+}
+
+@keyframes liftbarIn {
+  from {
+    transform: translate(-50%, 14px);
+  }
+  to {
+    transform: translate(-50%, 0);
+  }
+}
+
+.liftbar__text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.liftbar__text strong {
+  color: var(--n-000);
+}
+
+.liftbar__cancel {
+  flex: none;
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--n-000);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.liftbar__cancel:active {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 /* ===================================================================== done */

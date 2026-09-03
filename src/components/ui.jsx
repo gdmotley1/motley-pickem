@@ -1,7 +1,21 @@
 /** Small shared pieces. Kept in one file so the screens stay about their own logic. */
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 const EXIT_MS = 200
+
+/**
+ * Renders into document.body.
+ *
+ * `position: fixed` resolves against the nearest ancestor with a transform, not the
+ * viewport. The screen wrapper is a motion.div that keeps a transform after animating,
+ * so a fixed bar inside it anchored to the page instead of the screen and ended up at
+ * y=1533 in an 812px viewport. Portalling past that subtree is the fix.
+ */
+export function Portal({ children }) {
+  if (typeof document === 'undefined') return null
+  return createPortal(children, document.body)
+}
 
 /**
  * Bottom sheet that owns its own mount/unmount.
@@ -51,7 +65,7 @@ export function Sheet({ open, onClose, label, children }) {
   if (!mounted) return null
 
   return (
-    <>
+    <Portal>
       <div
         className={`sheet__scrim${closing ? ' is-out' : ''}`}
         onClick={onClose}
@@ -69,7 +83,7 @@ export function Sheet({ open, onClose, label, children }) {
         <div className="sheet__grab" />
         {children}
       </div>
-    </>
+    </Portal>
   )
 }
 
@@ -89,7 +103,11 @@ export function Toast({ message, onDone, ms = 2600 }) {
   }, [message, ms, onDone])
 
   if (!message) return null
-  return <div className={`toast${closing ? ' is-out' : ''}`}>{message}</div>
+  return (
+    <Portal>
+      <div className={`toast${closing ? ' is-out' : ''}`}>{message}</div>
+    </Portal>
+  )
 }
 
 export function Back({ onClick, label = 'Back' }) {

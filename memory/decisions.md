@@ -336,3 +336,48 @@ development runs against, and the migration is never executed locally.
 
 **How to apply:** Add the SQL function in the same change as the client call. The test is
 verified to fail when a migration is removed, so trust it.
+
+## Confidence points: tap to lift, tap to place. No dragging.
+
+The ranking screen arrives already sorted by the spread. Tapping a game lifts it, every
+other row becomes a target labelled "here", and tapping one gives the lifted game that
+row's point value. Tapping the lifted game again, or Cancel, puts it back.
+
+**Why:** Drag-to-reorder was unusable on a phone and Grant called it out. Three faults at
+once: the whole row was the drag handle so every touch fought the page scroll, the touch
+sensor needed a 150ms press-and-hold that read as nothing happening, and the dragged row
+was pinned inside a list twice the height of the viewport, which made moving a game from
+20th to 1st effectively impossible. Ranking twenty items by drag is a poor interaction
+even done well.
+
+The design turns on one observation: the left column already shows the points, so while a
+game is lifted, tapping a row reads as "give my game that many points" rather than "move
+to that index". People think in points, not positions. Grant expects to move only two to
+five games a week, so the flow optimises for one fast, unambiguous move.
+
+**How to apply:** dnd-kit is uninstalled; do not reintroduce dragging. Auto-rank is
+applied on arrival rather than behind a button, with "Reset to spread" to get back. The
+manual/auto distinction is the `touched` flag in the draft: once a player moves anything,
+the spread sort stops re-applying.
+
+## position: fixed resolves against a transformed ancestor, not the viewport
+
+Overlays (Sheet, Toast, the Moving bar) render through `Portal` in
+`src/components/ui.jsx`, which portals to document.body.
+
+**Why:** The screen wrapper is a motion.div that keeps a transform after animating, which
+makes it the containing block for any fixed descendant. The Moving bar landed at y=1533
+in an 812px viewport, completely off screen.
+
+**How to apply:** Any new fixed overlay goes through `Portal`. Do not assume `position:
+fixed` is relative to the screen inside an animated subtree.
+
+## Never animate an overlay's opacity from 0
+
+Entrance animations move the element; they do not fade it in.
+
+**Why:** A hidden or backgrounded tab pauses CSS animations. The Moving bar froze
+half-transparent with the list showing through it. `liftbarIn` translates only.
+
+**How to apply:** Keyframes for anything that must stay readable should animate transform
+alone, so a paused animation still leaves the element fully opaque.

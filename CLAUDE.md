@@ -60,6 +60,12 @@ React 19: it froze tab switches and left closed bottom sheets in the DOM, where 
 full-screen scrim ate every tap. Screens animate in on a fresh key with no exit; overlays
 use the `Sheet` / `Toast` components in `src/components/ui.jsx`.
 
+**`position: fixed` is relative to a transformed ancestor.** The screen wrapper is an
+animated motion.div, so fixed overlays inside it anchor to the page, not the screen. Use
+the `Portal` helper in `src/components/ui.jsx` for anything fixed. Related: never animate
+an overlay's opacity from 0, because a backgrounded tab pauses CSS animations and leaves
+it half-transparent.
+
 **ESPN's featured-games list is a brand list, not a good-games list.** It happily serves
 four 40-point spreads. Never feed it to the pool unfiltered. `suggest_slate` reshapes it
 into certainty tiers so confidence points stay meaningful.

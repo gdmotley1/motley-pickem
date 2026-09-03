@@ -1,23 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core'
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable'
-import { restrictToParentElement, restrictToVerticalAxis } from '@dnd-kit/modifiers'
-import { CSS } from '@dnd-kit/utilities'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import {
@@ -25,6 +7,7 @@ import {
   Empty,
   IconClock,
   IconGrip,
+  Portal,
   Screen,
   Spinner,
   Toast,
@@ -39,6 +22,7 @@ export default function Picks({ me, weekId }) {
   const [phase, setPhase] = useState('choose') // choose | rank | done
   const [winners, setWinners] = useState({})
   const [order, setOrder] = useState([])
+  const [orderTouched, setOrderTouched] = useState(false)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
 
@@ -65,6 +49,7 @@ export default function Picks({ me, weekId }) {
           .map((g) => g.game_id)
           .filter((id) => !saved.includes(id))
         setOrder([...saved, ...missing])
+        setOrderTouched(!!draft?.touched)
 
         const submitted = rows.length > 0 && rows.every((g) => g.my_pick)
         if (submitted && !draft) setPhase('done')
@@ -92,8 +77,8 @@ export default function Picks({ me, weekId }) {
   const allChosen = editable.length > 0 && chosenCount === editable.length
 
   useEffect(() => {
-    if (games) writeDraft(me.id, { winners, order })
-  }, [winners, order, games, me.id])
+    if (games) writeDraft(me.id, { winners, order, touched: orderTouched })
+  }, [winners, order, orderTouched, games, me.id])
 
   /* --------------------------------------------------------------- actions */
 
@@ -102,24 +87,52 @@ export default function Picks({ me, weekId }) {
     navigator.vibrate?.(8)
   }, [])
 
-  const autoRank = useCallback(() => {
-    // Order by how sure Vegas is, most certain first. The whole point is that you move
-    // only the handful you disagree with instead of sorting twenty games by hand.
-    const score = (g) => {
-      const line = g.spread_line == null ? 0 : Number(g.spread_line)
-      return winners[g.game_id] === g.favorite_abbr ? line : -line
-    }
-    setOrder((cur) =>
-      [...cur].sort((a, b) => {
-        const ga = editable.find((g) => g.game_id === a)
-        const gb = editable.find((g) => g.game_id === b)
-        if (!ga || !gb) return 0
-        return score(gb) - score(ga)
-      }),
-    )
+  /**
+   * How sure Vegas is about the pick you made: the line if you took the favourite,
+   * the negative of it if you took the dog. Biggest number is the safest pick.
+   */
+  const spreadOrder = useCallback(
+    (ids) => {
+      const score = (id) => {
+        const g = editable.find((x) => x.game_id === id)
+        if (!g) return 0
+        const line = g.spread_line == null ? 0 : Number(g.spread_line)
+        return winners[g.game_id] === g.favorite_abbr ? line : -line
+      }
+      return [...ids].sort((a, b) => score(b) - score(a))
+    },
+    [editable, winners],
+  )
+
+  // Land on the ranking screen already sorted. You only fix what you disagree with,
+  // which for this pool is two or three games.
+  useEffect(() => {
+    if (phase !== 'rank' || orderTouched || !order.length) return
+    setOrder((cur) => {
+      const next = spreadOrder(cur)
+      return next.every((id, i) => id === cur[i]) ? cur : next
+    })
+  }, [phase, orderTouched, order.length, spreadOrder])
+
+  const resetOrder = useCallback(() => {
+    setOrder((cur) => spreadOrder(cur))
+    setOrderTouched(false)
     navigator.vibrate?.(14)
-    setToast('Ranked by the spread. Drag anything you disagree with.')
-  }, [editable, winners])
+    setToast('Back to spread order.')
+  }, [spreadOrder])
+
+  const moveTo = useCallback((id, index) => {
+    setOrder((cur) => {
+      const from = cur.indexOf(id)
+      if (from === -1 || from === index) return cur
+      const next = [...cur]
+      next.splice(from, 1)
+      next.splice(index, 0, id)
+      return next
+    })
+    setOrderTouched(true)
+    navigator.vibrate?.(12)
+  }, [])
 
   async function submit() {
     setSaving(true)
@@ -176,13 +189,15 @@ export default function Picks({ me, weekId }) {
   if (phase === 'rank')
     return (
       <RankPhase
+        setToast={setToast}
         editable={editable}
         locked={locked}
         winners={winners}
         order={order}
         setOrder={setOrder}
         availableValues={availableValues}
-        onAutoRank={autoRank}
+        onReset={resetOrder}
+        onMove={moveTo}
         onBack={() => setPhase('choose')}
         onSubmit={submit}
         saving={saving}
@@ -327,48 +342,72 @@ function TeamPick({ game, side, selected, disabled, onClick }) {
 
 /* ==================================================================== rank */
 
+/**
+ * Assigning the confidence points.
+ *
+ * The first build was drag-to-reorder and it was unusable on a phone: the whole row was
+ * the drag handle so every touch fought the page scroll, a 150ms press-and-hold felt
+ * like nothing happening, and the dragged row was pinned inside a list twice the height
+ * of the screen, which made moving a game from 20th to 1st effectively impossible.
+ *
+ * This replaces it with tap to lift, tap to place. The trick is that the left column
+ * already shows the points, so while a game is lifted, tapping any row reads as "give my
+ * game that many points" rather than "move to that position". People think in points.
+ */
 function RankPhase({
   editable,
   locked,
   winners,
   order,
-  setOrder,
   availableValues,
-  onAutoRank,
+  onReset,
+  onMove,
   onBack,
   onSubmit,
   saving,
   error,
   toast,
+  setToast,
 }) {
+  const [lifted, setLifted] = useState(null)
   const byId = useMemo(
     () => Object.fromEntries(editable.map((g) => [g.game_id, g])),
     [editable],
   )
-  const sensors = useSensors(
-    // The delay lets a vertical scroll win, so the list does not grab every touch.
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 8 } }),
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
 
   const top = availableValues[0]
   const bottom = availableValues[availableValues.length - 1]
+  const liftedGame = lifted ? byId[lifted] : null
+  const liftedPick = lifted ? winners[lifted] : null
+
+  function onRowTap(id, index) {
+    if (!lifted) {
+      setLifted(id)
+      navigator.vibrate?.(10)
+      return
+    }
+    if (lifted === id) {
+      setLifted(null) // tapping the lifted game again puts it back down
+      return
+    }
+    onMove(lifted, index)
+    setLifted(null)
+  }
 
   return (
     <div>
       <div className="rank__head">
         <Back onClick={onBack} label="Winners" />
-        <button className="pill" onClick={onAutoRank}>
-          Auto-rank by spread
+        <button className="pill pill--quiet" onClick={onReset}>
+          Reset to spread
         </button>
       </div>
 
       <div className="rank__intro">
         <h2 className="h2">Most sure at the top</h2>
         <p className="sub">
-          The top game is worth <strong>{top}</strong> points, the bottom one{' '}
-          <strong>{bottom}</strong>. Press and hold a row to move it.
+          Already sorted by the spread, so the top game is worth <strong>{top}</strong> and
+          the bottom <strong>{bottom}</strong>. Tap a game to move it.
         </p>
       </div>
 
@@ -394,69 +433,78 @@ function RankPhase({
         </div>
       )}
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={({ active, over }) => {
-          if (!over || active.id === over.id) return
-          setOrder((cur) => arrayMove(cur, cur.indexOf(active.id), cur.indexOf(over.id)))
-          navigator.vibrate?.(8)
-        }}
-        modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-      >
-        <SortableContext items={order} strategy={verticalListSortingStrategy}>
-          <ul className="rank__list">
-            {order.map((id, i) => (
-              <RankRow
-                key={id}
-                id={id}
-                game={byId[id]}
-                pick={winners[id]}
-                points={availableValues[i]}
-              />
-            ))}
-          </ul>
-        </SortableContext>
-      </DndContext>
+      <ul className={`rank__list${lifted ? ' is-moving' : ''}`}>
+        {order.map((id, i) => {
+          const game = byId[id]
+          if (!game) return null
+          const pick = winners[id]
+          const opp = pick === game.home_abbr ? game.away_abbr : game.home_abbr
+          const logoId = pick === game.home_abbr ? game.home_id : game.away_id
+          const isLifted = lifted === id
+          const isTarget = !!lifted && !isLifted
+
+          return (
+            <motion.li
+              key={id}
+              layout
+              transition={{ type: 'spring', damping: 30, stiffness: 420 }}
+              className={`rankrow${isLifted ? ' is-lifted' : ''}${
+                isTarget ? ' is-target' : ''
+              }`}
+            >
+              <button
+                className="rankrow__hit"
+                onClick={() => onRowTap(id, i)}
+                aria-label={
+                  isLifted
+                    ? `${pick} is selected. Tap another game to place it, or tap again to cancel.`
+                    : lifted
+                      ? `Give ${liftedPick} ${availableValues[i]} points`
+                      : `Move ${pick}, currently ${availableValues[i]} points`
+                }
+              >
+                <span className="rankrow__pts num">{availableValues[i]}</span>
+                <TeamLogo teamId={logoId} abbr={pick} size={26} />
+                <span className="rankrow__team">
+                  {pick}
+                  <span className="rankrow__opp">over {opp}</span>
+                </span>
+                <span className="rankrow__cue">
+                  {isLifted ? 'moving' : isTarget ? 'here' : <IconGrip />}
+                </span>
+              </button>
+            </motion.li>
+          )
+        })}
+      </ul>
 
       {error && <p className="err">{error}</p>}
 
-      <div className="stickycta">
-        <button className="btn" onClick={onSubmit} disabled={saving}>
-          {saving ? 'Saving…' : 'Lock in my picks'}
-        </button>
-      </div>
+      {!lifted && (
+        <div className="stickycta">
+          <button className="btn" onClick={onSubmit} disabled={saving}>
+            {saving ? 'Saving…' : 'Lock in my picks'}
+          </button>
+        </div>
+      )}
+
+      {/* Fixed, not sticky: with twenty rows a sticky bar sits at the end of the list and
+          is off-screen exactly when you lift something near the top. */}
+      {lifted && (
+        <Portal>
+          <div className="liftbar">
+          <span className="liftbar__text">
+            Moving <strong>{liftedPick}</strong>. Tap a row to give it those points.
+          </span>
+            <button className="liftbar__cancel" onClick={() => setLifted(null)}>
+              Cancel
+            </button>
+          </div>
+        </Portal>
+      )}
 
       <Toast message={toast} onDone={() => setToast(null)} />
     </div>
-  )
-}
-
-function RankRow({ id, game, pick, points }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id })
-  if (!game) return null
-  const opp = pick === game.home_abbr ? game.away_abbr : game.home_abbr
-  const logoId = pick === game.home_abbr ? game.home_id : game.away_id
-
-  return (
-    <li
-      ref={setNodeRef}
-      className={`rankrow${isDragging ? ' is-dragging' : ''}`}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      {...attributes}
-      {...listeners}
-    >
-      <span className="rankrow__pts num">{points}</span>
-      <TeamLogo teamId={logoId} abbr={pick} size={26} />
-      <span className="rankrow__team">
-        {pick}
-        <span className="rankrow__opp">over {opp}</span>
-      </span>
-      <span className="rankrow__grip">
-        <IconGrip />
-      </span>
-    </li>
   )
 }
 
