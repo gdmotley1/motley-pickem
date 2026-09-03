@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// GitHub Pages serves this from /cfb-pickem/. Set BASE=/ for a custom domain later.
-const base = process.env.BASE ?? '/cfb-pickem/'
+// GitHub Pages serves this from /motley-pickem/. Set BASE=/ for a custom domain later.
+const base = process.env.BASE ?? '/motley-pickem/'
 
 export default defineConfig({
   base,

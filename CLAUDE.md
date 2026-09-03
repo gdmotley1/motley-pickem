@@ -20,7 +20,7 @@ checks are for UX only.
 
 ```bash
 python -m pytest tests/ -q                    # the gate. Run before saying anything is done.
-npm run dev                                   # app at /cfb-pickem/ ; add ?demo=1 for fake
+npm run dev                                   # app at /motley-pickem/ ; add ?demo=1 for fake
                                               #   opponents, results and a finished week
 npm run build                                 # must stay clean
 
