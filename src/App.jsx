@@ -47,12 +47,33 @@ export default function App() {
 
   // Check on load and whenever the app comes back to the foreground, which is exactly
   // when someone reopens it from their home screen.
+  //
+  // Three triggers, because one is not enough: an installed PWA resumed from the iOS
+  // back-forward cache fires pageshow and not always visibilitychange, and a browser tab
+  // switched back to fires focus. visibilitychange alone missed the case entirely.
   useEffect(() => {
-    const check = () => newBuildAvailable().then((yes) => yes && setStale(true))
+    let done = false
+    const check = () => {
+      if (done) return
+      newBuildAvailable().then((yes) => {
+        if (yes) {
+          done = true // stop polling once the banner is up
+          setStale(true)
+        }
+      })
+    }
     check()
-    const onShow = () => document.visibilityState === 'visible' && check()
+    const onShow = () => {
+      if (!document.hidden) check()
+    }
     document.addEventListener('visibilitychange', onShow)
-    return () => document.removeEventListener('visibilitychange', onShow)
+    window.addEventListener('focus', onShow)
+    window.addEventListener('pageshow', onShow)
+    return () => {
+      document.removeEventListener('visibilitychange', onShow)
+      window.removeEventListener('focus', onShow)
+      window.removeEventListener('pageshow', onShow)
+    }
   }, [])
 
   const signOut = useCallback(async () => {
