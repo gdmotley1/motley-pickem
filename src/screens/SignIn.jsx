@@ -25,9 +25,13 @@ export default function SignIn({ onSignedIn }) {
   }, [])
 
   async function finish() {
-    const me = await api.whoami()
-    if (me) onSignedIn(me)
-    else setError('Could not start a session. Try again.')
+    try {
+      const me = await api.whoami()
+      if (me) onSignedIn(me)
+      else setError('Signed in, but the session did not start. Try your PIN again.')
+    } catch (e) {
+      setError(e.message)
+    }
   }
 
   return (
@@ -37,7 +41,10 @@ export default function SignIn({ onSignedIn }) {
       <p className="signin__sub">Twenty games a week. Twenty points. Tap your name.</p>
 
       {!seats && !error && <Spinner />}
-      {error && !seats && <p className="err">{error}</p>}
+      {/* Shown whether or not the seats loaded. Gating this on !seats hid a real
+          failure: claiming a seat worked, whoami then died, and the screen just sat
+          there with no explanation. */}
+      {error && <p className="err">{error}</p>}
 
       {seats && (
         <div className="seats">
