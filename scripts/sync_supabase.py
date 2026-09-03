@@ -163,6 +163,33 @@ def ensure_week(sb: Supabase, season: int, week: dict) -> dict:
     return saved[0] if saved else existing[0]
 
 
+# If nobody has published by this many hours before the first kickoff, the job does it.
+# The pool is only useful if it is visible, and a week where the commissioner is busy
+# would otherwise leave the whole family unable to pick at all.
+FALLBACK_PUBLISH_HOURS = 18
+
+
+def maybe_publish(sb: Supabase, week_row: dict) -> None:
+    """Publish the auto-selected 20 as a safety net, never overriding a human."""
+    if week_row.get("published"):
+        return
+    games = sb.select("games", "week_id=eq.%s&in_slate=eq.true&select=kickoff&order=kickoff"
+                      % week_row["id"])
+    if len(games) != 20:
+        print("not publishing: %d games in the slate, expected 20" % len(games))
+        return
+    first = dt.datetime.fromisoformat(games[0]["kickoff"].replace("Z", "+00:00"))
+    hours = (first - dt.datetime.now(dt.timezone.utc)).total_seconds() / 3600
+    if hours > FALLBACK_PUBLISH_HOURS:
+        print("not publishing yet: %.1fh until kickoff, commissioner still has time"
+              % hours)
+        return
+    sb._request("PATCH", "/rest/v1/weeks?id=eq.%s" % week_row["id"],
+                {"published": True, "published_at":
+                 dt.datetime.now(dt.timezone.utc).isoformat()})
+    print("auto-published: %.1fh to kickoff and nobody had published" % hours)
+
+
 def sync_slate(sb: Supabase, a, week: dict) -> int:
     start, end = date_range(week)
     print("%s  %s .. %s" % (week["label"], start, end))
@@ -184,6 +211,8 @@ def sync_slate(sb: Supabase, a, week: dict) -> int:
     print("upserted %d games (%d pre-selected)%s"
           % (len(rows), len(chosen), " - slate preserved, week already published"
              if published else ""))
+
+    maybe_publish(sb, wk)
     return 0
 
 
