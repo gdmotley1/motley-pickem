@@ -461,3 +461,26 @@ four, and a leftover pick row would corrupt the standings.
 
 **How to apply:** confirm `list_seats` shows four empty seats and `picks` is empty before
 finishing.
+
+## The weekly automation is live and verified end to end
+
+`.github/workflows/sync.yml` runs the slate build Tue/Wed/Thu 08:00 ET and the scores
+job every 15 minutes Thu-Sun. Repo secrets `SUPABASE_URL` and `SUPABASE_SERVICE_KEY`
+feed it; `VITE_*` are repo variables.
+
+**Why it took a workaround:** the gh CLI token carries `gist, read:org, repo` and not
+`workflow`, so a push touching `.github/workflows/` is rejected, and `gh auth refresh`
+needs an interactive browser approval that cannot be automated. Creating the file in
+GitHub's web editor sidesteps it entirely, because the web session is not the CLI token.
+Grant's own `gh auth refresh` also reported "not logged in": he was in an elevated
+PowerShell, which reads a different Windows Credential Manager context.
+
+**How to apply:** to change a workflow, edit `docs/workflows/*.yml` here, then paste it
+into the web editor at
+`https://github.com/gdmotley1/motley-pickem/new/main?filename=.github/workflows/<name>.yml`.
+Trigger a run with `gh workflow run "Sync games" --repo gdmotley1/motley-pickem -f mode=slate`.
+
+**A bug this caught:** the scheduled build originally ran `--next`. On the Tuesday of
+Week 3 that resolves to Week 4, whose games are nine days out with no spreads posted, so
+no slate could be built at all. The primary is now `--current`, with next week as a
+best-effort extra that cannot fail the run.

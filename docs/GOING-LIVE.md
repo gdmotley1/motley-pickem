@@ -1,5 +1,14 @@
 # Going live
 
+**Status: DONE as of 2026-09-03.** The app is live against the real Supabase
+project, migrations 001-004 are applied, Week 1 is published with 20 games, and
+the scheduled jobs are running. Nothing below is outstanding; it is kept as the
+record of how it was set up and how to do it again.
+
+Verified from GitHub Actions into Postgres: the slate build upserts 40 games and
+preserves a published slate, and the scores job refreshes all 40 and applies the
+underdog auto-picks.
+
 The app is complete and deployed, but until these steps are done it runs in mock mode:
 every seat, PIN and pick lives in one phone's local storage and nothing is shared.
 
