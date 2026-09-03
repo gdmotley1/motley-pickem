@@ -1,0 +1,11 @@
+# Normalize line endings so diffs stay clean across Windows tooling.
+* text=auto eol=lf
+
+# Binary / generated assets: never diff, never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
