@@ -150,3 +150,49 @@ def test_a_claimed_seat_cannot_be_stolen(init_sql):
     claim = re.search(r"create or replace function claim_seat.*?\$\$(.*?)\$\$",
                       init_sql, re.S | re.I).group(1)
     assert "where id = p_seat and name is null" in claim
+
+
+# ------------------------------------------------- client / server drift
+
+def _all_migration_sql():
+    out = []
+    for path in MIGRATIONS:
+        with open(path, encoding="utf-8") as f:
+            out.append(f.read())
+    return "\n".join(out)
+
+
+def test_every_rpc_the_client_calls_exists_in_sql():
+    """The Setup screen once called get_pool, which existed only in the local mock.
+
+    It worked in development and would have failed against the real database. This walks
+    src/lib/api.js for every rpc('name') and asserts a matching SQL function is defined.
+    """
+    api_path = os.path.join(ROOT, "src", "lib", "api.js")
+    if not os.path.exists(api_path):
+        pytest.skip("frontend not present")
+    with open(api_path, encoding="utf-8") as f:
+        api = f.read()
+
+    called = sorted(set(re.findall(r"rpc\(\s*'([a-z_]+)'", api)))
+    assert called, "no rpc calls found in api.js"
+
+    sql = _all_migration_sql()
+    defined = set(re.findall(r"create or replace function\s+([a-z_]+)\s*\(", sql, re.I))
+
+    missing = [fn for fn in called if fn not in defined]
+    assert not missing, (
+        "client calls RPCs with no SQL definition: %s (defined: %s)"
+        % (missing, sorted(defined))
+    )
+
+
+def test_admin_only_rpcs_check_is_admin():
+    """Hiding the Setup tab is cosmetic. These are the real gate."""
+    sql = _all_migration_sql()
+    for fn in ("publish_slate", "get_pool"):
+        body = re.search(
+            r"create or replace function %s.*?\$\$(.*?)\$\$" % fn, sql, re.S | re.I
+        )
+        assert body, "%s is not defined" % fn
+        assert "is_admin" in body.group(1), "%s does not check is_admin" % fn

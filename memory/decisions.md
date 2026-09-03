@@ -310,3 +310,29 @@ padding grew the line box. The fix keeps the badge, which carries real informati
 a list with and without it rather than eyeballing: the difference was only 6px and was
 invisible in a screenshot until measured. The Board goes further and renders a row for
 every claimed player, so a game card's height never depends on how many people picked.
+
+## Admin is hidden entirely for non-admins, and gated again in SQL
+
+Seats 1 and 2 see a fourth tab, "Setup". Seats 3 and 4 have a three-tab bar with no
+Setup tab and no route to it.
+
+**Why:** Hiding the tab is only cosmetic. The real gate is that `publish_slate` and
+`get_pool` both raise unless `_player_for(token).is_admin`, so a non-admin calling the
+RPC directly is refused whatever the UI shows.
+
+**How to apply:** Never rely on the hidden tab as the permission. Any new admin action
+needs its own `is_admin` check inside the SECURITY DEFINER function, and
+`test_admin_only_rpcs_check_is_admin` should be extended to cover it.
+
+## Every RPC the client calls must exist in a migration
+
+`test_every_rpc_the_client_calls_exists_in_sql` parses `src/lib/api.js` for `rpc('name')`
+and asserts a matching `create or replace function` in `migrations/`.
+
+**Why:** `get_pool` shipped in the mock only. The Setup screen worked perfectly in local
+development and would have thrown the moment the app pointed at the real database,
+because the function did not exist. Nothing else would have caught it: the mock is what
+development runs against, and the migration is never executed locally.
+
+**How to apply:** Add the SQL function in the same change as the client call. The test is
+verified to fail when a migration is removed, so trust it.
