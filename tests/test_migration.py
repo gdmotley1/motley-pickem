@@ -9,6 +9,7 @@ from __future__ import annotations
 import glob
 import os
 import re
+import sys
 
 import pytest
 
@@ -196,3 +197,24 @@ def test_admin_only_rpcs_check_is_admin():
         )
         assert body, "%s is not defined" % fn
         assert "is_admin" in body.group(1), "%s does not check is_admin" % fn
+
+
+def test_combined_migration_is_up_to_date():
+    """migrations/ALL.sql is what Grant actually pastes. It must never drift."""
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import build_combined_migration as combiner
+
+    path = os.path.join(ROOT, "migrations", "ALL.sql")
+    assert os.path.exists(path), "run python scripts/build_combined_migration.py"
+    with open(path, encoding="utf-8") as f:
+        on_disk = f.read()
+    assert on_disk == combiner.build(), (
+        "migrations/ALL.sql is stale. Regenerate it with "
+        "python scripts/build_combined_migration.py"
+    )
+
+
+def test_combined_migration_parses_as_one_script():
+    path = os.path.join(ROOT, "migrations", "ALL.sql")
+    with open(path, encoding="utf-8") as f:
+        pglast.parse_sql(f.read())

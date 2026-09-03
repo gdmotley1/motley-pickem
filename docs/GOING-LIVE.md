@@ -5,13 +5,22 @@ every seat, PIN and pick lives in one phone's local storage and nothing is share
 
 ## 1. Create the database (blocks everything else)
 
-In the Supabase SQL Editor for the **new free project**, run in order:
+Open [migrations/ALL.sql](../migrations/ALL.sql), copy the whole thing, paste it into the
+Supabase SQL Editor for the **new free project**, press Run. That is the entire step.
 
-1. `migrations/001_init.sql` — tables, RLS, the kickoff lock, sign-in
-2. `migrations/002_get_pool.sql` — the commissioner's slate builder
-3. `migrations/003_get_week.sql` — week metadata
+It is generated from the numbered migrations, so there is nothing to run in order and
+nothing to miss:
 
-Each is safe to re-run.
+- [001_init.sql](../migrations/001_init.sql) — tables, RLS, the kickoff lock, sign-in
+- [002_get_pool.sql](../migrations/002_get_pool.sql) — the commissioner's slate builder
+- [003_get_week.sql](../migrations/003_get_week.sql) — week metadata
+
+Every statement is idempotent, so running it again is harmless. Regenerate after editing
+any migration:
+
+```bash
+python scripts/build_combined_migration.py
+```
 
 ## 2. Point the app at it
 
@@ -35,7 +44,8 @@ The `gh` CLI token here cannot create `.github/workflows`. One command fixes tha
 gh auth refresh -s workflow
 ```
 
-Then move both workflows into place and push:
+Then move both workflows ([deploy.yml](workflows/deploy.yml),
+[sync.yml](workflows/sync.yml)) into place and push:
 
 ```bash
 mkdir -p .github/workflows
