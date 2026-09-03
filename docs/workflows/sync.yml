@@ -1,0 +1,67 @@
+# Keeps the app fed with no one having to remember anything.
+#
+# Move this to .github/workflows/sync.yml once the repo token carries the workflow
+# scope (gh auth refresh -s workflow), then add two repository secrets:
+#   SUPABASE_URL           the project URL
+#   SUPABASE_SERVICE_KEY   service_role key. Server side only, never in the browser.
+#
+# Times are UTC and GitHub runs cron late by a few minutes, which does not matter here.
+
+name: Sync games
+
+on:
+  schedule:
+    # Build next week's 40-game pool Tuesday 12:00 UTC (8am ET), then refresh the
+    # spreads Wednesday and Thursday so the pool is current when Dad opens it
+    # Thursday morning. Building on Tuesday is the safety margin: if one run fails,
+    # there are two more before the Thursday night kickoff.
+    - cron: '0 12 * * 2,3,4'
+    # Scores, finals and the underdog auto-picks, every 15 minutes Thursday through
+    # Sunday. Phones read live scores straight from ESPN, so this only has to be
+    # timely enough to grade results and fill missed picks at kickoff.
+    - cron: '*/15 * * * 4,5,6,0'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'slate or scores'
+        required: true
+        default: 'slate'
+        type: choice
+        options: [slate, scores]
+      week:
+        description: 'CFB week number (blank = current)'
+        required: false
+
+concurrency:
+  group: sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build the pool
+        # The 12:00 schedule and a manual slate run.
+        if: github.event.schedule == '0 12 * * 2,3,4' || inputs.mode == 'slate'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python scripts/sync_supabase.py --mode slate \
+            ${{ inputs.week && format('--week {0}', inputs.week) || '--next' }}
+          # Also refresh the week in progress, so a late line move is picked up.
+          python scripts/sync_supabase.py --mode slate --current || true
+
+      - name: Refresh scores and grade
+        if: github.event.schedule == '*/15 * * * 4,5,6,0' || inputs.mode == 'scores'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          python scripts/sync_supabase.py --mode scores \
+            ${{ inputs.week && format('--week {0}', inputs.week) || '--current' }}
