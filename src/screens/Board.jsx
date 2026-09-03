@@ -11,7 +11,7 @@ import { kickoffLabel } from '../lib/format.js'
  * kickoff has passed. Nothing here filters for secrecy, so there is no way for the
  * client to leak an unplayed pick.
  */
-export default function Board({ me, weekId }) {
+export default function Board({ me, weekId, week }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
@@ -50,7 +50,7 @@ export default function Board({ me, weekId }) {
 
   return (
     <Screen
-      eyebrow="Week 2"
+      eyebrow={week?.label || "This week"}
       title="The Board"
       sub={
         upcoming.length === 0 && open.length

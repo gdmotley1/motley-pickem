@@ -112,6 +112,9 @@ export const savePicks = (weekId, picks) =>
 export const publishSlate = (weekId, gameIds) =>
   rpc('publish_slate', withToken({ p_week: weekId, p_game_ids: gameIds }))
 
+/** Week metadata for the header. Week numbers follow ESPN's published CFB calendar. */
+export const getWeek = (weekId) => rpc('get_week', withToken({ p_week: weekId }))
+
 /** Admin only: the full 40-game pool for a week, with in_slate flags. */
 export const getPool = (weekId) => rpc('get_pool', withToken({ p_week: weekId }))
 

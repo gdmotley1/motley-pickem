@@ -381,3 +381,23 @@ half-transparent with the list showing through it. `liftbarIn` translates only.
 
 **How to apply:** Keyframes for anything that must stay readable should animate transform
 alone, so a paused animation still leaves the element fully opaque.
+
+## Weeks follow ESPN's published calendar, never arithmetic
+
+`scripts/cfb_weeks.py` fetches the official regular-season calendar and every other
+script takes `--week N`, `--current` or `--next` from it.
+
+**Why:** Grant asked for real CFB weeks because of odd Thursday cutoffs, and the calendar
+has four traps a hand-rolled version gets wrong:
+1. Week 1 of 2026 runs 22 Aug to 8 Sep, seventeen days, because it absorbs Week 0.
+2. Boundaries land about 3am ET Monday, after Sunday night games, so a late Sunday game
+   belongs to the week that is ending and a Thursday game to the week that opened Monday.
+3. The boundary hour shifts by one when daylight saving ends in November.
+4. ESPN ends a week at HH:59 and opens the next at HH+1:00, leaving a 60 second hole.
+
+The app had hard-coded "Week 2" for a slate that is actually Week 1.
+
+**How to apply:** Never compute a week number. `week_for()` snaps the 60 second hole
+forward. `date_range()` clamps windows longer than 9 days to their trailing days, because
+a pick'em week is one weekend and Week 1 contains two. The label reaches the UI through
+`get_week`, so it is never hard-coded in a component.

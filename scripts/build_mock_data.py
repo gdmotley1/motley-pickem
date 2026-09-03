@@ -116,9 +116,12 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001
             print("  could not pull logo %s (%s)" % (tid, exc), file=sys.stderr)
 
+    wk = pool.get("week") or {}
     payload = {
-        "week": {"id": 1, "season": 2026, "week_no": 2,
-                 "label": pool["window"]["start"] + " week", "published": True},
+        "week": {"id": 1, "season": 2026,
+                 "week_no": wk.get("week"),
+                 "label": wk.get("label") or "This week",
+                 "published": True},
         "slate": slate,
         "alternates": alternates,
     }

@@ -27,8 +27,14 @@ npm run dev                                   # app at /motley-pickem/ ; add ?de
                                               #   opponents, results and a finished week
 npm run build                                 # must stay clean
 
-# rebuild this week's game pool (40 games, best 20 pre-selected)
-python scripts/suggest_slate.py --start 2026-09-03 --end 2026-09-06 --out outputs/week01_pool.json
+# the CFB week calendar (ESPN's real boundaries, not Monday-to-Sunday)
+python scripts/cfb_weeks.py                    # whole season
+python scripts/cfb_weeks.py --current          # week in progress
+
+# rebuild a week's game pool (40 games, best 20 pre-selected)
+python scripts/suggest_slate.py --current --out outputs/week01_pool.json
+python scripts/suggest_slate.py --next         # build next week in advance
+python scripts/build_mock_data.py              # refresh the offline demo data
 
 # raw ESPN pull for a date range
 python scripts/fetch_slate.py --start 2026-09-03 --end 2026-09-06
@@ -65,6 +71,12 @@ animated motion.div, so fixed overlays inside it anchor to the page, not the scr
 the `Portal` helper in `src/components/ui.jsx` for anything fixed. Related: never animate
 an overlay's opacity from 0, because a backgrounded tab pauses CSS animations and leaves
 it half-transparent.
+
+**Week numbers come from ESPN's calendar, never from arithmetic.** Week 1 of 2026 runs
+22 Aug to 8 Sep because it absorbs Week 0, boundaries land ~3am ET Monday so Sunday night
+games stay in the week that is ending, the boundary hour shifts when DST ends, and there
+is a 60 second hole between weeks that `week_for` snaps forward. The app once hard-coded
+"Week 2" for a slate that is actually Week 1. See `scripts/cfb_weeks.py`.
 
 **ESPN's featured-games list is a brand list, not a good-games list.** It happily serves
 four 40-point spreads. Never feed it to the pool unfiltered. `suggest_slate` reshapes it

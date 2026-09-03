@@ -16,7 +16,7 @@ import { kickoffLabel } from '../lib/format.js'
 
 const DRAFT_KEY = 'pickem.draft.v1'
 
-export default function Picks({ me, weekId }) {
+export default function Picks({ me, weekId, week }) {
   const [games, setGames] = useState(null)
   const [error, setError] = useState(null)
   const [phase, setPhase] = useState('choose') // choose | rank | done
@@ -167,7 +167,7 @@ export default function Picks({ me, weekId }) {
   if (!games) return <Spinner />
   if (!games.length)
     return (
-      <Screen eyebrow="Week 2" title="No slate yet">
+      <Screen eyebrow={week?.label || "This week"} title="No slate yet">
         <Empty icon={<IconClock />} title="Nothing published">
           Your commissioner has not published this week&apos;s twenty games.
         </Empty>

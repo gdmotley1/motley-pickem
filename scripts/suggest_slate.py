@@ -27,6 +27,7 @@ import datetime as dt
 import json
 import sys
 
+from cfb_weeks import current_week, date_range, fetch_calendar, next_week, week_by_number
 from fetch_slate import _get, et, fetch
 
 FEATURED = ("https://site.api.espn.com/apis/v2/scoreboard/header"
@@ -151,7 +152,7 @@ def select_slate(games: list):
     return chosen[:SLATE_SIZE], reasons
 
 
-def build(start: dt.date, end: dt.date) -> dict:
+def build(start: dt.date, end: dt.date, week: dict | None = None) -> dict:
     games = fetch(start, end)
 
     try:
@@ -182,6 +183,7 @@ def build(start: dt.date, end: dt.date) -> dict:
     return {
         "generated_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
         "window": {"start": start.isoformat(), "end": end.isoformat()},
+        "week": week,
         "featured_in_window": sum(1 for g in games if g["featured"]),
         "total_games": len(games),
         "sec_games": sum(1 for g in slate if is_sec(g)),
@@ -202,13 +204,36 @@ def fmt(g: dict) -> str:
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--start", required=True)
-    p.add_argument("--end", required=True)
+    p.add_argument("--week", type=int, default=None, help="CFB week number")
+    p.add_argument("--current", action="store_true", help="the week in progress")
+    p.add_argument("--next", action="store_true", help="the next week to build")
+    p.add_argument("--season", type=int, default=2026)
+    p.add_argument("--start", default=None, help="override, ignores the calendar")
+    p.add_argument("--end", default=None)
     p.add_argument("--out", default=None)
     p.add_argument("--alts", type=int, default=6, help="how many alternates to print")
     a = p.parse_args()
 
-    res = build(dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end))
+    # Week boundaries come from ESPN's own calendar, not a guess at Monday-to-Sunday.
+    # See scripts/cfb_weeks.py for why that matters.
+    week = None
+    if a.start and a.end:
+        start, end = dt.date.fromisoformat(a.start), dt.date.fromisoformat(a.end)
+    else:
+        weeks = fetch_calendar(a.season)
+        if a.week:
+            week = week_by_number(weeks, a.week)
+        elif a.next:
+            week = next_week(weeks)
+        else:
+            week = current_week(weeks)
+        if not week:
+            print("No matching week in the %d calendar." % a.season, file=sys.stderr)
+            return 1
+        start, end = date_range(week)
+        print("%s  (%s .. %s)" % (week["label"], start, end))
+
+    res = build(start, end, week)
     print("pool of %d from %d games (%d ESPN-featured in window), %d SEC in the 20"
           % (res["pool_size"], res["total_games"], res["featured_in_window"],
              res["sec_games"]))

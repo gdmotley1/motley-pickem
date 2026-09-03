@@ -211,6 +211,12 @@ export async function rpc(fn, args = {}) {
       save()
       return null
 
+    case 'get_week': {
+      requireMe(args.p_token)
+      const w = await week()
+      return [{ ...w.week, slate_size: w.slate.length }]
+    }
+
     case 'get_slate': {
       const me = requireMe(args.p_token)
       const w = await week()

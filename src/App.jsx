@@ -27,10 +27,21 @@ export default function App() {
   const [me, setMe] = useState(undefined) // undefined = still checking
   const [tab, setTab] = useState('picks')
   const [menu, setMenu] = useState(false)
+  const [week, setWeek] = useState(null)
 
   useEffect(() => {
     api.whoami().then((p) => setMe(p ?? null))
   }, [])
+
+  // Week label comes from ESPN's calendar via the backend, never hard-coded: Week 1 of
+  // 2026 spans seventeen days and the app was previously mislabelling it as Week 2.
+  useEffect(() => {
+    if (!me) return
+    api
+      .getWeek(WEEK_ID)
+      .then((rows) => setWeek(Array.isArray(rows) ? rows[0] : rows))
+      .catch(() => setWeek(null))
+  }, [me])
 
   const signOut = useCallback(async () => {
     await api.signOut()
@@ -51,7 +62,9 @@ export default function App() {
       <header className="apphdr">
         <div>
           <span className="apphdr__title">Motley Pick&apos;em</span>
-          <span className="apphdr__week">Week 2 · 20 games</span>
+          <span className="apphdr__week">
+            {week ? `${week.label} · ${week.slate_size} games` : ' '}
+          </span>
         </div>
         <button className="apphdr__me" onClick={() => setMenu(true)}>
           <Avatar name={me.name} color={me.color} size={24} />
@@ -74,8 +87,8 @@ export default function App() {
           transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           className="app__page"
         >
-          {tab === 'picks' && <Picks me={me} weekId={WEEK_ID} />}
-          {tab === 'board' && <Board me={me} weekId={WEEK_ID} />}
+          {tab === 'picks' && <Picks me={me} weekId={WEEK_ID} week={week} />}
+          {tab === 'board' && <Board me={me} weekId={WEEK_ID} week={week} />}
           {tab === 'standings' && <Standings me={me} />}
           {tab === 'admin' && <Admin me={me} weekId={WEEK_ID} />}
         </motion.div>
