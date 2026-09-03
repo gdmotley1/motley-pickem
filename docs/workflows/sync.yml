@@ -1,20 +1,19 @@
-# Keeps the app fed with no one having to remember anything.
+# Keeps Motley Pick'em fed with no one having to remember anything.
 #
-# Move this to .github/workflows/sync.yml once the repo token carries the workflow
-# scope (gh auth refresh -s workflow), then add two repository secrets:
-#   SUPABASE_URL           the project URL
-#   SUPABASE_SERVICE_KEY   service_role key. Server side only, never in the browser.
+# Repo secrets required (already set): SUPABASE_URL, SUPABASE_SERVICE_KEY.
+# The service key bypasses RLS, so it lives only in secrets and never in a VITE_ var.
 #
-# Times are UTC and GitHub runs cron late by a few minutes, which does not matter here.
+# Times are UTC. GitHub runs cron a few minutes late, which does not matter here.
 
 name: Sync games
 
 on:
   schedule:
-    # Build next week's 40-game pool Tuesday 12:00 UTC (8am ET), then refresh the
-    # spreads Wednesday and Thursday so the pool is current when Dad opens it
-    # Thursday morning. Building on Tuesday is the safety margin: if one run fails,
-    # there are two more before the Thursday night kickoff.
+    # 12:00 UTC = 8am ET, Tuesday / Wednesday / Thursday.
+    # Builds the week whose games are THIS coming weekend, refreshes spreads daily so
+    # the pool is current when Dad opens it Thursday morning, and auto-publishes 18
+    # hours before the first kickoff if nobody has. Running three days gives two
+    # spare attempts before Thursday night.
     - cron: '0 12 * * 2,3,4'
     # Scores, finals and the underdog auto-picks, every 15 minutes Thursday through
     # Sunday. Phones read live scores straight from ESPN, so this only has to be
@@ -29,12 +28,16 @@ on:
         type: choice
         options: [slate, scores]
       week:
-        description: 'CFB week number (blank = current)'
+        description: 'CFB week number (blank = the current week)'
         required: false
 
 concurrency:
   group: sync
   cancel-in-progress: false
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
 jobs:
   sync:
@@ -45,23 +48,21 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Build the pool
-        # The 12:00 schedule and a manual slate run.
+      - name: Build this week's pool
         if: github.event.schedule == '0 12 * * 2,3,4' || inputs.mode == 'slate'
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python scripts/sync_supabase.py --mode slate \
-            ${{ inputs.week && format('--week {0}', inputs.week) || '--next' }}
-          # Also refresh the week in progress, so a late line move is picked up.
-          python scripts/sync_supabase.py --mode slate --current || true
+            ${{ inputs.week && format('--week {0}', inputs.week) || '--current' }}
 
-      - name: Refresh scores and grade
+      - name: Get a head start on next week
+        # Best effort only. Lines are often unposted this far out, so the slate cannot
+        # be built yet and a failure here must not fail the run.
+        if: github.event.schedule == '0 12 * * 2,3,4'
+        continue-on-error: true
+        run: python scripts/sync_supabase.py --mode slate --next
+
+      - name: Refresh scores, grade finals, auto-pick
         if: github.event.schedule == '*/15 * * * 4,5,6,0' || inputs.mode == 'scores'
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python scripts/sync_supabase.py --mode scores \
             ${{ inputs.week && format('--week {0}', inputs.week) || '--current' }}
