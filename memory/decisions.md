@@ -429,3 +429,35 @@ one chance to get it wrong instead of three.
 
 **How to apply:** Edit a numbered migration, then regenerate. A test compares the file on
 disk to a fresh build and fails if it has drifted, so it cannot go stale silently.
+
+## The app went live 2026-09-03 against the real Supabase project
+
+Database created, Week 1 loaded with 40 games and a published slate of 20, and the whole
+RPC surface verified end to end from the deployed site.
+
+**Why it matters:** everything before this was a prototype against a localStorage mock.
+Three bugs only appeared against real Postgres, and none of them could have been caught
+by the mock or by reading the code:
+1. `search_path = public` alone could not reach pgcrypto, which Supabase installs in
+   `extensions`. The migration failed at the very first function.
+2. `whoami` was declared STABLE and writes `sessions.last_seen`. Postgres accepts that
+   at creation and refuses at call time, so a seat could be claimed but no session could
+   start.
+3. `SignIn` only rendered its error when the seat list had not loaded, so bug 2 produced
+   a completely silent failure.
+
+**How to apply:** verify against the real database before calling anything done, and
+verify a guard by breaking the thing it guards. The first version of the volatility test
+used `update\s+\w`, which only matches a one-letter table name, so it passed while
+the bug was live.
+
+## Test data must be cleaned up after live verification
+
+Live checks claim a seat, publish, and save picks. Every one of those ends by deleting
+the picks and sessions and resetting the player row so all four seats read unclaimed.
+
+**Why:** the family shares one four-seat roster. A leftover ZZTEST seat is one of only
+four, and a leftover pick row would corrupt the standings.
+
+**How to apply:** confirm `list_seats` shows four empty seats and `picks` is empty before
+finishing.

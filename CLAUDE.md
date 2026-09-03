@@ -1,6 +1,8 @@
 # Motley Pick'em (repo folder: cfb-pickem)
 
 Live: https://gdmotley1.github.io/motley-pickem/ · repo `gdmotley1/motley-pickem`
+Backend is REAL as of 2026-09-03: Supabase project `lugxthfaksdjmvxepryt`, migrations
+001-004 applied, Week 1 published. The app is no longer in mock mode.
 Deploy with `bash deploy.sh`, which publishes `dist/` to the `gh-pages` branch.
 
 A college football confidence pool for Grant's family. Four people, 20 games a week,
