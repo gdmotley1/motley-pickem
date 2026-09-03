@@ -1612,3 +1612,39 @@
   from { opacity: 1; transform: translate(-50%, 0); }
   to { opacity: 0; transform: translate(-50%, 16px); }
 }
+
+/* A game that has not kicked off. Listed rather than hidden, so the board is the full
+   twenty and you can check your own card against it. */
+.bgame--locked {
+  background: var(--n-100);
+  box-shadow: none;
+}
+
+.bgame--locked .bgame__side {
+  opacity: 0.75;
+}
+
+.bpick--hidden {
+  background: transparent;
+  border: 1px dashed var(--line);
+}
+
+.bpick--hidden .bpick__who,
+.bpick--hidden .bpick__pts {
+  color: var(--ink-3);
+}
+
+.bpick__masked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.bgame__head .chip svg {
+  margin-right: 1px;
+}

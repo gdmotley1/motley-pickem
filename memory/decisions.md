@@ -484,3 +484,32 @@ Trigger a run with `gh workflow run "Sync games" --repo gdmotley1/motley-pickem 
 Week 3 that resolves to Week 4, whose games are nine days out with no spreads posted, so
 no slate could be built at all. The primary is now `--current`, with next week as a
 best-effort extra that cannot fail the run.
+
+## The ranking is restored from the server, not just the local draft
+
+On load, `Picks` rebuilds `order` from each game's saved `my_confidence`, falls back to a
+local draft when one exists, and only then to the spread sort.
+
+**Why:** Grant reported that picks saved but confidence points did not. The client read
+the ranking from the local draft alone, and a successful submit clears that draft, so
+reopening the app found nothing and re-applied the spread sort. The confidence values
+were correct in Postgres the whole time; the client was discarding them on load.
+Verified by moving Georgia from 20 to 11, reloading, and confirming both the app and the
+database still read 11.
+
+**How to apply:** `get_slate` already returns `my_confidence`. Anything that rebuilds the
+order must prefer it, and must set `orderTouched` so the spread sort cannot overwrite a
+saved ranking.
+
+## The Board lists all twenty games, locked ones included
+
+A game that has not kicked off shows greyed with a lock icon and its kickoff time, your
+own pick and points visible, everyone else masked as "hidden".
+
+**Why:** Grant asked for it, and it is better than the empty state it replaced. The board
+is the whole week at a glance, you can check your own card against it before kickoff, and
+the lock icon makes the reveal rule obvious rather than something to explain.
+
+**How to apply:** Visibility is still the server's decision. `get_board` returns nothing
+for an unplayed game; the locked row is drawn from `get_slate`, which only ever contains
+the viewer's own pick. Never render another player's pick from a client-side filter.

@@ -42,14 +42,27 @@ export default function Picks({ me, weekId, week }) {
         setWinners(w)
 
         const editable = rows.filter((g) => !g.locked)
-        const saved = (draft?.order || []).filter((id) =>
+
+        // The ranking is rebuilt from the server first, then a local draft on top.
+        //
+        // This used to read the draft alone, and submitting clears the draft, so
+        // reopening the app fell back to spread order and every point value looked
+        // wrong. The confidence numbers were saved correctly the whole time; the
+        // client was throwing them away on load.
+        const fromServer = editable
+          .filter((g) => g.my_confidence != null)
+          .sort((a, b) => b.my_confidence - a.my_confidence)
+          .map((g) => g.game_id)
+        const fromDraft = (draft?.order || []).filter((id) =>
           editable.some((g) => g.game_id === id),
         )
+        const base = fromDraft.length ? fromDraft : fromServer
         const missing = editable
           .map((g) => g.game_id)
-          .filter((id) => !saved.includes(id))
-        setOrder([...saved, ...missing])
-        setOrderTouched(!!draft?.touched)
+          .filter((id) => !base.includes(id))
+        setOrder([...base, ...missing])
+        // A saved ranking counts as deliberate, so the spread sort must not stomp it.
+        setOrderTouched(!!draft?.touched || fromServer.length > 0)
 
         const submitted = rows.length > 0 && rows.every((g) => g.my_pick)
         if (submitted && !draft) setPhase('done')

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
-import { Avatar, Empty, IconClock, Screen, Spinner } from '../components/ui.jsx'
+import { Avatar, IconLock, Screen, Spinner } from '../components/ui.jsx'
 import { kickoffLabel } from '../lib/format.js'
 
 /**
@@ -50,30 +50,20 @@ export default function Board({ me, weekId, week }) {
 
   return (
     <Screen
-      eyebrow={week?.label || "This week"}
+      eyebrow={week?.label || 'This week'}
       title="The Board"
       sub={
-        upcoming.length === 0 && open.length
+        upcoming.length === 0
           ? `All ${slate.length} games are open.`
-          : open.length
-            ? `${open.length} of ${slate.length} games open. The other ${upcoming.length} unlock at kickoff.`
-            : 'Everyone’s picks stay hidden until each game kicks off.'
+          : `${open.length} of ${slate.length} open. The rest unlock as they kick off.`
       }
     >
-      {open.length === 0 ? (
-        <Empty icon={<IconClock />} title="Nothing has kicked off yet">
-          The moment the first game starts, everyone&apos;s pick for it appears here.
-          {upcoming.length > 0 && (
-            <>
-              <br />
-              First up: {upcoming[0].away_abbr} at {upcoming[0].home_abbr},{' '}
-              {kickoffLabel(upcoming[0].kickoff)}.
-            </>
-          )}
-        </Empty>
-      ) : (
-        <div style={{ paddingTop: 4 }}>
-          {open.map((g) => (
+      {/* Every game is listed, not just the ones that have started. An unplayed game
+          shows locked with your own pick visible, so you can check your card against
+          the board without waiting for kickoff. */}
+      <div style={{ paddingTop: 4 }}>
+        {slate.map((g) =>
+          g.locked ? (
             <BoardGame
               key={g.game_id}
               game={g}
@@ -81,16 +71,66 @@ export default function Board({ me, weekId, week }) {
               roster={roster}
               me={me}
             />
-          ))}
-        </div>
-      )}
-
-      {open.length > 0 && upcoming.length > 0 && (
-        <p className="sub" style={{ padding: '6px 16px 0', textAlign: 'center' }}>
-          {upcoming.length} more game{upcoming.length > 1 ? 's' : ''} unlock at kickoff.
-        </p>
-      )}
+          ) : (
+            <LockedGame key={g.game_id} game={g} roster={roster} me={me} />
+          ),
+        )}
+      </div>
     </Screen>
+  )
+}
+
+/** A game that has not kicked off: your pick is shown, everyone else's is hidden. */
+function LockedGame({ game, roster, me }) {
+  return (
+    <div className="bgame bgame--locked">
+      <div className="bgame__head">
+        <div className="bgame__score">
+          <span className="bgame__side">
+            <TeamLogo teamId={game.away_id} abbr={game.away_abbr} size={22} />
+            {game.away_abbr}
+          </span>
+          <span className="bgame__sep">{game.neutral_site ? 'vs' : '@'}</span>
+          <span className="bgame__side">
+            <TeamLogo teamId={game.home_id} abbr={game.home_abbr} size={22} />
+            {game.home_abbr}
+          </span>
+        </div>
+        <span className="chip">
+          <IconLock />
+          {kickoffLabel(game.kickoff)}
+        </span>
+      </div>
+
+      <div className="bpicks">
+        {roster.map((player) => {
+          const mine = player.id === me.id
+          return (
+            <div className={`bpick${mine ? '' : ' bpick--hidden'}`} key={player.id}>
+              <Avatar name={player.name} color={player.color} size={22} />
+              <span className="bpick__who">
+                {player.name}
+                {mine ? ' (you)' : ''}
+              </span>
+              {mine ? (
+                <>
+                  <span className="bpick__team">{game.my_pick || 'no pick yet'}</span>
+                  <span className="bpick__pts num">{game.my_confidence ?? '—'}</span>
+                </>
+              ) : (
+                <>
+                  <span className="bpick__team bpick__masked">
+                    <IconLock />
+                    hidden
+                  </span>
+                  <span className="bpick__pts num">–</span>
+                </>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
