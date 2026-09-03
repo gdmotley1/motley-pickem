@@ -1648,3 +1648,54 @@
 .bgame__head .chip svg {
   margin-right: 1px;
 }
+
+/* Two real calls to action on the confirmation screen: go back and edit, or go look at
+   the board. Equal weight side by side, with the forward action filled. */
+.done__cta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.done__cta .btn {
+  font-size: 14px;
+  padding: 14px 10px;
+  line-height: 1.25;
+  min-height: 52px;
+}
+
+.btn--outline {
+  background: var(--n-000);
+  border: 1.5px solid var(--n-300);
+  color: var(--ink);
+}
+
+.btn--outline:active {
+  background: var(--n-100);
+  border-color: var(--g-500);
+}
+
+/* Offered, never forced: reloading on its own mid-pick would throw away work. */
+.update {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(84px + var(--safe-bottom));
+  z-index: 46;
+  width: calc(100% - 28px);
+  max-width: 432px;
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: var(--r-md);
+  background: var(--accent-deep);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  box-shadow: var(--sh-3);
+  animation: liftbarIn 0.2s var(--ease) both;
+}
+
+.update:active {
+  background: var(--a-600);
+}

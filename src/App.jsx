@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import * as api from './lib/api.js'
+import { newBuildAvailable } from './lib/version.js'
 import SignIn from './screens/SignIn.jsx'
 import Picks from './screens/Picks.jsx'
 import Board from './screens/Board.jsx'
@@ -28,6 +29,7 @@ export default function App() {
   const [tab, setTab] = useState('picks')
   const [menu, setMenu] = useState(false)
   const [week, setWeek] = useState(null)
+  const [stale, setStale] = useState(false)
 
   useEffect(() => {
     api.whoami().then((p) => setMe(p ?? null))
@@ -42,6 +44,16 @@ export default function App() {
       .then((rows) => setWeek(Array.isArray(rows) ? rows[0] : rows))
       .catch(() => setWeek(null))
   }, [me])
+
+  // Check on load and whenever the app comes back to the foreground, which is exactly
+  // when someone reopens it from their home screen.
+  useEffect(() => {
+    const check = () => newBuildAvailable().then((yes) => yes && setStale(true))
+    check()
+    const onShow = () => document.visibilityState === 'visible' && check()
+    document.addEventListener('visibilitychange', onShow)
+    return () => document.removeEventListener('visibilitychange', onShow)
+  }, [])
 
   const signOut = useCallback(async () => {
     await api.signOut()
@@ -87,7 +99,9 @@ export default function App() {
           transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           className="app__page"
         >
-          {tab === 'picks' && <Picks me={me} weekId={WEEK_ID} week={week} />}
+          {tab === 'picks' && (
+            <Picks me={me} weekId={WEEK_ID} week={week} onNavigate={setTab} />
+          )}
           {tab === 'board' && <Board me={me} weekId={WEEK_ID} week={week} />}
           {tab === 'standings' && <Standings me={me} />}
           {tab === 'admin' && <Admin me={me} weekId={WEEK_ID} />}
@@ -111,6 +125,12 @@ export default function App() {
           </button>
         ))}
       </nav>
+
+      {stale && (
+        <button className="update" onClick={() => window.location.reload()}>
+          A newer version is ready. Tap to update.
+        </button>
+      )}
 
       <AccountSheet
         open={menu}

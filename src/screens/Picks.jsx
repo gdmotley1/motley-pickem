@@ -16,7 +16,7 @@ import { kickoffLabel } from '../lib/format.js'
 
 const DRAFT_KEY = 'pickem.draft.v1'
 
-export default function Picks({ me, weekId, week }) {
+export default function Picks({ me, weekId, week, onNavigate }) {
   const [games, setGames] = useState(null)
   const [error, setError] = useState(null)
   const [phase, setPhase] = useState('choose') // choose | rank | done
@@ -190,6 +190,7 @@ export default function Picks({ me, weekId, week }) {
   if (phase === 'done')
     return (
       <Done
+        onSeeBoard={() => onNavigate?.('board')}
         games={games}
         winners={winners}
         order={order}
@@ -523,7 +524,7 @@ function RankPhase({
 
 /* ==================================================================== done */
 
-function Done({ games, winners, order, locked, availableValues, onEdit }) {
+function Done({ games, winners, order, locked, availableValues, onEdit, onSeeBoard }) {
   const byId = Object.fromEntries(games.map((g) => [g.game_id, g]))
   const rows = [
     ...locked.map((g) => ({
@@ -555,9 +556,14 @@ function Done({ games, winners, order, locked, availableValues, onEdit }) {
         Picks are saved. Change any game right up until it kicks off.
       </p>
 
-      <button className="btn btn--ghost" onClick={onEdit}>
-        Change something
-      </button>
+      <div className="done__cta">
+        <button className="btn btn--outline" onClick={onEdit}>
+          Change something
+        </button>
+        <button className="btn" onClick={onSeeBoard}>
+          See the big board
+        </button>
+      </div>
 
       {rows.length > 0 && (
         <ul className="done__list">
