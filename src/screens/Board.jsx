@@ -303,8 +303,13 @@ function BoardGame({ game, picks, roster, me }) {
               </span>
               <span className="bpick__team">{p.pick_abbr}</span>
               {p.auto && <span className="bpick__auto">auto</span>}
+              {/* A win banks the confidence, so it gets the plus. Everything else shows
+                  the wager itself: a loss used to collapse to +0, which hid the only
+                  interesting thing about it, since 18 on the upset of the week and 3 on
+                  a game nobody watched read the same. A game still to be graded shows
+                  the same number in default ink, and the red wash tells the two apart. */}
               <span className="bpick__pts num">
-                {p.points === null ? p.confidence : `+${p.points}`}
+                {p.correct ? `+${p.points}` : p.confidence}
               </span>
             </div>
           )

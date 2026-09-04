@@ -1363,8 +1363,12 @@
 .bpick.is-right .bpick__pts {
   color: var(--g-600);
 }
+/* A lost wager keeps the red so the colour coding still holds, but at half strength so
+   it reads as spent rather than earned. The number is what they had riding on the game,
+   not a score, so it must never look like something that was added to a total. */
 .bpick.is-wrong .bpick__pts {
   color: var(--bad);
+  opacity: 0.5;
 }
 
 .bpick--none {
