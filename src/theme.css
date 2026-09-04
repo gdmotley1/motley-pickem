@@ -1,78 +1,133 @@
-/* Saturday broadcast, second pass.
-   Warm, editorial, print-adjacent. Deep field green for chrome, a warm off-white page,
-   one amber accent. Mobile only.
+/* Slate.
+   Cool blue-grey chrome, white cards, one confident blue. Chosen by Grant on 2026-09-04
+   from a board of ten, for "a little sharper and looking polished". Replaces the warm
+   "Saturday broadcast" palette: deep field green, cream page, amber accent, Bitter.
 
-   v1 painted repeating yard lines behind the sign-in screen. On a real phone they read
-   as wireframe banding rather than texture, so they are gone. Depth now comes from
-   layered surfaces and soft warm shadows instead of drawn-on lines. */
+   Two things carried over from that pass and still hold. Mobile only, 375-430px. And
+   depth comes from layered surfaces and a hairline, never from drawn-on texture: v1
+   painted yard lines behind the sign-in and they read as wireframe banding on a phone.
+
+   ---------------------------------------------------------------------------
+   THE CONTRACT
+
+   Everything below the palette is named for the JOB it does, and app.css uses only
+   those names. It used to reach into the ramp directly, 97 times, so every component
+   had "the chrome is green" and "the page is warm" baked into it and a new palette
+   could not be dropped in. Changing the theme now means changing the palette block and
+   the semantic block that reads from it; no component needs to know.
+
+   Two pairs are deliberately kept apart, because they were the same colour under the
+   old palette and only diverged here:
+
+     --pick*   the selection state. This is the one you chose. Blue.
+     --good*   the result. This one was right. Green.
+
+     --on-field    text sitting on the dark chrome
+     --surface     a raised white surface
+
+   Splitting those is what makes a dark theme possible later without touching app.css.
+   ------------------------------------------------------------------------- */
 
 :root {
-  /* --- green scale, the chrome ------------------------------------------ */
-  --g-900: #06241b;
-  --g-800: #0a3327;
-  --g-700: #0f4433;
-  --g-600: #165741;
-  --g-500: #1f7053;
-  --g-400: #38906d;
-  --g-100: #e4efe9;
-  --g-050: #f0f7f3;
+  /* --- slate scale, the chrome ------------------------------------------ */
+  --s-900: #10151c;
+  --s-800: #1a212a;
+  --s-700: #28313d;
+  --s-600: #38434f;
+  --s-500: #55616d;
 
-  /* --- warm neutrals, the page ------------------------------------------ */
-  --n-000: #ffffff;
-  --n-050: #fdfbf7; /* cards */
-  --n-100: #f6f2ea; /* page */
-  --n-200: #ece6da; /* hairlines, wells */
-  --n-300: #ddd5c5;
-  --n-500: #9a9382;
-  --n-700: #5c5648;
-  --n-900: #1e1a13;
+  /* --- cool neutrals, the page ------------------------------------------ */
+  --c-000: #ffffff;
+  --c-050: #f8fafb; /* raised, just off white */
+  --c-100: #f3f6f8; /* page */
+  --c-150: #eef2f6; /* recessed tiles inside a card */
+  --c-200: #e7ecf1; /* wells, tracks, chips */
+  --c-300: #c9d2dc; /* the stronger border */
+  --c-500: #5c6873; /* 4.8:1 on a well at 9.5px; #77848f was 3.2 */
+  --c-700: #48535e;
+  --c-900: #131a22;
 
-  /* --- amber accent ------------------------------------------------------ */
-  --a-600: #a8660f;
-  --a-500: #c07d1c;
-  --a-400: #dc9c3a;
-  --a-100: #fbeed8;
+  /* --- blue, the selection ----------------------------------------------- */
+  --b-700: #1f56c4;
+  --b-600: #2f6fed;
+  --b-400: #6a9bf5;
+  --b-100: #eaf1fe;
 
-  /* --- red, for live and locked ------------------------------------------ */
-  --r-600: #9c2f1b;
-  --r-100: #fbe8e3;
+  /* --- green, the correct answer ----------------------------------------- */
+  --gr-600: #177541; /* 5.0:1 on --good-wash; #1f9254 was 3.5 */
+  --gr-100: #e4f3ea;
 
-  /* --- semantic ---------------------------------------------------------- */
-  --field: var(--g-700);
-  --field-deep: var(--g-900);
-  --page: var(--n-100);
-  --card: var(--n-050);
-  --line: var(--n-200);
-  --ink: var(--n-900);
-  --ink-2: var(--n-700);
-  --ink-3: var(--n-500);
-  --on-field: #eef5f1;
-  --on-field-2: #9dbcac;
-  --accent: var(--a-500);
-  --accent-deep: var(--a-600);
-  --accent-wash: var(--a-100);
-  --good: var(--g-500);
-  --good-wash: var(--g-100);
-  --bad: var(--r-600);
-  --bad-wash: var(--r-100);
+  /* --- red, for live, locked and a missed pick --------------------------- */
+  --rd-600: #c33c2c;
+  --rd-100: #fbeae7;
+
+  /* --- chrome ------------------------------------------------------------ */
+  --field: var(--s-700);
+  --field-deep: var(--s-900);
+  --field-press: var(--s-800);
+  --on-field: #f2f6fa;
+  --on-field-2: #97a5b3;
+
+  /* --- surfaces ---------------------------------------------------------- */
+  --page: var(--c-100);
+  --card: var(--c-050);
+  --surface: var(--c-000);
+  --sunk: var(--c-150);
+  --well: var(--c-200);
+  --line: #dde4eb;
+  --line-strong: var(--c-300);
+
+  /* Translucent twins for the sticky bars, which blur the page behind them. Keep the
+     alpha: opaque bars make the scroll underneath look like a seam. */
+  --page-a: rgba(243, 246, 248, 0.94);
+  --card-a: rgba(248, 250, 251, 0.92);
+
+  /* --- ink --------------------------------------------------------------- */
+  --ink: var(--c-900);
+  --ink-2: var(--c-700);
+  --ink-3: var(--c-500);
+
+  /* --- accent: the line, the eyebrow, the one warm-adjacent highlight ----- */
+  --accent: var(--b-600);
+  --accent-deep: var(--b-700);
+  --accent-bright: var(--b-400); /* accent that has to read on the dark chrome */
+  --accent-wash: var(--b-100);
+
+  /* --- the selection state ----------------------------------------------- */
+  --pick: var(--b-600);
+  --pick-edge: var(--b-600);
+  --pick-soft: var(--b-400);
+  --pick-wash: var(--b-100);
+
+  /* --- results ----------------------------------------------------------- */
+  --good: var(--gr-600);
+  --good-wash: var(--gr-100);
+  --bad: var(--rd-600);
+  --bad-wash: var(--rd-100);
+
+  /* --- overlays ---------------------------------------------------------- */
+  --scrim: rgba(13, 20, 28, 0.6);
+  --glow: rgba(47, 111, 237, 0.22);
+  --glow-out: rgba(16, 21, 28, 0);
+  --shadow-tint: rgba(19, 26, 34, 0.35);
 
   /* --- type -------------------------------------------------------------- */
-  --display: 'Bitter', Georgia, 'Times New Roman', serif;
+  --display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 
-  /* --- radii ------------------------------------------------------------- */
-  --r-xs: 6px;
-  --r-sm: 10px;
-  --r-md: 14px;
-  --r-lg: 18px;
-  --r-xl: 24px;
+  /* --- radii: tighter than the warm pass, which is most of "sharper" ------ */
+  --r-xs: 4px;
+  --r-sm: 7px;
+  --r-md: 8px;
+  --r-lg: 10px;
+  --r-xl: 14px;
   --r-pill: 999px;
 
-  /* --- elevation, warm rather than grey ---------------------------------- */
-  --sh-1: 0 1px 1px rgba(30, 26, 19, 0.04), 0 1px 3px rgba(30, 26, 19, 0.05);
-  --sh-2: 0 2px 4px rgba(30, 26, 19, 0.05), 0 6px 16px rgba(30, 26, 19, 0.07);
-  --sh-3: 0 6px 12px rgba(30, 26, 19, 0.08), 0 18px 40px rgba(30, 26, 19, 0.12);
-  --sh-4: 0 10px 20px rgba(30, 26, 19, 0.12), 0 32px 64px rgba(30, 26, 19, 0.2);
+  /* --- elevation, cool rather than warm, and shallower ------------------- */
+  --sh-1: 0 1px 1px rgba(19, 26, 34, 0.04), 0 1px 3px rgba(19, 26, 34, 0.05);
+  --sh-2: 0 2px 4px rgba(19, 26, 34, 0.05), 0 6px 16px rgba(19, 26, 34, 0.07);
+  --sh-3: 0 6px 12px rgba(19, 26, 34, 0.08), 0 18px 40px rgba(19, 26, 34, 0.12);
+  --sh-4: 0 10px 20px rgba(19, 26, 34, 0.12), 0 32px 64px rgba(19, 26, 34, 0.2);
 
   --tap: 44px;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -114,7 +169,9 @@ h2,
 h3 {
   font-family: var(--display);
   font-weight: 700;
-  letter-spacing: -0.018em;
+  /* Archivo is a grotesk, not a slab. It carries less negative tracking than Bitter did
+     before the counters start closing up at display sizes. */
+  letter-spacing: -0.012em;
   margin: 0;
   line-height: 1.15;
 }

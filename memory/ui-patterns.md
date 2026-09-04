@@ -4,15 +4,51 @@ How Motley Pick'em's interface behaves, and the library choices that turned out 
 be wrong. Read before changing a screen.
 
 
-## Visual direction: Saturday broadcast
+## Visual direction: Slate
 
-Warm and traditional. Deep field greens, cream, serif display headlines, a little
-college-football-on-CBS nostalgia. Not a dark neon betting app.
+Cool blue-grey chrome, white cards, one confident blue, Archivo for display. Tight radii
+and a hairline rather than soft shadows. Replaced "Saturday broadcast" (deep field green,
+cream page, amber accent, Bitter) on 2026-09-04.
 
-**Why:** Chosen over modern sports app, clean minimal, and family trophy room.
+**Why:** Grant asked for "a little sharper and looking polished" and picked Slate from a
+board of ten rendered as real pick screens. The warm pass was chosen originally over
+modern-sports-app and clean-minimal; this is that reversal, made deliberately.
 
-**How to apply:** This project does NOT use the house report style. That style is for Fouts
-executive PDFs. Do not import IBM Plex or the burnt-orange accent here.
+**How to apply:** This project still does NOT use the house report style. That is for
+Fouts executive PDFs; do not import IBM Plex or the burnt-orange accent here.
+
+The theme board that produced this choice is an artifact, and the other nine are still
+live in it if a future pass wants one:
+https://claude.ai/code/artifact/e417012f-a327-4883-b138-d95957d1b31a
+
+## Components name jobs, never colours
+
+`src/app.css` may use only semantic tokens. The palette ramp (`--s-*`, `--c-*`, `--b-*`,
+`--gr-*`, `--rd-*`) is private to `src/theme.css`.
+
+**Why:** app.css used to reach into the ramp directly, 97 times, with names like `--g-600`
+and `--n-200`. Every one baked "the chrome is green" and "the page is warm" into the
+component using it, so switching to Slate meant editing 97 declarations before a single
+colour moved. `tests/test_theme.py` now fails if any component names a ramp position, if
+a token is used but never defined, or if the display face is not in the font link.
+
+Two pairs are kept apart on purpose, having been one colour under the warm palette:
+
+- `--pick*` is the selection ("you chose this", blue); `--good*` is the result ("this was
+  right", green). They collapsed before, and a correct pick briefly rendered blue points
+  on a green wash when the palette moved.
+- `--on-field` is text on the dark chrome; `--surface` is a raised white surface. Same
+  value in a light theme, opposite in a dark one, which is what makes a night mode a
+  palette change rather than a rewrite.
+
+**How to apply:** need a colour with no token? Add a semantic one to theme.css named for
+its job. Chip modifiers follow the same rule: `.chip--accent`, `.chip--good`, `.chip--bad`,
+not `--amber`, `--green`, `--red`. Contrast is measured, not eyeballed: `--ink-3` carries
+the 9.5px meta line and was darkened to hold 4.8:1 on a well.
+
+The PWA's install splash and Android status bar are painted from `static/manifest.webmanifest`
+and the `theme-color` meta in `index.html`, neither of which is CSS, so both must move with
+`--field`. A test asserts all three agree.
 
 ## Mobile only. There is no desktop layout.
 

@@ -269,9 +269,9 @@ export default function Admin({ weekId }) {
                         <span>{kickoffLabel(g.kickoff)}</span>
                         <span className="num">{api.spreadLabel(g)}</span>
                         {g.locked ? (
-                          <span className="chip chip--red">kicked off</span>
+                          <span className="chip chip--bad">kicked off</span>
                         ) : g.featured ? (
-                          <span className="chip chip--amber">ESPN top</span>
+                          <span className="chip chip--accent">ESPN top</span>
                         ) : g.tier ? (
                           <span className="chip">{g.tier}</span>
                         ) : null}

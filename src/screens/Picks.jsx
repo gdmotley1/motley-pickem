@@ -371,7 +371,7 @@ function GameRow({ game, picked, onChoose, isLocked = false, ranks, onPreview })
         <span>{kickoffLabel(game.kickoff)}</span>
         <span className="grow__dot">·</span>
         <span className="grow__spread num">{api.spreadLabel(game)}</span>
-        {isLocked && <span className="chip chip--red">locked</span>}
+        {isLocked && <span className="chip chip--bad">locked</span>}
         {game.tv && <span className="grow__tv">{game.tv}</span>}
         {/* Last in the row and visually quiet: the two team buttons are the point of this
             card and nothing here may compete with them for a thumb. The 18px pill gets a
@@ -686,7 +686,7 @@ function LockMark() {
         <rect x="4.4" y="11.4" width="15.2" height="9.8" rx="2.4" fill="currentColor" />
         <path
           d="M12 15.2v2.4"
-          stroke="var(--g-600)"
+          stroke="var(--field)"
           strokeWidth="1.9"
           strokeLinecap="round"
         />
@@ -743,7 +743,7 @@ function Done({ games, winners, order, locked, availableValues, onEdit, onSeeBoa
                 <span style={{ flex: 1, minWidth: 0 }}>
                   {r.pick} <span style={{ color: 'var(--ink-3)' }}>over {opp}</span>
                 </span>
-                {g.locked && <span className="chip chip--red">locked</span>}
+                {g.locked && <span className="chip chip--bad">locked</span>}
               </li>
             )
           })}
