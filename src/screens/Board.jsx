@@ -215,7 +215,7 @@ function LockedGame({ game, roster, me }) {
           const mine = player.id === me.id
           return (
             <div className={`bpick${mine ? '' : ' bpick--hidden'}`} key={player.id}>
-              <Avatar name={player.name} color={player.color} size={22} />
+              <Avatar name={player.name} color={player.color} teamId={player.team_id} size={22} />
               <span className="bpick__who">
                 {player.name}
                 {mine ? ' (you)' : ''}
@@ -300,7 +300,7 @@ function BoardGame({ game, picks, roster, me }) {
           if (!p)
             return (
               <div className="bpick bpick--none" key={player.id}>
-                <Avatar name={player.name} color={player.color} size={22} />
+                <Avatar name={player.name} color={player.color} teamId={player.team_id} size={22} />
                 <span className="bpick__who">
                   {player.name}
                   {mine ? ' (you)' : ''}
@@ -316,7 +316,7 @@ function BoardGame({ game, picks, roster, me }) {
                 p.correct === false ? ' is-wrong' : ''
               }`}
             >
-              <Avatar name={p.player_name} color={p.player_color} size={22} />
+              <Avatar name={p.player_name} color={p.player_color} teamId={p.player_team} size={22} />
               <span className="bpick__who">
                 {p.player_name}
                 {mine ? ' (you)' : ''}

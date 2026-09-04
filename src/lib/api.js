@@ -127,6 +127,10 @@ export const getCurrentWeek = () => rpc('get_current_week', withToken({}))
 /** Admin only: the full 40-game pool for a week, with in_slate flags. */
 export const getPool = (weekId) => rpc('get_pool', withToken({ p_week: weekId }))
 
+/** Set your own profile picture. Pass null to go back to your initial. */
+export const setMyTeam = (teamId) =>
+  rpc('set_my_team', withToken({ p_team_id: teamId ?? null }))
+
 /* ------------------------------------------------------------------ helpers */
 
 /** Logos are vendored per ESPN team id, light and dark variants. */

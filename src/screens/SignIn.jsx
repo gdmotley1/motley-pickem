@@ -84,7 +84,7 @@ function SeatTile({ seat, onClick }) {
     >
       {seat.claimed ? (
         <>
-          <Avatar name={seat.name} color={seat.color} size={38} />
+          <Avatar name={seat.name} color={seat.color} teamId={seat.team_id} size={38} />
           <span className="seat__name">
             {seat.name}
             {seat.is_admin && <span className="seat__role">Commissioner</span>}

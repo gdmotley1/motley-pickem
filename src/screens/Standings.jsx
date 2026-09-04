@@ -109,7 +109,7 @@ export default function Standings({ weekId }) {
           return (
             <div key={r.player_id} className={`srow${lastPos === 1 ? ' is-leader' : ''}`}>
               <span className="srow__pos num">{lastPos}</span>
-              <Avatar name={r.player_name} color={r.player_color} size={36} />
+              <Avatar name={r.player_name} color={r.player_color} teamId={r.player_team} size={36} />
               <span className="srow__body">
                 <span className="srow__name">{r.player_name}</span>
                 <span className="srow__meta num">

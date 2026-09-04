@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { markUrl, teamById } from '../lib/teams.js'
+
 const EXIT_MS = 200
 
 /**
@@ -135,7 +137,40 @@ export function Chevron({ dir = 'left', size = 16 }) {
   )
 }
 
-export function Avatar({ name, color, size = 26 }) {
+/**
+ * A player's face: their school's mark on a colour it shows up on, or their initial.
+ *
+ * `teamId` is optional and everything degrades to the initial without it, which matters
+ * in three places that all really happen: before static/data/teams.json has loaded, for
+ * a player who has not picked a school yet, and for a stored id no longer in the library.
+ * The disc keeps the player's own colour in that case, so four people stay distinct.
+ *
+ * The background and which cut of the mark to use are both read from the library rather
+ * than computed here. scripts/build_team_library.py measured every logo against its
+ * school's colours to pick them, because a mark drawn in a school's primary colour
+ * disappears on a disc of that same colour.
+ */
+export function Avatar({ name, color, teamId, size = 26 }) {
+  const [failed, setFailed] = useState(false)
+  const team = failed ? undefined : teamById(teamId)
+  const box = { width: size, height: size }
+
+  if (team) {
+    return (
+      <span className="avatar avatar--team" style={{ ...box, background: team.bg }}>
+        <img
+          src={markUrl(team)}
+          alt=""
+          width={Math.round(size * 0.72)}
+          height={Math.round(size * 0.72)}
+          loading="lazy"
+          decoding="async"
+          onError={() => setFailed(true)}
+        />
+      </span>
+    )
+  }
+
   const initials = (name || '?')
     .split(/\s+/)
     .slice(0, 2)
@@ -145,7 +180,7 @@ export function Avatar({ name, color, size = 26 }) {
   return (
     <span
       className="avatar"
-      style={{ background: color, width: size, height: size, fontSize: size * 0.42 }}
+      style={{ background: color, ...box, fontSize: size * 0.42 }}
       aria-hidden="true"
     >
       {initials}

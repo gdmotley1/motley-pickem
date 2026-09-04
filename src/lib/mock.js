@@ -42,6 +42,7 @@ function load() {
       pin: null,
       is_admin: id <= 2,
       color: COLORS[id - 1],
+      team_id: null,
     })),
     sessions: {},
     picks: {}, // `${playerId}:${gameId}` -> { pick, confidence, auto }
@@ -177,6 +178,7 @@ export async function rpc(fn, args = {}) {
         is_admin: p.is_admin,
         claimed: p.name !== null,
         color: p.color,
+        team_id: p.team_id ?? null,
       }))
     }
 
@@ -203,7 +205,20 @@ export async function rpc(fn, args = {}) {
     case 'whoami': {
       const me = playerFor(args.p_token)
       if (!me) fail('Not signed in')
-      return [{ id: me.id, name: me.name, is_admin: me.is_admin, color: me.color }]
+      return [{ id: me.id, name: me.name, is_admin: me.is_admin, color: me.color,
+                team_id: me.team_id ?? null }]
+    }
+
+    case 'set_my_team': {
+      const me = playerFor(args.p_token)
+      if (!me) fail('Not signed in')
+      const id = args.p_team_id
+      if (id !== null && !/^[A-Za-z0-9_-]{1,16}$/.test(String(id))) {
+        fail('That is not a team id')
+      }
+      me.team_id = id
+      save()
+      return null
     }
 
     case 'sign_out':
@@ -256,6 +271,7 @@ export async function rpc(fn, args = {}) {
             player_id: p.id,
             player_name: p.name,
             player_color: p.color,
+            player_team: p.team_id ?? null,
             pick_abbr: mine.pick,
             confidence: mine.confidence,
             auto: !!mine.auto,
@@ -292,6 +308,7 @@ export async function rpc(fn, args = {}) {
             player_id: p.id,
             player_name: p.name,
             player_color: p.color,
+            player_team: p.team_id ?? null,
             weeks_played: games ? 1 : 0,
             correct,
             games,

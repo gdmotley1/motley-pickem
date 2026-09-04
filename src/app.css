@@ -2434,3 +2434,111 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ------------------------------------------------------------ profile pictures */
+
+/* The mark sits on a background chosen at build time, so nothing here picks colours.
+   overflow:hidden keeps a square mark inside the disc; the img is sized by the Avatar
+   component so one rule serves every size from 22px to 56px. */
+.avatar--team {
+  overflow: hidden;
+  padding: 0;
+  /* A hairline so a light disc still has an edge. Five schools land on the light neutral
+     because their own mark is dark, and without this Colorado's white disc dissolves into
+     a Standings card, which is also light. Inset so it never changes the layout size. */
+  box-shadow: inset 0 0 0 1px rgba(19, 26, 34, 0.12);
+}
+
+.avatar--team img {
+  object-fit: contain;
+  display: block;
+}
+
+.tpick__search {
+  margin: 2px 0 10px;
+}
+
+/* Capped and scrolled rather than growing the sheet: 139 rows would push the whole
+   thing past the viewport and take the search box off screen with it. */
+.tpick__list {
+  max-height: 46vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 -4px 10px;
+  padding: 0 4px;
+}
+
+.tpick__row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  border-radius: var(--r-md);
+  text-align: left;
+  color: var(--ink);
+}
+
+.tpick__row.is-on {
+  background: var(--pick-wash);
+  box-shadow: inset 0 0 0 1.5px var(--pick-edge);
+}
+
+.tpick__disc {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex: none;
+}
+
+.tpick__disc img {
+  object-fit: contain;
+}
+
+.tpick__names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.tpick__school {
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tpick__mascot {
+  font-size: 11.5px;
+  color: var(--ink-2);
+}
+
+.tpick__on {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pick);
+  flex: none;
+}
+
+.tpick__none,
+.tpick__err {
+  font-size: 13px;
+  color: var(--ink-2);
+  text-align: center;
+  padding: 14px 0;
+  margin: 0;
+}
+
+.tpick__err {
+  color: var(--bad);
+}

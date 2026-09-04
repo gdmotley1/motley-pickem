@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import * as api from './lib/api.js'
 import { newBuildAvailable } from './lib/version.js'
+import TeamPicker from './components/TeamPicker.jsx'
+import { loadTeams } from './lib/teams.js'
 import SignIn from './screens/SignIn.jsx'
 import Picks from './screens/Picks.jsx'
 import Board from './screens/Board.jsx'
@@ -21,6 +23,28 @@ import {
    sync of a season. */
 const FALLBACK_WEEK = 1
 const LAST_WEEK_KEY = 'pickem.week'
+
+/* Nobody goes through the claim flow again: all four seats were taken before profile
+   pictures existed. So the only way an existing player learns about them is to be told
+   once, the first time they open the app after it shipped. Remembered per device so it
+   asks once and then never again, whether or not they picked. */
+const ASKED_TEAM_KEY = 'pickem.askedTeam'
+
+const askedForTeam = () => {
+  try {
+    return localStorage.getItem(ASKED_TEAM_KEY) === '1'
+  } catch {
+    return true /* private mode: never nag rather than nag every load */
+  }
+}
+
+const rememberAskedForTeam = () => {
+  try {
+    localStorage.setItem(ASKED_TEAM_KEY, '1')
+  } catch {
+    /* nothing to do; the prompt simply will not reappear this session */
+  }
+}
 
 const rememberWeek = (id) => {
   try {
@@ -52,12 +76,18 @@ export default function App() {
   // you land.
   const [tab, setTab] = useState('board')
   const [menu, setMenu] = useState(false)
+  const [picker, setPicker] = useState(false)
+  const [nudge, setNudge] = useState(false)
   const [week, setWeek] = useState(null)
   const [weekId, setWeekId] = useState(rememberedWeek)
   const [stale, setStale] = useState(false)
 
   useEffect(() => {
-    api.whoami().then((p) => setMe(p ?? null))
+    loadTeams() // 18KB, wanted before the first avatar renders
+    api.whoami().then((p) => {
+      setMe(p ?? null)
+      if (p && !p.team_id && !askedForTeam()) setNudge(true)
+    })
   }, [])
 
   /* Which week the app is on, resolved by the server from ESPN's own boundaries rather
@@ -143,6 +173,16 @@ export default function App() {
   }, [])
 
   if (me === undefined) return <Splash />
+  /* Optimistic on purpose: the avatar is the whole feedback, and waiting on a round trip
+     to see your own logo appear feels broken. api.setMyTeam throws on failure and the
+     picker surfaces it, so a rejected save is not silent. */
+  async function pickTeam(teamId) {
+    await api.setMyTeam(teamId)
+    setMe((p) => (p ? { ...p, team_id: teamId } : p))
+    rememberAskedForTeam()
+    setNudge(false)
+  }
+
   if (me === null) return <SignIn onSignedIn={setMe} />
 
   const tabs = me.is_admin
@@ -159,7 +199,7 @@ export default function App() {
           </span>
         </div>
         <button className="apphdr__me" onClick={() => setMenu(true)}>
-          <Avatar name={me.name} color={me.color} size={24} />
+          <Avatar name={me.name} color={me.color} teamId={me.team_id} size={24} />
           <span className="apphdr__name">{me.name}</span>
         </button>
       </header>
@@ -217,6 +257,32 @@ export default function App() {
         me={me}
         onClose={() => setMenu(false)}
         onSignOut={signOut}
+        onPickTeam={() => {
+          setMenu(false)
+          setPicker(true)
+        }}
+      />
+
+      <TeamPicker
+        open={picker}
+        current={me.team_id}
+        onClose={() => {
+          setPicker(false)
+          rememberAskedForTeam()
+        }}
+        onPick={pickTeam}
+      />
+
+      <TeamNudge
+        open={nudge && !picker && !menu}
+        onDismiss={() => {
+          setNudge(false)
+          rememberAskedForTeam()
+        }}
+        onPick={() => {
+          setNudge(false)
+          setPicker(true)
+        }}
       />
     </div>
   )
@@ -224,21 +290,43 @@ export default function App() {
 
 /** Tapping your name used to sign you out instantly, which is far too easy to do by
     accident. It now opens this, so signing out is deliberate. */
-function AccountSheet({ open, me, onClose, onSignOut }) {
+function AccountSheet({ open, me, onClose, onSignOut, onPickTeam }) {
   return (
     <Sheet open={open} onClose={onClose} label="Account">
       <div style={{ display: 'grid', placeItems: 'center', gap: 10, marginBottom: 6 }}>
-        <Avatar name={me.name} color={me.color} size={56} />
+        <Avatar name={me.name} color={me.color} teamId={me.team_id} size={56} />
         <h2 className="sheet__title">{me.name}</h2>
       </div>
       <p className="sheet__sub">
         {me.is_admin ? 'Commissioner · can publish the slate' : 'Player'}
       </p>
+      <button className="btn btn--ghost" onClick={onPickTeam}>
+        {me.team_id ? 'Change your team' : 'Pick your team'}
+      </button>
       <button className="btn" onClick={onClose}>
         Keep picking
       </button>
       <button className="btn btn--ghost" onClick={onSignOut}>
         Sign out and switch player
+      </button>
+    </Sheet>
+  )
+}
+
+/** Shown once, to players who were already here before profile pictures existed. */
+function TeamNudge({ open, onDismiss, onPick }) {
+  return (
+    <Sheet open={open} onClose={onDismiss} label="Pick your team">
+      <h2 className="sheet__title">New: wear your team</h2>
+      <p className="sheet__sub">
+        Put your school&apos;s logo on your picks, the board and the standings. Any of 139
+        teams, and you can change it whenever you like.
+      </p>
+      <button className="btn" onClick={onPick}>
+        Pick my team
+      </button>
+      <button className="btn btn--ghost" onClick={onDismiss}>
+        Not now
       </button>
     </Sheet>
   )
