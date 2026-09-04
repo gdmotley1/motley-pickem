@@ -131,5 +131,19 @@ export function spreadLabel(game) {
   return `${game.favorite_abbr} -${n % 1 === 0 ? n : n.toFixed(1)}`
 }
 
+/**
+ * "O/U 52.5", or null when there is nothing to show.
+ *
+ * Null is common and not an error: ESPN stops publishing odds once a game is final, so
+ * anything that kicked off before the total was ever stored has no number and never
+ * will. Callers drop the label rather than printing a placeholder.
+ */
+export function totalLabel(game) {
+  if (game.over_under === null || game.over_under === undefined) return null
+  const n = Number(game.over_under)
+  if (!Number.isFinite(n)) return null
+  return `O/U ${n % 1 === 0 ? n : n.toFixed(1)}`
+}
+
 export const isUnderdog = (game, abbr) =>
   !!game.underdog_abbr && game.underdog_abbr === abbr

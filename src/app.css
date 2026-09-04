@@ -1300,6 +1300,22 @@
   font-size: 11px;
 }
 
+/* The pre-kickoff line and total, tucked under the matchup. Quiet on purpose: it is
+   reference while you read the picks, not the first thing on the card. The negative top
+   margin pulls it up against the head rather than sitting in the head's own gap. */
+.bgame__odds {
+  margin: -6px 0 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ink-3);
+}
+
+.bgame__oddsep {
+  padding: 0 6px;
+  opacity: 0.5;
+}
+
 .bpicks {
   display: grid;
   gap: 5px;

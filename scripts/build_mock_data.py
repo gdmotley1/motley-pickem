@@ -55,6 +55,7 @@ def row(g: dict) -> dict:
         "spread_line": o.get("line"),
         "favorite_abbr": o.get("favorite"),
         "underdog_abbr": o.get("underdog"),
+        "over_under": o.get("over_under"),
         "tier": g.get("tier"),
         "interest": g.get("interest"),
         "featured": bool(g.get("featured")),

@@ -142,6 +142,30 @@ export default function Board({ me, weekId, week }) {
   )
 }
 
+/**
+ * The line and the total, as they stood before kickoff.
+ *
+ * Both are read off the stored game row and never from the live ESPN poll, so the
+ * numbers are the ones the game was priced at rather than anything that moved during
+ * it. ESPN stops publishing odds the moment a game goes final, so either half can be
+ * missing on an older game and there is no way to recover it: the row renders what it
+ * has and disappears entirely when it has neither.
+ */
+function Odds({ game }) {
+  const spread = game.spread_line === null || game.spread_line === undefined
+    ? null
+    : api.spreadLabel(game)
+  const total = api.totalLabel(game)
+  if (!spread && !total) return null
+  return (
+    <p className="bgame__odds num">
+      {spread}
+      {spread && total ? <span className="bgame__oddsep">·</span> : null}
+      {total}
+    </p>
+  )
+}
+
 /** A game that has not kicked off: your pick is shown, everyone else's is hidden. */
 function LockedGame({ game, roster, me }) {
   return (
@@ -163,6 +187,8 @@ function LockedGame({ game, roster, me }) {
           {kickoffLabel(game.kickoff)}
         </span>
       </div>
+
+      <Odds game={game} />
 
       <div className="bpicks">
         {roster.map((player) => {
@@ -239,6 +265,8 @@ function BoardGame({ game, picks, roster, me }) {
           {done ? 'Final' : game.status_detail || 'Live'}
         </span>
       </div>
+
+      <Odds game={game} />
 
       {/* Every claimed player gets a row whether or not they picked, so each game card
           is exactly the same height and a missing pick is visible rather than absent. */}

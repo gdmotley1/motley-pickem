@@ -62,3 +62,77 @@ def test_an_incomplete_slate_is_never_published():
 @pytest.mark.parametrize("mode", ["slate", "scores"])
 def test_both_modes_are_wired(mode):
     assert hasattr(sync, "sync_%s" % mode)
+
+
+# ------------------------------------------------------------------- odds freeze
+
+# ESPN drops the odds block the moment a game goes final. Verified on 2026-09-04: every
+# completed game from 3 Sep returned details: null and overUnder: null, while every game
+# still in `pre` carried both. The scores job upserts whatever ESPN last said, so a final
+# was overwriting the stored line with nothing. COLO @ GT was found in the database with
+# spread_line null and favorite_abbr null, having gone in at GT -6.5.
+
+
+def a_game_row(state, line=6.5, total=51.5):
+    return {
+        "id": 401856776,
+        "state": state,
+        "home_score": 20,
+        "spread_line": line,
+        "favorite_abbr": "GT",
+        "underdog_abbr": "COLO",
+        "over_under": total,
+    }
+
+
+@pytest.mark.parametrize("state", [None, "pre"])
+def test_odds_still_move_while_a_game_has_not_kicked_off(state):
+    kept = sync.freeze_odds(a_game_row(state), state)
+    assert kept["spread_line"] == 6.5
+    assert kept["over_under"] == 51.5
+    assert kept["favorite_abbr"] == "GT"
+
+
+@pytest.mark.parametrize("state", ["in", "post"])
+def test_a_kicked_off_game_never_has_its_odds_rewritten(state):
+    """The whole point: ESPN's post-game nulls must not reach the database."""
+    frozen = sync.freeze_odds(a_game_row(state, line=None, total=None), state)
+    for column in sync.ODDS_COLUMNS:
+        assert column not in frozen, "%s would overwrite the stored value" % column
+
+
+def test_freezing_leaves_the_score_alone():
+    frozen = sync.freeze_odds(a_game_row("post"), "post")
+    assert frozen["home_score"] == 20
+    assert frozen["state"] == "post"
+    assert frozen["id"] == 401856776
+
+
+def test_every_odds_column_the_row_builder_writes_is_frozen_together():
+    """A new odds column added to game_row but not to ODDS_COLUMNS would leak through.
+
+    Sentinel values that cannot appear anywhere else in the row, so the check finds the
+    columns fed by the odds block rather than anything that merely looks like a team.
+    """
+    marks = {99.5, 88.5, "ZZFAV", "ZZDOG"}
+    row = sync.game_row(
+        {
+            "espn_id": "1",
+            "home": {"abbr": "GT"},
+            "away": {"abbr": "COLO"},
+            "kickoff_utc": "2026-09-04T00:00:00Z",
+            "odds": {
+                "line": 99.5,
+                "favorite": "ZZFAV",
+                "underdog": "ZZDOG",
+                "over_under": 88.5,
+            },
+        },
+        1,
+        None,
+    )
+    from_odds = {k for k, v in row.items() if v in marks}
+    assert from_odds == set(sync.ODDS_COLUMNS), (
+        "game_row and ODDS_COLUMNS disagree; unfrozen: %s"
+        % sorted(from_odds - set(sync.ODDS_COLUMNS))
+    )

@@ -98,6 +98,28 @@ class Supabase:
         return self._request("POST", "/rest/v1/rpc/%s" % fn, args or {})
 
 
+# The line, the favourite and the total. Written only while a game is still `pre`.
+ODDS_COLUMNS = ("spread_line", "favorite_abbr", "underdog_abbr", "over_under")
+
+
+def freeze_odds(row: dict, state: str | None) -> dict:
+    """Drop the odds columns from an update once the game has kicked off.
+
+    ESPN stops publishing odds for a game that is no longer `pre`: checked on
+    2026-09-04, every completed game from 3 Sep came back with `details: null` and
+    `overUnder: null`. Because the scores job upserts whatever ESPN last said, a final
+    was quietly overwriting the line we had. COLO @ GT went into the database at
+    GT -6.5 and came out of its own kickoff with spread_line null.
+
+    Leaving the keys out of the payload means Postgres keeps the stored value, so the
+    number on the Board is always the one that stood before kickoff. That is also what
+    Grant asked for: the pre-kickoff line, never a live one.
+    """
+    if state in (None, "pre"):
+        return row
+    return {k: v for k, v in row.items() if k not in ODDS_COLUMNS}
+
+
 def game_row(g: dict, week_id: int, in_slate: bool | None) -> dict:
     o = g.get("odds") or {}
     row = {
@@ -117,6 +139,7 @@ def game_row(g: dict, week_id: int, in_slate: bool | None) -> dict:
         "spread_line": o.get("line"),
         "favorite_abbr": o.get("favorite"),
         "underdog_abbr": o.get("underdog"),
+        "over_under": o.get("over_under"),
         "tier": tier_of(g),
         "interest": g.get("interest"),
         "featured": bool(g.get("featured")),
@@ -238,9 +261,22 @@ def sync_scores(sb: Supabase, a, week: dict) -> int:
     from fetch_slate import fetch
     live = [g for g in fetch(start, end) if int(g["espn_id"]) in known]
 
-    # in_slate is deliberately omitted so a score refresh can never change the slate.
-    rows = [game_row(g, wk["id"], None) for g in live]
-    sb.upsert("games", rows, "id")
+    # in_slate is deliberately omitted so a score refresh can never change the slate,
+    # and the odds are held back for anything that has kicked off so a final cannot
+    # erase the line it was priced at. See freeze_odds.
+    #
+    # Two batches rather than one, because PostgREST rejects a bulk insert whose objects
+    # do not all carry the same keys: "All object keys must match". Splitting on whether
+    # the odds survived keeps each batch uniform.
+    fresh = [game_row(g, wk["id"], None) for g in live if (g.get("state") or "pre") == "pre"]
+    kicked = [
+        freeze_odds(game_row(g, wk["id"], None), g.get("state"))
+        for g in live
+        if (g.get("state") or "pre") != "pre"
+    ]
+    sb.upsert("games", fresh, "id")
+    sb.upsert("games", kicked, "id")
+    rows = fresh + kicked
 
     finals = sum(1 for g in live if g.get("winner"))
     playing = sum(1 for g in live if g.get("state") == "in")
