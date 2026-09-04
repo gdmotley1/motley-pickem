@@ -1,0 +1,19 @@
+[
+  {
+    "id": "gcsu",
+    "abbr": "GCSU",
+    "school": "Georgia College & State",
+    "mascot": "Bobcats",
+    "display": "Georgia College & State Bobcats",
+    "short": "Georgia College",
+    "color": "#001E78",
+    "alt_color": "#184848",
+    "conference": "Other",
+    "conference_id": 0,
+    "source": "https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Georgia_College_Bobcats_logo.svg/500px-Georgia_College_Bobcats_logo.svg.png",
+    "source_page": "https://en.wikipedia.org/wiki/Georgia_College_Bobcats",
+    "license": "Fair use: a school mark used to identify the school.",
+    "crop_bottom": 0.3,
+    "why": "Grant's alma mater. Division II Peach Belt, no football team, so it is in none of ESPN's lists. Colour is the school navy rather than the school green because the bobcat is outlined in green and vanishes on it."
+  }
+]
