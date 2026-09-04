@@ -146,3 +146,23 @@ same centred column as `.tabbar` (`left: 50%; translateX(-50%); max-width: 460px
 `top` set from the measured header height. `useHeaderOffset` in
 `src/components/WeekScore.jsx` does that measurement; do not hard-code the height, it is
 padding plus two lines of type plus the safe-area inset.
+
+## ESPN deletes a game's odds the moment it goes final
+
+Not "stops updating" and not "returns the closing line": the whole `odds` block is gone.
+Checked on 2026-09-04, every completed game from 3 Sep came back with `details: null` and
+`overUnder: null`, while all 68 games still in `pre` that day carried both.
+
+**Why:** the scores job upserts whatever ESPN last said, so a game was having its line
+erased by its own kickoff. COLO @ GT went into the database at GT -6.5 and was found
+after the game with `spread_line`, `favorite_abbr` and `underdog_abbr` all null. Nothing
+noticed, because the Board did not show the spread until the total was added alongside it.
+The line for that game was only recoverable because `inputs/slate_2026-09-03_2026-09-06.json`
+still held the 18:01Z pre-kickoff pull.
+
+**How to apply:** odds are write-once-until-kickoff. `sync_supabase.freeze_odds` drops
+every column in `ODDS_COLUMNS` from the payload for any game past `state = 'pre'`, so
+Postgres keeps what it has. A new odds column must be added to `ODDS_COLUMNS` as well as
+to `game_row`; `test_every_odds_column_the_row_builder_writes_is_frozen_together` fails if
+it is not. The odds also go up in their own batch, because PostgREST rejects a bulk insert
+whose objects do not all carry the same keys.
