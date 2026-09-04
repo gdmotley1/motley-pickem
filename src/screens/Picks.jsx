@@ -7,6 +7,7 @@ import {
   Empty,
   IconClock,
   IconGrip,
+  IconLock,
   Portal,
   Screen,
   Spinner,
@@ -19,10 +20,11 @@ const DRAFT_KEY = 'pickem.draft.v1'
 export default function Picks({ me, weekId, week, onNavigate }) {
   const [games, setGames] = useState(null)
   const [error, setError] = useState(null)
-  const [phase, setPhase] = useState('choose') // choose | rank | done
+  const [phase, setPhase] = useState('choose') // choose | rank | locked | done
   const [winners, setWinners] = useState({})
   const [order, setOrder] = useState([])
   const [orderTouched, setOrderTouched] = useState(false)
+  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
 
@@ -56,7 +58,18 @@ export default function Picks({ me, weekId, week, onNavigate }) {
         const fromDraft = (draft?.order || []).filter((id) =>
           editable.some((g) => g.game_id === id),
         )
-        const base = fromDraft.length ? fromDraft : fromServer
+        // Once you have submitted, the server is the only version that counts. Letting a
+        // leftover draft win here dropped you back into a freely movable list with no sign
+        // of what was actually saved, which is the opposite of locked in.
+        //
+        // The exception is a card you deliberately reopened with Change. That flag is what
+        // keeps a half-finished edit alive across a tab switch, without the list quietly
+        // unlocking itself every time you come back to it.
+        const submitted = rows.length > 0 && rows.every((g) => g.my_pick)
+        const resuming = submitted && !!draft?.editing
+        setEditing(resuming)
+        const base =
+          submitted && !resuming ? fromServer : fromDraft.length ? fromDraft : fromServer
         const missing = editable
           .map((g) => g.game_id)
           .filter((id) => !base.includes(id))
@@ -64,8 +77,7 @@ export default function Picks({ me, weekId, week, onNavigate }) {
         // A saved ranking counts as deliberate, so the spread sort must not stomp it.
         setOrderTouched(!!draft?.touched || fromServer.length > 0)
 
-        const submitted = rows.length > 0 && rows.every((g) => g.my_pick)
-        if (submitted && !draft) setPhase('done')
+        if (submitted && !resuming) setPhase('locked')
         else if (editable.length && editable.every((g) => w[g.game_id])) setPhase('rank')
       })
       .catch((e) => alive && setError(e.message))
@@ -90,8 +102,8 @@ export default function Picks({ me, weekId, week, onNavigate }) {
   const allChosen = editable.length > 0 && chosenCount === editable.length
 
   useEffect(() => {
-    if (games) writeDraft(me.id, { winners, order, touched: orderTouched })
-  }, [winners, order, orderTouched, games, me.id])
+    if (games) writeDraft(me.id, { winners, order, touched: orderTouched, editing })
+  }, [winners, order, orderTouched, editing, games, me.id])
 
   /* --------------------------------------------------------------- actions */
 
@@ -134,6 +146,13 @@ export default function Picks({ me, weekId, week, onNavigate }) {
     setToast('Back to spread order.')
   }, [spreadOrder])
 
+  /* Reopening a submitted card. Nothing is saved again until Lock in my picks. */
+  const reopen = useCallback(() => {
+    setEditing(true)
+    setPhase('rank')
+    navigator.vibrate?.(10)
+  }, [])
+
   const moveTo = useCallback((id, index) => {
     setOrder((cur) => {
       const from = cur.indexOf(id)
@@ -165,6 +184,7 @@ export default function Picks({ me, weekId, week, onNavigate }) {
       ]
       await api.savePicks(weekId, payload)
       clearDraft(me.id)
+      setEditing(false)
       setPhase('done')
       navigator.vibrate?.([12, 40, 18])
     } catch (e) {
@@ -196,13 +216,16 @@ export default function Picks({ me, weekId, week, onNavigate }) {
         order={order}
         locked={locked}
         availableValues={availableValues}
-        onEdit={() => setPhase('rank')}
+        onEdit={reopen}
       />
     )
 
-  if (phase === 'rank')
+  if (phase === 'rank' || phase === 'locked')
     return (
       <RankPhase
+        readOnly={phase === 'locked'}
+        onChange={reopen}
+        onSeeBoard={() => onNavigate?.('board')}
         setToast={setToast}
         editable={editable}
         locked={locked}
@@ -374,7 +397,10 @@ function RankPhase({
   winners,
   order,
   availableValues,
+  readOnly,
   onReset,
+  onChange,
+  onSeeBoard,
   onMove,
   onBack,
   onSubmit,
@@ -411,18 +437,32 @@ function RankPhase({
   return (
     <div>
       <div className="rank__head">
-        <Back onClick={onBack} label="Winners" />
-        <button className="pill pill--quiet" onClick={onReset}>
-          Reset to spread
+        {readOnly ? (
+          <span className="rank__sealed">
+            <IconLock />
+            Locked in
+          </span>
+        ) : (
+          <Back onClick={onBack} label="Winners" />
+        )}
+        <button className="pill pill--quiet" onClick={readOnly ? onChange : onReset}>
+          {readOnly ? 'Change' : 'Reset to spread'}
         </button>
       </div>
 
       <div className="rank__intro">
-        <h2 className="h2">Most sure at the top</h2>
-        <p className="sub">
-          Already sorted by the spread, so the top game is worth <strong>{top}</strong> and
-          the bottom <strong>{bottom}</strong>. Tap a game to move it.
-        </p>
+        <h2 className="h2">{readOnly ? 'Your picks are in' : 'Most sure at the top'}</h2>
+        {readOnly ? (
+          <p className="sub">
+            Saved and locked. Tap <strong>Change</strong> to edit anything that has not
+            kicked off yet.
+          </p>
+        ) : (
+          <p className="sub">
+            Already sorted by the spread, so the top game is worth <strong>{top}</strong>{' '}
+            and the bottom <strong>{bottom}</strong>. Tap a game to move it.
+          </p>
+        )}
       </div>
 
       {locked.length > 0 && (
@@ -441,6 +481,7 @@ function RankPhase({
                   over {g.my_pick === g.home_abbr ? g.away_abbr : g.home_abbr}
                 </span>
               </span>
+              <span className="rankrow__spread num">{api.spreadLabel(g)}</span>
               <span className="rankrow__lock">locked</span>
             </div>
           ))}
@@ -457,36 +498,55 @@ function RankPhase({
           const isLifted = lifted === id
           const isTarget = !!lifted && !isLifted
 
+          const body = (
+            <>
+              <span className="rankrow__pts num">{availableValues[i]}</span>
+              <TeamLogo teamId={logoId} abbr={pick} size={26} />
+              <span className="rankrow__team">
+                {pick}
+                <span className="rankrow__opp">over {opp}</span>
+              </span>
+              <span className="rankrow__spread num">{api.spreadLabel(game)}</span>
+              <span className="rankrow__cue">
+                {readOnly ? (
+                  <IconLock size={15} />
+                ) : isLifted ? (
+                  'moving'
+                ) : isTarget ? (
+                  'here'
+                ) : (
+                  <IconGrip />
+                )}
+              </span>
+            </>
+          )
+
           return (
             <motion.li
               key={id}
               layout
               transition={{ type: 'spring', damping: 30, stiffness: 420 }}
-              className={`rankrow${isLifted ? ' is-lifted' : ''}${
-                isTarget ? ' is-target' : ''
-              }`}
+              className={`rankrow${readOnly ? ' rankrow--sealed' : ''}${
+                isLifted ? ' is-lifted' : ''
+              }${isTarget ? ' is-target' : ''}`}
             >
-              <button
-                className="rankrow__hit"
-                onClick={() => onRowTap(id, i)}
-                aria-label={
-                  isLifted
-                    ? `${pick} is selected. Tap another game to place it, or tap again to cancel.`
-                    : lifted
-                      ? `Give ${liftedPick} ${availableValues[i]} points`
-                      : `Move ${pick}, currently ${availableValues[i]} points`
-                }
-              >
-                <span className="rankrow__pts num">{availableValues[i]}</span>
-                <TeamLogo teamId={logoId} abbr={pick} size={26} />
-                <span className="rankrow__team">
-                  {pick}
-                  <span className="rankrow__opp">over {opp}</span>
-                </span>
-                <span className="rankrow__cue">
-                  {isLifted ? 'moving' : isTarget ? 'here' : <IconGrip />}
-                </span>
-              </button>
+              {readOnly ? (
+                <div className="rankrow__hit">{body}</div>
+              ) : (
+                <button
+                  className="rankrow__hit"
+                  onClick={() => onRowTap(id, i)}
+                  aria-label={
+                    isLifted
+                      ? `${pick} is selected. Tap another game to place it, or tap again to cancel.`
+                      : lifted
+                        ? `Give ${liftedPick} ${availableValues[i]} points`
+                        : `Move ${pick}, currently ${availableValues[i]} points. ${api.spreadLabel(game)}`
+                  }
+                >
+                  {body}
+                </button>
+              )}
             </motion.li>
           )
         })}
@@ -494,12 +554,20 @@ function RankPhase({
 
       {error && <p className="err">{error}</p>}
 
-      {!lifted && (
+      {readOnly ? (
         <div className="stickycta">
-          <button className="btn" onClick={onSubmit} disabled={saving}>
-            {saving ? 'Saving…' : 'Lock in my picks'}
+          <button className="btn" onClick={onSeeBoard}>
+            See the big board
           </button>
         </div>
+      ) : (
+        !lifted && (
+          <div className="stickycta">
+            <button className="btn" onClick={onSubmit} disabled={saving}>
+              {saving ? 'Saving…' : 'Lock in my picks'}
+            </button>
+          </div>
+        )
       )}
 
       {/* Fixed, not sticky: with twenty rows a sticky bar sits at the end of the list and
@@ -524,6 +592,45 @@ function RankPhase({
 
 /* ==================================================================== done */
 
+/**
+ * The shackle drops into the body, so submitting reads as closing something rather
+ * than sending it.
+ *
+ * Nothing here animates opacity, and nothing starts invisible. A backgrounded tab
+ * stops driving animation frames, and an opacity-from-zero version of this stranded
+ * an empty green circle on screen with no padlock in it. Frozen mid-spring, a
+ * transform-only lock is still a lock, just with the shackle slightly raised.
+ */
+function LockMark() {
+  return (
+    <motion.div
+      className="done__mark"
+      initial={{ scale: 0.55 }}
+      animate={{ scale: 1 }}
+      transition={{ type: 'spring', damping: 14, stiffness: 260 }}
+    >
+      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" aria-hidden="true">
+        <motion.path
+          d="M8 12.6V7.6a4 4 0 0 1 8 0v5"
+          stroke="currentColor"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          initial={{ y: -4.5 }}
+          animate={{ y: 0 }}
+          transition={{ delay: 0.22, type: 'spring', damping: 9, stiffness: 700 }}
+        />
+        <rect x="4.4" y="11.4" width="15.2" height="9.8" rx="2.4" fill="currentColor" />
+        <path
+          d="M12 15.2v2.4"
+          stroke="var(--g-600)"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+      </svg>
+    </motion.div>
+  )
+}
+
 function Done({ games, winners, order, locked, availableValues, onEdit, onSeeBoard }) {
   const byId = Object.fromEntries(games.map((g) => [g.game_id, g]))
   const rows = [
@@ -543,14 +650,7 @@ function Done({ games, winners, order, locked, availableValues, onEdit, onSeeBoa
 
   return (
     <div className="done">
-      <motion.div
-        className="done__mark"
-        initial={{ scale: 0.55, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', damping: 14, stiffness: 260 }}
-      >
-        ✓
-      </motion.div>
+      <LockMark />
       <h2 className="h1">You&apos;re in</h2>
       <p className="sub">
         Picks are saved. Change any game right up until it kicks off.
