@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import { Avatar, IconLock, Screen, Spinner } from '../components/ui.jsx'
+import { fetchLiveScores } from '../lib/espn.js'
 import { kickoffLabel } from '../lib/format.js'
 
 /**
@@ -15,6 +16,7 @@ export default function Board({ me, weekId, week }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
+  const [live, setLive] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -32,6 +34,68 @@ export default function Board({ me, weekId, week }) {
     }
   }, [weekId])
 
+  /**
+   * Poll ESPN while the board is open.
+   *
+   * The database only moves when the sync job runs, and that schedule slips by an hour
+   * or more, so without this a game can sit at 0-0 through an entire half. Every 45
+   * seconds while something is actually being played, every 5 minutes otherwise so a
+   * kickoff that happens with the board already open still gets picked up, and not at
+   * all once every game has been graded.
+   */
+  useEffect(() => {
+    if (!slate?.length) return undefined
+    if (slate.every((g) => g.winner_abbr)) return undefined
+
+    let alive = true
+    let timer = null
+
+    const tick = async () => {
+      if (!alive) return
+      // A hidden tab is not being watched, and its timers are throttled anyway.
+      if (document.visibilityState === 'visible') {
+        try {
+          const m = await fetchLiveScores(slate)
+          if (alive) setLive(m)
+        } catch {
+          /* Keep whatever the database gave us. A missing live score is not an error
+             worth putting on screen. */
+        }
+      }
+      if (!alive) return
+      const playing = slate.some((g) => g.locked && !g.winner_abbr)
+      timer = setTimeout(tick, playing ? 45000 : 300000)
+    }
+
+    // Coming back to the app is the moment the score matters most. Waiting out the
+    // rest of the interval would show a stale number on the screen you just unlocked.
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      clearTimeout(timer)
+      tick()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
+    tick()
+    return () => {
+      alive = false
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [slate])
+
+  /* ESPN wins on the numbers, the database keeps the winner. Grading and the standings
+     stay with the sync job, so the board can never show a result the standings do not
+     already agree with. */
+  const games = useMemo(() => {
+    if (!slate) return null
+    if (!live) return slate
+    return slate.map((g) => {
+      const l = live.get(String(g.game_id))
+      return l ? { ...g, ...l } : g
+    })
+  }, [slate, live])
+
   const byGame = useMemo(() => {
     const m = new Map()
     for (const r of rows || []) {
@@ -43,10 +107,10 @@ export default function Board({ me, weekId, week }) {
   }, [rows])
 
   if (error) return <p className="err">{error}</p>
-  if (!slate || !rows || !roster) return <Spinner />
+  if (!games || !rows || !roster) return <Spinner />
 
-  const open = slate.filter((g) => g.locked)
-  const upcoming = slate.filter((g) => !g.locked)
+  const open = games.filter((g) => g.locked)
+  const upcoming = games.filter((g) => !g.locked)
 
   return (
     <Screen
@@ -54,15 +118,15 @@ export default function Board({ me, weekId, week }) {
       title="The Board"
       sub={
         upcoming.length === 0
-          ? `All ${slate.length} games are open.`
-          : `${open.length} of ${slate.length} open. The rest unlock as they kick off.`
+          ? `All ${games.length} games are open.`
+          : `${open.length} of ${games.length} open. The rest unlock as they kick off.`
       }
     >
       {/* Every game is listed, not just the ones that have started. An unplayed game
           shows locked with your own pick visible, so you can check your card against
           the board without waiting for kickoff. */}
       <div style={{ paddingTop: 4 }}>
-        {slate.map((g) =>
+        {games.map((g) =>
           g.locked ? (
             <BoardGame
               key={g.game_id}
