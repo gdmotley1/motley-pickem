@@ -217,6 +217,14 @@ export async function rpc(fn, args = {}) {
       return [{ ...w.week, slate_size: w.slate.length }]
     }
 
+    /* The mock has exactly one week, so "current" is that week. It still has to answer,
+       because the app resolves the week from here before it asks for anything else. */
+    case 'get_current_week': {
+      requireMe(args.p_token)
+      const w = await week()
+      return [{ ...w.week, slate_size: w.slate.length }]
+    }
+
     case 'get_slate': {
       const me = requireMe(args.p_token)
       const w = await week()

@@ -16,7 +16,28 @@ import {
   Sheet,
 } from './components/ui.jsx'
 
-const WEEK_ID = 1
+/* The week the app falls back to when the server will not name one, and the seed for a
+   phone that has never successfully asked. Week 1 is only ever wrong before the first
+   sync of a season. */
+const FALLBACK_WEEK = 1
+const LAST_WEEK_KEY = 'pickem.week'
+
+const rememberWeek = (id) => {
+  try {
+    localStorage.setItem(LAST_WEEK_KEY, String(id))
+  } catch {
+    /* private mode; the app just re-resolves from the server next time */
+  }
+}
+
+const rememberedWeek = () => {
+  try {
+    const n = Number(localStorage.getItem(LAST_WEEK_KEY))
+    return Number.isInteger(n) && n > 0 ? n : FALLBACK_WEEK
+  } catch {
+    return FALLBACK_WEEK
+  }
+}
 
 const BASE_TABS = [
   { id: 'picks', label: 'Picks', Icon: IconPicks },
@@ -32,21 +53,56 @@ export default function App() {
   const [tab, setTab] = useState('board')
   const [menu, setMenu] = useState(false)
   const [week, setWeek] = useState(null)
+  const [weekId, setWeekId] = useState(rememberedWeek)
   const [stale, setStale] = useState(false)
 
   useEffect(() => {
     api.whoami().then((p) => setMe(p ?? null))
   }, [])
 
-  // Week label comes from ESPN's calendar via the backend, never hard-coded: Week 1 of
-  // 2026 spans seventeen days and the app was previously mislabelling it as Week 2.
+  /* Which week the app is on, resolved by the server from ESPN's own boundaries rather
+     than hard-coded. This used to be a constant, which meant every Tuesday somebody had
+     to edit it and redeploy or the family would still be looking at the week that ended.
+
+     get_current_week returns nothing twice a season's worth of moments: after the last
+     week ends in December, and inside the sixty second hole ESPN leaves between a week
+     closing at HH:59 and the next opening at HH+1:00. Both should hold on the week we
+     were already showing rather than jumping to Week 1, so an empty answer keeps the
+     remembered id. In the off season that means the board stays on championship weekend,
+     which is the right thing to be looking at. */
+  useEffect(() => {
+    if (!me) return
+    let alive = true
+    api
+      .getCurrentWeek()
+      .then((rows) => {
+        if (!alive) return
+        const current = Array.isArray(rows) ? rows[0] : rows
+        if (!current?.id) return
+        setWeekId(current.id)
+        rememberWeek(current.id)
+        setWeek(current)
+      })
+      .catch(() => {
+        /* fall through to the remembered week; the label load below still runs */
+      })
+    return () => {
+      alive = false
+    }
+  }, [me])
+
+  // The label for whatever week we settled on. Runs for the remembered id too, so a phone
+  // that could not reach get_current_week still shows a real header rather than a blank.
   useEffect(() => {
     if (!me) return
     api
-      .getWeek(WEEK_ID)
-      .then((rows) => setWeek(Array.isArray(rows) ? rows[0] : rows))
+      .getWeek(weekId)
+      .then((rows) => {
+        const row = Array.isArray(rows) ? rows[0] : rows
+        if (row) setWeek(row)
+      })
       .catch(() => setWeek(null))
-  }, [me])
+  }, [me, weekId])
 
   // Check on load and whenever the app comes back to the foreground, which is exactly
   // when someone reopens it from their home screen.
@@ -124,11 +180,11 @@ export default function App() {
           className="app__page"
         >
           {tab === 'picks' && (
-            <Picks me={me} weekId={WEEK_ID} week={week} onNavigate={setTab} />
+            <Picks me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
-          {tab === 'board' && <Board me={me} weekId={WEEK_ID} week={week} />}
-          {tab === 'standings' && <Standings me={me} weekId={WEEK_ID} />}
-          {tab === 'admin' && <Admin me={me} weekId={WEEK_ID} />}
+          {tab === 'board' && <Board me={me} weekId={weekId} week={week} />}
+          {tab === 'standings' && <Standings me={me} weekId={weekId} />}
+          {tab === 'admin' && <Admin me={me} weekId={weekId} />}
         </motion.div>
       </main>
 

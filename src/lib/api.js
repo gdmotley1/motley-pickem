@@ -115,6 +115,15 @@ export const publishSlate = (weekId, gameIds) =>
 /** Week metadata for the header. Week numbers follow ESPN's published CFB calendar. */
 export const getWeek = (weekId) => rpc('get_week', withToken({ p_week: weekId }))
 
+/**
+ * The week `now()` falls inside, straight from the weeks table's ESPN boundaries.
+ *
+ * Returns nothing in two cases, both of which the caller has to survive: the season is
+ * over, and the sixty second hole ESPN leaves between one week ending at HH:59 and the
+ * next opening at HH+1:00.
+ */
+export const getCurrentWeek = () => rpc('get_current_week', withToken({}))
+
 /** Admin only: the full 40-game pool for a week, with in_slate flags. */
 export const getPool = (weekId) => rpc('get_pool', withToken({ p_week: weekId }))
 
