@@ -1,25 +1,81 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
+import { liveWinner } from '../lib/espn.js'
+import { useLiveScores } from '../lib/useLiveScores.js'
 
 /**
  * Season standings plus the two cuts worth arguing about: raw accuracy, and whether the
  * points you spent actually landed on the games you got right.
  */
-export default function Standings() {
-  const [rows, setRows] = useState(null)
+export default function Standings({ weekId }) {
+  const [base, setBase] = useState(null)
+  const [slate, setSlate] = useState(null)
+  const [picks, setPicks] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     let alive = true
-    api
-      .getStandings()
-      .then((r) => alive && setRows(r))
+    Promise.all([api.getStandings(), api.getSlate(weekId), api.getBoard(weekId)])
+      .then(([totals, sl, b]) => {
+        if (!alive) return
+        setBase(totals)
+        setSlate(sl)
+        setPicks(b)
+      })
       .catch((e) => alive && setError(e.message))
     return () => {
       alive = false
     }
-  }, [])
+  }, [weekId])
+
+  const live = useLiveScores(slate)
+
+  /**
+   * Season totals, plus this week's games that are over but not yet graded.
+   *
+   * get_standings counts a game only once games.winner_abbr is set, so a game stays
+   * missing from the totals however long ago it actually finished, and the sync job that
+   * sets it can be an hour late. Those picks are already in the board rows, so the same
+   * arithmetic the server does is redone here and added on top. Nothing is counted
+   * twice: a game the database has graded is skipped by the first condition.
+   */
+  const rows = useMemo(() => {
+    if (!base) return null
+    if (!live || !slate || !picks) return base
+
+    const delta = new Map()
+    for (const g of slate) {
+      if (g.winner_abbr) continue
+      const winner = liveWinner(g, live)
+      if (!winner) continue
+      for (const p of picks) {
+        if (p.game_id !== g.game_id) continue
+        const d = delta.get(p.player_id) || { correct: 0, games: 0, points: 0 }
+        d.games += 1
+        if (p.pick_abbr === winner) {
+          d.correct += 1
+          d.points += p.confidence
+        }
+        delta.set(p.player_id, d)
+      }
+    }
+    if (!delta.size) return base
+
+    return base
+      .map((r) => {
+        const d = delta.get(r.player_id)
+        if (!d) return r
+        return {
+          ...r,
+          correct: r.correct + d.correct,
+          games: r.games + d.games,
+          points: r.points + d.points,
+        }
+      })
+      // Same order the server uses: points, then games called right.
+      .sort((a, b) => b.points - a.points || b.correct - a.correct)
+  }, [base, slate, picks, live])
 
   if (error) return <p className="err">{error}</p>
   if (!rows) return <Spinner />

@@ -1363,6 +1363,206 @@
   color: var(--ink-3);
 }
 
+/* ====================================================== the week's score bar */
+
+.wkbars {
+  margin: 10px 12px 14px;
+  padding: 11px 12px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+}
+
+.wkbars__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.wkbars__ttl {
+  flex: 1;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.wkbars__key {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.wkbars__key i {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.wkbars__key .is-banked {
+  background: var(--g-700);
+}
+
+/* The pale half of the bar is a colour the swatch cannot borrow, since each player's is
+   their own. A hairline well reads as "not yet earned" without picking one of them. */
+.wkbars__key .is-live {
+  background: var(--n-200);
+  box-shadow: inset 0 0 0 1px var(--ink-3);
+}
+
+.wkbars__rows {
+  display: grid;
+  gap: 8px;
+}
+
+.wkbar {
+  display: grid;
+  grid-template-columns: 52px 1fr 30px;
+  align-items: center;
+  gap: 9px;
+}
+
+.wkbar__name {
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wkbar__track {
+  position: relative;
+  display: block;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--n-200);
+  overflow: hidden;
+}
+
+.wkbar__live,
+.wkbar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-pill);
+  transition: width 0.5s var(--ease);
+}
+
+.wkbar__live {
+  opacity: 0.22;
+}
+
+.wkbar__fill {
+  min-width: 6px;
+}
+
+.wkbar__val {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--ink);
+}
+
+/* Ties stand, so this lands on every player level on points, not just one. */
+.wkbar__val.is-leader {
+  color: var(--accent-deep);
+}
+
+.wkbars__foot {
+  margin-top: 10px;
+  font-size: 10.5px;
+  color: var(--ink-3);
+  line-height: 1.45;
+}
+
+/* The pinned strip. Fixed and portalled past the screen wrapper, laid out on the same
+   centred column as the tab bar. Out of flow, so showing it never moves a game card.
+
+   `top` is set inline from the measured header height, not here: the header is sticky
+   and opaque, so a strip at the top of the viewport would sit behind it and never be
+   seen. Zero is only the value before the first measurement. */
+.wkbug {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 460px;
+  z-index: 22;
+  height: 0;
+}
+
+.wkbug__bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 7px 10px;
+  background: rgba(253, 251, 247, 0.94);
+  backdrop-filter: blur(12px) saturate(1.4);
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 6px 12px -8px rgba(30, 26, 19, 0.35);
+  /* Slid, never faded: a backgrounded tab pauses opacity work and has left an overlay
+     stuck half-transparent here before. */
+  transform: translateY(-100%);
+  visibility: hidden;
+  transition: transform 0.22s var(--ease), visibility 0.22s;
+}
+
+.wkbug.is-on .wkbug__bar {
+  transform: none;
+  visibility: visible;
+}
+
+.wkbug__p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.wkbug__p i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.wkbug__who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wkbug__p b {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.wkbug__p.is-leader b {
+  color: var(--accent-deep);
+}
+
 /* ================================================================ standings */
 
 .stand {

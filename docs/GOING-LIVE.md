@@ -6,8 +6,8 @@ the scheduled jobs are running. Nothing below is outstanding; it is kept as the
 record of how it was set up and how to do it again.
 
 Verified from GitHub Actions into Postgres: the slate build upserts 40 games and
-preserves a published slate, and the scores job refreshes all 40 and applies the
-underdog auto-picks.
+preserves a published slate, and the scores job refreshes all 40. Auto-picks moved
+to pg_cron inside Postgres on 2026-09-04 and no longer depend on this job.
 
 The app is complete and deployed, but until these steps are done it runs in mock mode:
 every seat, PIN and pick lives in one phone's local storage and nothing is shared.
@@ -77,8 +77,9 @@ anything prefixed `VITE_` is compiled into the browser bundle.
 | When | What |
 |---|---|
 | Tue, Wed, Thu 8am ET | Build next week's 40-game pool and refresh spreads |
-| Every 15 min, Thu–Sun | Update scores, grade finals, auto-pick the underdog for anyone who missed a kickoff |
-| Continuously, on each phone | Live scores pulled straight from ESPN |
+| Every 15 min, Thu–Sun | Update scores and grade finals. GitHub does not honour this schedule; real gaps of 100 minutes have been seen, which is why nothing time-critical depends on it any more |
+| Every 5 min, all year (pg_cron) | Auto-pick the favorite for anyone who missed a kickoff. Runs inside Postgres, needs no network |
+| Continuously, on each phone | Live scores and live grading pulled straight from ESPN |
 
 The only human step left is your dad opening Setup, swapping any games he wants, and
 tapping Publish.

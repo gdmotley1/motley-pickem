@@ -124,7 +124,7 @@ export default function App() {
             <Picks me={me} weekId={WEEK_ID} week={week} onNavigate={setTab} />
           )}
           {tab === 'board' && <Board me={me} weekId={WEEK_ID} week={week} />}
-          {tab === 'standings' && <Standings me={me} />}
+          {tab === 'standings' && <Standings me={me} weekId={WEEK_ID} />}
           {tab === 'admin' && <Admin me={me} weekId={WEEK_ID} />}
         </motion.div>
       </main>

@@ -22,7 +22,7 @@ bowl handling unless Grant reopens it.
 ## The spread is displayed, never picked against
 
 Picks are straight-up winners. The Vegas spread is shown on every game for context and is
-used by the app for auto-ranking, upset detection, and the underdog auto-pick rule.
+used by the app for auto-ranking, upset detection, and the favorite auto-pick rule.
 
 **Why:** This is how the family already plays. Against-the-spread would change the game.
 
@@ -51,17 +51,20 @@ not submitted can see a Thursday result before assigning points.
 **How to apply:** Lock must be enforced server-side in a Postgres RLS policy comparing
 `now()` to kickoff. Never trust a client-side lock; browser devtools would defeat it.
 
-## Missed picks auto-fill the UNDERDOG at the lowest unused confidence
+## Missed picks auto-fill the FAVORITE at the lowest unused confidence
 
-At kickoff, any game a player has not picked is filled with the Vegas underdog and assigned
+At kickoff, any game a player has not picked is filled with the Vegas favorite and assigned
 the lowest confidence value they have not spent.
 
-**Why:** Grant deliberately overrode the suggested "favorite" default. The underdog is the
-lower-probability outcome, so forgetting is genuinely punished, but nobody eats a zero week
-and quits.
+**Why:** Reversed on 2026-09-04. For most of the build this was the underdog, chosen so that
+forgetting genuinely cost you something. Grant decided that is not the pool he wants and that
+the favorite is fairer. The sting is mild either way, because a missed game still gets the
+lowest confidence value left, so it is worth almost nothing whichever side it lands on.
 
-**How to apply:** Underdog, not favorite. If the game is a pick'em with no favorite, take the
-road team. This runs in the sync job at kickoff, not in the browser.
+**How to apply:** Favorite, not underdog. If there is no line and so no favorite, take the
+home team. This runs in Postgres, in `apply_auto_picks()`, on a pg_cron schedule every five
+minutes, so it lands within five minutes of kickoff without waiting on the GitHub sync job.
+Never in the browser. See `migrations/005_autopick_favorite_on_cron.sql`.
 
 ## Picks are hidden until each game locks
 

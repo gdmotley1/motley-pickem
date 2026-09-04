@@ -126,3 +126,23 @@ four, and a leftover pick row would corrupt the standings.
 
 **How to apply:** confirm `list_seats` shows four empty seats and `picks` is empty before
 finishing.
+
+## `position: sticky` can never pin anything in this app
+
+`.app__body` is `overflow-y: auto`, so it is the scrollport every sticky descendant
+resolves against. It never actually scrolls: `.app` is sized by `min-height: 100dvh`, so
+the flex child grows with its content and the **document** is what moves. A sticky element
+inside it therefore scrolls away like any static one, silently.
+
+**Why:** the week score bug was built as `position: sticky; top: 0` and looked correct in
+the markup. In the browser it scrolled off the top with the games. The same fact is why
+`.tabbar` is `position: fixed` rather than sticky. Two further traps stack on top of it:
+`fixed` inside the screen wrapper anchors to that motion.div's transform, not the viewport,
+so it needs the `Portal` helper; and the header is sticky and opaque at `z-index: 30`, so
+anything pinned to `top: 0` sits behind it and is never seen.
+
+**How to apply:** anything that pins goes `Portal` + `position: fixed`, laid out on the
+same centred column as `.tabbar` (`left: 50%; translateX(-50%); max-width: 460px`), with
+`top` set from the measured header height. `useHeaderOffset` in
+`src/components/WeekScore.jsx` does that measurement; do not hard-code the height, it is
+padding plus two lines of type plus the safe-area inset.

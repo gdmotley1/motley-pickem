@@ -8,8 +8,13 @@ Two modes:
                   refresh cannot undo his choices.
 
   --mode scores   Refresh kickoff times, spreads, live scores and finals for games
-                  already in the database, then apply the underdog auto-picks for
-                  anyone who missed a kickoff. Safe to run every few minutes.
+                  already in the database, then apply the auto-picks for anyone who
+                  missed a kickoff. Safe to run every few minutes.
+
+                  Auto-picks also run on their own, every five minutes, from pg_cron
+                  inside Postgres, because GitHub does not honour the schedule in
+                  .github/workflows/sync.yml. Calling apply_auto_picks() here too is
+                  harmless: it only ever fills a pick that is missing.
 
 Writes with the service_role key, which bypasses RLS. That key must never reach the
 browser: it lives in the environment only.

@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import { Avatar, IconLock, Screen, Spinner } from '../components/ui.jsx'
-import { fetchLiveScores } from '../lib/espn.js'
+import { WeekScore, ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
+import { withLive } from '../lib/espn.js'
+import { weekScore } from '../lib/weekScore.js'
+import { useLiveScores } from '../lib/useLiveScores.js'
 import { kickoffLabel } from '../lib/format.js'
 
 /**
@@ -16,7 +19,6 @@ export default function Board({ me, weekId, week }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
-  const [live, setLive] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
@@ -34,66 +36,16 @@ export default function Board({ me, weekId, week }) {
     }
   }, [weekId])
 
-  /**
-   * Poll ESPN while the board is open.
-   *
-   * The database only moves when the sync job runs, and that schedule slips by an hour
-   * or more, so without this a game can sit at 0-0 through an entire half. Every 45
-   * seconds while something is actually being played, every 5 minutes otherwise so a
-   * kickoff that happens with the board already open still gets picked up, and not at
-   * all once every game has been graded.
-   */
-  useEffect(() => {
-    if (!slate?.length) return undefined
-    if (slate.every((g) => g.winner_abbr)) return undefined
+  const live = useLiveScores(slate)
 
-    let alive = true
-    let timer = null
-
-    const tick = async () => {
-      if (!alive) return
-      // A hidden tab is not being watched, and its timers are throttled anyway.
-      if (document.visibilityState === 'visible') {
-        try {
-          const m = await fetchLiveScores(slate)
-          if (alive) setLive(m)
-        } catch {
-          /* Keep whatever the database gave us. A missing live score is not an error
-             worth putting on screen. */
-        }
-      }
-      if (!alive) return
-      const playing = slate.some((g) => g.locked && !g.winner_abbr)
-      timer = setTimeout(tick, playing ? 45000 : 300000)
-    }
-
-    // Coming back to the app is the moment the score matters most. Waiting out the
-    // rest of the interval would show a stale number on the screen you just unlocked.
-    const onVisible = () => {
-      if (document.visibilityState !== 'visible') return
-      clearTimeout(timer)
-      tick()
-    }
-    document.addEventListener('visibilitychange', onVisible)
-
-    tick()
-    return () => {
-      alive = false
-      clearTimeout(timer)
-      document.removeEventListener('visibilitychange', onVisible)
-    }
-  }, [slate])
-
-  /* ESPN wins on the numbers, the database keeps the winner. Grading and the standings
-     stay with the sync job, so the board can never show a result the standings do not
-     already agree with. */
+  /* Score, status and winner all come from ESPN once a game is under way, so a final
+     marks the loser and fills in everyone's points the moment it happens rather than
+     whenever the sync job next runs. `withLive` still defers to a database winner
+     wherever there is one, so the two can never disagree. */
   const games = useMemo(() => {
     if (!slate) return null
     if (!live) return slate
-    return slate.map((g) => {
-      const l = live.get(String(g.game_id))
-      return l ? { ...g, ...l } : g
-    })
+    return slate.map((g) => withLive(g, live))
   }, [slate, live])
 
   const byGame = useMemo(() => {
@@ -105,6 +57,33 @@ export default function Board({ me, weekId, week }) {
     for (const list of m.values()) list.sort((a, b) => b.confidence - a.confidence)
     return m
   }, [rows])
+
+  const score = useMemo(
+    () => (games && rows && roster ? weekScore(games, rows, roster) : null),
+    [games, rows, roster],
+  )
+
+  /* Nothing to show before the first kickoff: four empty bars say less than the
+     "unlock as they kick off" line already above them. */
+  const showScore = !!score && games.some((g) => g.locked)
+
+  /* The pinned strip takes over the moment the card itself has scrolled away, so the
+     score is never more than a glance away twelve games down the board. Watching the card
+     beats watching the scroll offset: no listener, and nothing to keep in step with the
+     card's height. The header is sticky and covers the top of the page, so the top of the
+     viewport is not the top of what can be read, and the margin below takes it off. */
+  const headerH = useHeaderOffset()
+  const cardRef = useRef(null)
+  const [pinned, setPinned] = useState(false)
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined
+    const io = new IntersectionObserver(([e]) => setPinned(!e.isIntersecting), {
+      rootMargin: `-${headerH}px 0px 0px 0px`,
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [showScore, headerH])
 
   if (error) return <p className="err">{error}</p>
   if (!games || !rows || !roster) return <Spinner />
@@ -122,6 +101,13 @@ export default function Board({ me, weekId, week }) {
           : `${open.length} of ${games.length} open. The rest unlock as they kick off.`
       }
     >
+      {showScore && (
+        <>
+          <WeekScore score={score} cardRef={cardRef} />
+          <ScoreBug score={score} pinned={pinned} top={headerH} />
+        </>
+      )}
+
       {/* Every game is listed, not just the ones that have started. An unplayed game
           shows locked with your own pick visible, so you can check your card against
           the board without waiting for kickoff. */}
@@ -198,6 +184,20 @@ function LockedGame({ game, roster, me }) {
   )
 }
 
+/**
+ * Fill in correct and points from whatever winner the card has.
+ *
+ * get_board leaves both null until the database has graded the game, which waits on the
+ * sync job. When the live score says it is over, the arithmetic is the same one the
+ * server does, so do it here and let the card be right immediately. A row the database
+ * has already graded is returned untouched.
+ */
+function graded(pick, winner) {
+  if (!pick || !winner || pick.correct !== null) return pick
+  const correct = pick.pick_abbr === winner
+  return { ...pick, correct, points: correct ? pick.confidence : 0 }
+}
+
 function BoardGame({ game, picks, roster, me }) {
   const done = !!game.winner_abbr
   const homeWon = done && game.winner_abbr === game.home_abbr
@@ -232,7 +232,10 @@ function BoardGame({ game, picks, roster, me }) {
           is exactly the same height and a missing pick is visible rather than absent. */}
       <div className="bpicks">
         {roster.map((player) => {
-          const p = picks.find((x) => x.player_id === player.id)
+          const p = graded(
+            picks.find((x) => x.player_id === player.id),
+            game.winner_abbr,
+          )
           const mine = player.id === me.id
           if (!p)
             return (

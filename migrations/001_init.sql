@@ -407,6 +407,9 @@ end $$;
 
 -- ---------------------------------------------------------------- auto-picks at kickoff
 
+-- SUPERSEDED by 005_autopick_favorite_on_cron.sql: the rule is now the FAVORITE, and it
+-- runs on pg_cron rather than from the sync job. Left here as the original record.
+--
 -- Any claimed player with no pick on a game that has started gets the UNDERDOG at the
 -- lowest confidence value they have not spent that week. Run from the sync job.
 create or replace function apply_auto_picks()

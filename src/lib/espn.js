@@ -1,16 +1,15 @@
 /**
- * Live scores, read straight from ESPN by the phone.
+ * Live scores and live grading, read straight from ESPN by the phone.
  *
- * The scores in Postgres are only ever as fresh as the sync job, and GitHub does not
- * honour the every-15-minutes schedule in .github/workflows/sync.yml: on the Thursday
- * of week 1 it ran at 22:42 and then not again until 00:25, so the Colorado game sat
- * on the board at 0-0 for the whole first half. Rather than fight the scheduler, the
- * client asks ESPN itself. The scoreboard endpoint needs no key, sends CORS headers,
- * and costs nothing.
+ * The database is only ever as fresh as the sync job, and GitHub does not honour the
+ * every-15-minutes schedule in .github/workflows/sync.yml: on the Thursday of week 1 it
+ * ran at 22:42 and then not again until 00:25, so the Colorado game sat on the board at
+ * 0-0 for the whole first half. Rather than fight the scheduler, the client asks ESPN
+ * itself. The scoreboard endpoint needs no key, sends CORS headers, and costs nothing.
  *
- * Display only. Winners, grading and the standings still come from the database via
- * the sync job, so if this file fails entirely the board simply shows the last synced
- * score and nothing else breaks.
+ * Display only. The winner written to Postgres is still the sync job's to write, and
+ * `liveWinner` always defers to it when it is there. If this file fails entirely the
+ * board falls back to the last synced score and nothing breaks.
  */
 
 const SCOREBOARD =
@@ -24,36 +23,47 @@ const SCOREBOARD =
 const etDate = (iso) =>
   new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }).replace(/-/g, '')
 
-/** "20260903-20260906" spans the whole week in one request instead of four. */
-export function dateRange(games) {
-  const days = (games || [])
-    .map((g) => g.kickoff)
-    .filter(Boolean)
-    .map(etDate)
-    .sort()
-  if (!days.length) return null
-  const first = days[0]
-  const last = days[days.length - 1]
-  return first === last ? first : `${first}-${last}`
+/**
+ * The days still worth asking about: a game that has kicked off and whose result we do
+ * not already have, either from the database or from an earlier poll.
+ *
+ * A final score never changes, so once a day is settled it never needs fetching again.
+ * This matters because the payload is not small: gzipped, the whole week is 81KB and a
+ * Saturday alone is 64KB, against 12KB for a Thursday night. Asking only for the days
+ * still in play keeps a Thursday poll at 12KB and stops the polling altogether once the
+ * last game is over.
+ */
+export function pendingDates(games, previous) {
+  const now = Date.now()
+  const days = new Set()
+  for (const g of games || []) {
+    if (!g.kickoff) continue
+    if (new Date(g.kickoff).getTime() > now) continue
+    if (g.winner_abbr) continue
+    if (previous?.get(String(g.game_id))?.completed) continue
+    days.add(etDate(g.kickoff))
+  }
+  return [...days].sort()
 }
 
 /**
- * Map of ESPN event id to the live line, keyed as a string.
+ * Map of ESPN event id to the live line, keyed as a string, carrying forward everything
+ * already known so a narrowed fetch never drops a result we had.
  *
- * `games.id` in Postgres IS the ESPN event id, so the merge on the board is a straight
- * lookup with no matching heuristics. Games that have not kicked off are left out, so
- * an unplayed game keeps the kickoff time the database gave it rather than showing a
- * meaningless 0-0.
+ * `games.id` in Postgres IS the ESPN event id, so the merge is a straight lookup with no
+ * matching heuristics. Games that have not kicked off are skipped, so an unplayed game
+ * keeps the kickoff time the database gave it rather than showing a meaningless 0-0.
  */
-export async function fetchLiveScores(games) {
-  const dates = dateRange(games)
-  if (!dates) return new Map()
+export async function fetchLiveScores(games, previous) {
+  const days = pendingDates(games, previous)
+  if (!days.length) return previous || new Map()
+  const dates = days.length === 1 ? days[0] : `${days[0]}-${days[days.length - 1]}`
 
   const res = await fetch(`${SCOREBOARD}?groups=80&dates=${dates}`)
   if (!res.ok) throw new Error(`ESPN scoreboard: HTTP ${res.status}`)
   const data = await res.json()
 
-  const out = new Map()
+  const out = new Map(previous || [])
   for (const ev of data.events || []) {
     const comp = ev.competitions?.[0]
     const status = comp?.status?.type
@@ -73,4 +83,35 @@ export async function fetchLiveScores(games) {
     })
   }
   return out
+}
+
+/**
+ * The winner to show: whatever the database has graded, else what the final score says.
+ *
+ * Returns null while a game is unfinished, so callers never have to guess. Deliberately
+ * returns the abbreviation off the game row rather than off the ESPN payload, so a
+ * difference in how the two spell a team can never produce a winner that matches nobody's
+ * pick. A tie returns null; college football does not have them, and inventing a winner
+ * from one would be worse than showing nothing.
+ */
+export function liveWinner(game, live) {
+  if (game.winner_abbr) return game.winner_abbr
+  const l = live?.get(String(game.game_id))
+  if (!l?.completed) return null
+  if (l.home_score == null || l.away_score == null) return null
+  if (l.home_score === l.away_score) return null
+  return l.home_score > l.away_score ? game.home_abbr : game.away_abbr
+}
+
+/** A game row with the live score, status and winner laid over the database values. */
+export function withLive(game, live) {
+  const l = live?.get(String(game.game_id))
+  if (!l) return game
+  return {
+    ...game,
+    away_score: l.away_score ?? game.away_score,
+    home_score: l.home_score ?? game.home_score,
+    status_detail: l.status_detail || game.status_detail,
+    winner_abbr: liveWinner(game, live),
+  }
 }
