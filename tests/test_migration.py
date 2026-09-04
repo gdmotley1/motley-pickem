@@ -191,7 +191,7 @@ def test_every_rpc_the_client_calls_exists_in_sql():
 def test_admin_only_rpcs_check_is_admin():
     """Hiding the Setup tab is cosmetic. These are the real gate."""
     sql = _all_migration_sql()
-    for fn in ("publish_slate", "get_pool"):
+    for fn in ("publish_slate", "get_pool", "cron_health"):
         body = re.search(
             r"create or replace function %s.*?\$\$(.*?)\$\$" % fn, sql, re.S | re.I
         )
