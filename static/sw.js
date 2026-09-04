@@ -115,7 +115,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
 
-  if (request.mode === 'navigate') {
+  // Any request for the document, not just navigations. Something in the wild asks for
+  // index.html with mode "no-cors" rather than "navigate", and the fallthrough below was
+  // filing a second copy of the shell in the assets cache. Matching on the path as well
+  // keeps exactly one shell under exactly one policy.
+  if (request.mode === 'navigate' || url.pathname === INDEX || url.pathname === BASE) {
     event.respondWith(networkFirstDocument(request))
     return
   }
