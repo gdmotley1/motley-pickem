@@ -300,3 +300,54 @@ Postgres keeps what it has. A new odds column must be added to `ODDS_COLUMNS` as
 to `game_row`; `test_every_odds_column_the_row_builder_writes_is_frozen_together` fails if
 it is not. The odds also go up in their own batch, because PostgREST rejects a bulk insert
 whose objects do not all carry the same keys.
+
+## A week's last game can finish after the week has rolled over
+
+`sync_scores` grades exactly ONE week, whichever `--current` resolves to, and only fetches
+that week's date window. A game that ends after its own week has closed is therefore never
+reached again by a scheduled run.
+
+**Why:** found on 2026-09-04, three days before it would have bitten. Week 1 of 2026 ends
+`2026-09-08T06:59Z`, 3am ET Tuesday, because it holds the Labor Day Monday night game:
+SMU at FSU, kickoff `2026-09-07T23:30Z`. The scores cron ran `*/15 * * * 4,5,6,0`,
+Thursday through Sunday, so the next run after that game was Thursday 2026-09-10, by which
+point `week_for()` returns Week 2 and the Week 1 result is out of reach. `winner_abbr`
+would have stayed null for the rest of the season.
+
+That is not a cosmetic lag. `get_standings` counts a game only once `winner_abbr` is set,
+so all four season totals would have been short by up to 20 confidence points, enough to
+hand Week 1 to the wrong person. The Standings screen's live overlay does not save it
+either: `Standings.jsx` patches only the week currently on screen, so from 8 Sep onward
+nothing on any screen would ever have counted that game.
+
+Verified against the live database, read-only: at Thu 2026-09-10 the sweep returns
+`[1]`, before kickoff it returns `[]`, and three weeks later it returns `[]` again.
+
+**How to apply:** `sweep_ungraded()` runs after every `--mode scores` and grades any
+earlier week still holding a slate game that has kicked off with no winner. It is bounded
+to `STALE_GRADE_DAYS` so a cancellation is not refetched all season, and it is best effort
+so a straggler cannot fail the run that just refreshed the current week. The cron also
+gained `*/30 * * * 1,2,3`, which is what puts a job in the window while the result still
+matters. Do not narrow the scores schedule back to game days:
+`tests/test_workflow.py::test_scores_are_graded_on_every_day_of_the_week` fails, and it is
+verified to fail on the old schedule with "no scores job runs on cron weekday(s) [1, 2, 3]".
+
+**A second bug this uncovered, over HTTP only.** The first version of the query sent
+`kickoff=lt.2026-09-04T18:53:28+00:00` unencoded. A bare `+` in a query string decodes to
+a space, so PostgREST saw `"2026-09-04T18:53:28 00:00"` and returned
+`400 invalid input syntax for type timestamp with time zone`. No fake catches this,
+because the encoding only exists on the wire, which is why the sweep was checked against
+the live database and not just against `GradeSB`. Any timestamp put into a PostgREST
+filter goes through `urllib.parse.quote`.
+
+**A step's `if:` is the cron string written a second time.** GitHub dispatches a schedule
+by putting the cron in `github.event.schedule`, and each step compares against that
+literal. Edit one without the other and the schedule fires, no step matches, and the run
+goes green having done nothing. `tests/test_workflow.py` asserts both directions, and that
+`docs/workflows/sync.yml` still matches the `.github/workflows/` copy that actually runs.
+
+**Pushing a workflow change needs a scope this machine's token lacks.** `gh auth status`
+shows `gist, read:org, repo` and no `workflow`, so a commit touching
+`.github/workflows/` is rejected. Either `gh auth refresh -s workflow` once, or paste the
+file at
+`https://github.com/gdmotley1/motley-pickem/new/main?filename=.github/workflows/sync.yml`.

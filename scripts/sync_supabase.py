@@ -16,6 +16,11 @@ Two modes:
                   .github/workflows/sync.yml. Calling apply_auto_picks() here too is
                   harmless: it only ever fills a pick that is missing.
 
+                  It then sweeps: any EARLIER week still holding a slate game that has
+                  kicked off with no winner is graded too. One week is resolved, but a
+                  game can finish after its own week has closed, and nothing else would
+                  ever go back for it. See sweep_ungraded().
+
 Writes with the service_role key, which bypasses RLS. That key must never reach the
 browser: it lives in the environment only.
 
@@ -31,6 +36,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from cfb_weeks import current_week, date_range, fetch_calendar, next_week, week_by_number
@@ -277,8 +283,12 @@ def sync_scores(sb: Supabase, a, week: dict) -> int:
 
     known = {int(g["id"]) for g in sb.select("games", "week_id=eq.%s&select=id" % wk["id"])}
     if not known:
-        print("No games stored for %s yet." % week["label"], file=sys.stderr)
-        return 1
+        # Not a failure. Early in a week the pool may not be built yet, and since this
+        # job started running Monday through Wednesday that is the ordinary state rather
+        # than the exception. Failing here would send a red run every half hour for three
+        # days a week. --mode slate is what guarantees games exist, and it fails loudly.
+        print("No games stored for %s yet; nothing to grade." % week["label"])
+        return 0
 
     from fetch_slate import fetch
     live = [g for g in fetch(start, end) if int(g["espn_id"]) in known]
@@ -312,6 +322,75 @@ def sync_scores(sb: Supabase, a, week: dict) -> int:
     return 0
 
 
+# --------------------------------------- weeks a scheduled run would otherwise not reach
+
+# A game that finishes after its own week has rolled over is never graded, because this
+# job resolves exactly ONE week and then only fetches that week's window.
+#
+# Week 1 of 2026 is the case that forced this, measured on 2026-09-04. It ends
+# 2026-09-08T06:59Z, 3am ET Tuesday, because it holds the Labor Day Monday night game:
+# SMU at FSU, kickoff 2026-09-07T23:30Z. The scores cron ran Thursday through Sunday, so
+# the next scheduled run was 2026-09-10T00:00Z, by which point --current is Week 2 and
+# Week 1's Monday result is out of reach. winner_abbr would have stayed null for the rest
+# of the season. get_standings counts a game only once that is set, so all four season
+# totals would have been short by up to 20 points, enough to hand Week 1 to the wrong
+# person, and the Standings screen's live overlay does not cover it either: that patches
+# only the week currently on screen.
+#
+# Sweeping every earlier week that still holds an ungraded slate game fixes the class
+# rather than that one game. It costs a single select on a run with nothing to do.
+STALE_GRADE_DAYS = 10
+
+
+def weeks_awaiting_grades(sb: Supabase, season: int, skip_week_no: int,
+                          now: dt.datetime | None = None) -> list:
+    """Week numbers holding a slate game that has kicked off and still has no winner.
+
+    Only slate games count: an ungraded game nobody could pick changes no standing.
+    Bounded to the last STALE_GRADE_DAYS so a game ESPN never grades, a cancellation,
+    is not refetched every fifteen minutes for the rest of the season.
+    """
+    now = now or dt.datetime.now(dt.timezone.utc)
+    floor = now - dt.timedelta(days=STALE_GRADE_DAYS)
+    # quote() is not decoration. An aware timestamp renders as +00:00, and a bare + in a
+    # query string decodes to a space, so PostgREST reads it as the malformed
+    # "2026-09-04T18:53:28 00:00" and answers 400. Caught against the live database on
+    # 2026-09-04; no fake can see it, because the encoding only exists over HTTP.
+    stranded = sb.select(
+        "games",
+        "select=week_id&in_slate=eq.true&winner_abbr=is.null"
+        "&kickoff=lt.%s&kickoff=gt.%s"
+        % (urllib.parse.quote(now.isoformat()), urllib.parse.quote(floor.isoformat())))
+    if not stranded:
+        return []
+    ids = {g["week_id"] for g in stranded}
+    weeks = sb.select("weeks", "season=eq.%d&select=id,week_no" % season)
+    return sorted({w["week_no"] for w in weeks
+                   if w["id"] in ids and w["week_no"] != skip_week_no})
+
+
+def sweep_ungraded(sb: Supabase, a, synced: dict) -> None:
+    """Grade the weeks the resolved run could not reach.
+
+    Best effort on purpose. The current week is what the family is looking at, so a
+    failure to grade a straggler must not fail the job that just refreshed it.
+    """
+    pending = weeks_awaiting_grades(sb, a.season, synced["week"])
+    if not pending:
+        return
+    calendar = fetch_calendar(a.season)
+    for number in pending:
+        week = week_by_number(calendar, number)
+        if not week:
+            continue
+        print("sweep: %s still holds a game that kicked off and was never graded"
+              % week["label"])
+        try:
+            sync_scores(sb, a, week)
+        except Exception as exc:                      # noqa: BLE001
+            print("sweep of %s failed: %s" % (week["label"], exc), file=sys.stderr)
+
+
 def main() -> int:
     load_dotenv()
     p = argparse.ArgumentParser()
@@ -330,7 +409,12 @@ def main() -> int:
         return 0
 
     sb = Supabase(env("SUPABASE_URL"), env("SUPABASE_SERVICE_KEY"))
-    return sync_slate(sb, a, week) if a.mode == "slate" else sync_scores(sb, a, week)
+    if a.mode == "slate":
+        return sync_slate(sb, a, week)
+
+    rc = sync_scores(sb, a, week)
+    sweep_ungraded(sb, a, week)
+    return rc
 
 
 if __name__ == "__main__":

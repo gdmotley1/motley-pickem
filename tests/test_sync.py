@@ -1,9 +1,11 @@
 """The weekly sync job's decision logic, without touching the network or the database."""
 from __future__ import annotations
 
+import argparse
 import datetime as dt
 import os
 import sys
+import urllib.parse
 
 import pytest
 
@@ -324,3 +326,114 @@ def test_each_upsert_batch_carries_identical_keys(monkeypatch):
 
     # And the two batches really are different shapes, or the split proves nothing.
     assert frozenset(batches[0][0]) != frozenset(batches[1][0])
+
+
+# ----------------------------------------- grading a week that has already rolled over
+
+# The scores job grades exactly ONE week, whichever --current resolves to. A game that
+# finishes after its own week has rolled over is therefore never reached again.
+#
+# Week 1 of 2026 is the case that forced this, measured against the live calendar on
+# 2026-09-04. It ends 2026-09-08T06:59Z, 3am ET Tuesday, because it holds the Labor Day
+# Monday night game: SMU at FSU, kickoff 2026-09-07T23:30Z. The scores cron ran Thursday
+# through Sunday only, so the next scheduled run was 2026-09-10T00:00Z, by which point
+# --current is Week 2 and sync_scores only fetches Week 2's window. winner_abbr on that
+# game would have stayed null for the rest of the season, and get_standings counts a game
+# only once it is set, so every player's season total would have been short by up to 20
+# points. The Standings screen's live overlay does not cover it either: that only patches
+# the week currently on screen.
+
+
+class GradeSB:
+    """Answers the two selects weeks_awaiting_grades makes, and records both."""
+
+    def __init__(self, stranded, weeks):
+        self.stranded = stranded
+        self.weeks = weeks
+        self.queries = {}
+
+    def select(self, table, query=""):
+        self.queries[table] = query
+        return self.stranded if table == "games" else self.weeks
+
+
+THREE_WEEKS = [{"id": 1, "week_no": 1}, {"id": 2, "week_no": 2}, {"id": 3, "week_no": 3}]
+
+
+def test_a_game_stranded_by_a_rolled_over_week_is_found():
+    """The Labor Day game: ungraded in week 1 while the job is resolving week 2."""
+    sb = GradeSB([{"week_id": 1}], THREE_WEEKS)
+    assert sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2) == [1]
+
+
+def test_the_week_the_job_just_graded_is_not_swept_again():
+    """Otherwise every run would grade the current week twice, for nothing."""
+    sb = GradeSB([{"week_id": 2}], THREE_WEEKS)
+    assert sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2) == []
+
+
+def test_several_stranded_weeks_all_come_back_in_order():
+    sb = GradeSB([{"week_id": 3}, {"week_id": 1}, {"week_id": 1}], THREE_WEEKS)
+    assert sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2) == [1, 3]
+
+
+def test_a_week_with_everything_graded_costs_one_select_and_stops():
+    sb = GradeSB([], THREE_WEEKS)
+    assert sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2) == []
+    assert "weeks" not in sb.queries, "looked up the weeks table with nothing to grade"
+
+
+def test_the_sweep_asks_only_about_slate_games_that_have_kicked_off():
+    """A pool game nobody picked does not matter, and a game still to come is not late."""
+    sb = GradeSB([], THREE_WEEKS)
+    sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2)
+    q = sb.queries["games"]
+    assert "in_slate=eq.true" in q
+    assert "winner_abbr=is.null" in q
+    assert "kickoff=lt." in q
+
+
+def test_a_game_espn_never_grades_is_not_chased_all_season():
+    """A cancellation would otherwise refetch its week every fifteen minutes forever."""
+    now = dt.datetime(2026, 11, 1, tzinfo=dt.timezone.utc)
+    sb = GradeSB([], THREE_WEEKS)
+    sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2, now=now)
+    floor = now - dt.timedelta(days=sync.STALE_GRADE_DAYS)
+    assert "kickoff=gt.%s" % urllib.parse.quote(floor.isoformat()) in sb.queries["games"]
+
+
+def test_the_timestamps_in_the_query_are_url_encoded():
+    """A bare + in a query string decodes to a space, and PostgREST answers 400.
+
+    The live database rejected the first version of this query with
+    "invalid input syntax for type timestamp with time zone" because an aware datetime
+    renders as +00:00. No fake catches it: the encoding only exists over HTTP.
+    """
+    sb = GradeSB([], THREE_WEEKS)
+    sync.weeks_awaiting_grades(sb, 2026, skip_week_no=2,
+                               now=dt.datetime(2026, 9, 4, tzinfo=dt.timezone.utc))
+    assert "+" not in sb.queries["games"], "an unencoded + would arrive as a space"
+    assert "%2B00%3A00" in sb.queries["games"]
+
+
+def test_the_scores_run_grades_the_week_it_did_not_resolve(monkeypatch):
+    """End to end: resolving week 2 still gets week 1's Monday night game graded."""
+    graded = []
+    monkeypatch.setattr(sync, "weeks_awaiting_grades", lambda *a, **k: [1])
+    monkeypatch.setattr(sync, "fetch_calendar", lambda season: [
+        {"week": 1, "label": "Week 1"}, {"week": 2, "label": "Week 2"}])
+    monkeypatch.setattr(sync, "week_by_number",
+                        lambda cal, n: next(w for w in cal if w["week"] == n))
+    monkeypatch.setattr(sync, "sync_scores", lambda sb, a, w: graded.append(w["week"]))
+
+    args = argparse.Namespace(season=2026)
+    sync.sweep_ungraded(None, args, {"week": 2, "label": "Week 2"})
+    assert graded == [1], "week 1's stranded game was never graded"
+
+
+def test_nothing_stranded_means_no_calendar_fetch(monkeypatch):
+    """The common case runs on every scores job, so it has to stay cheap."""
+    monkeypatch.setattr(sync, "weeks_awaiting_grades", lambda *a, **k: [])
+    monkeypatch.setattr(sync, "fetch_calendar", lambda season: pytest.fail(
+        "fetched the ESPN calendar with nothing to sweep"))
+    sync.sweep_ungraded(None, argparse.Namespace(season=2026), {"week": 2})

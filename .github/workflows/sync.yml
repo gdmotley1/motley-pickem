@@ -19,6 +19,14 @@ on:
     # Sunday. Phones read live scores straight from ESPN, so this only has to be
     # timely enough to grade results and fill missed picks at kickoff.
     - cron: '*/15 * * * 4,5,6,0'
+    # Monday through Wednesday, twice an hour. Most weeks this has nothing to do and
+    # says so. It exists because a game can finish after its own week has rolled over:
+    # week 1 of 2026 ends 3am ET Tuesday and holds the Labor Day Monday night game,
+    # SMU at FSU. With Thursday as the next run, --current had already moved to week 2
+    # and that result would never have been graded at all. sweep_ungraded() in
+    # sync_supabase.py is what finds it; this is what gets a job there while it still
+    # matters rather than two days later.
+    - cron: '*/30 * * * 1,2,3'
   workflow_dispatch:
     inputs:
       mode:
@@ -62,7 +70,12 @@ jobs:
         run: python scripts/sync_supabase.py --mode slate --next
 
       - name: Refresh scores, grade finals, auto-pick
-        if: github.event.schedule == '*/15 * * * 4,5,6,0' || inputs.mode == 'scores'
+        # Both score schedules run the same command. The sweep inside it is what makes
+        # the Monday to Wednesday one worth having.
+        if: >-
+          github.event.schedule == '*/15 * * * 4,5,6,0'
+          || github.event.schedule == '*/30 * * * 1,2,3'
+          || inputs.mode == 'scores'
         run: |
           python scripts/sync_supabase.py --mode scores \
             ${{ inputs.week && format('--week {0}', inputs.week) || '--current' }}
