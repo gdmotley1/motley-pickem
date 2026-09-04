@@ -53,3 +53,40 @@ Week 3 that resolves to Week 4, whose games are nine days out with no spreads po
 no slate could be built at all. The primary is now `--current`, with next week as a
 best-effort extra that cannot fail the run.
 
+
+## 2026-09-04 — Pool widened, matchup preview, Slate theme, service worker
+
+Four changes in one session, each of which surfaced a bug in the last.
+
+**The pool is every game.** It was the top 40 by interest out of ~90, and dropped any
+game with no posted line before that cut. Kennesaw State, the example Grant gave, ranked
+39th of 70 alternates with its line posted, so the cap alone put it out of Dad's reach.
+The Setup screen gained search, conference chips and day sections to make ~91 rows usable
+on a phone; migration 007 returns the conference columns get_pool never selected.
+
+**Matchup preview.** A Preview pill on each game row opens a sheet with ESPN's win
+probability, AP ranks, records, each team's last five and the venue and weather. It also
+revived a dead path: TeamPick had always rendered an AP rank that get_slate never
+returned, so the number only ever appeared in the offline demo.
+
+**Slate theme,** chosen from a board of ten rendered as real pick screens. Most of that
+work was routing app.css off the colour ramp onto a semantic contract, 97 declarations,
+because every ramp token had baked "the chrome is green" into the component using it.
+
+**Service worker.** CLAUDE.md had claimed the app was a PWA since the first commit and
+there was no worker, so it installed and then behaved like a bookmark.
+
+**Three bugs the work exposed, all now covered by tests:**
+
+1. `sync_slate` never froze the odds on a played game. Harmless while the pool was built
+   once on Monday; with a bigger pool a mid-week rebuild is ordinary, and it would have
+   nulled the line on 38 of the 40 week 1 games the family had already picked against.
+   The first fix then failed live with PostgREST's "All object keys must match", which
+   `sync_scores` had split its batches to avoid all along.
+2. A correct pick took its points colour from the selection green. The two had always
+   been the same value, so nothing forced them apart until the palette moved.
+3. `--ink-3` carries the 9.5px meta line at 3.2:1, under AA, in an app read by every age
+   in the family.
+
+**Method worth keeping:** every live write was snapshotted first and diffed after. That
+is the only reason "the week 1 rebuild lost nothing" is a fact rather than a hope.

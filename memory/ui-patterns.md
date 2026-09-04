@@ -17,9 +17,13 @@ modern-sports-app and clean-minimal; this is that reversal, made deliberately.
 **How to apply:** This project still does NOT use the house report style. That is for
 Fouts executive PDFs; do not import IBM Plex or the burnt-orange accent here.
 
-The theme board that produced this choice is an artifact, and the other nine are still
-live in it if a future pass wants one:
+The board that produced this choice is an artifact, and the other nine are still live in
+it if a future pass wants one:
 https://claude.ai/code/artifact/e417012f-a327-4883-b138-d95957d1b31a
+
+Rebuild it against the current components with `python scripts/build_theme_board.py`. Its
+token names are src/theme.css's semantic contract verbatim, so a theme read off the board
+is a copy-paste into the palette block rather than a translation.
 
 ## Components name jobs, never colours
 

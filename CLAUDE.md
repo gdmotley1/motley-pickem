@@ -5,7 +5,7 @@
 
 Live: https://gdmotley1.github.io/motley-pickem/ · repo `gdmotley1/motley-pickem`
 Backend is REAL as of 2026-09-03: Supabase project `lugxthfaksdjmvxepryt`, migrations
-001-004 applied, Week 1 published. The app is no longer in mock mode.
+001-007 applied, Week 1 published. The app is no longer in mock mode.
 Deploy with `bash deploy.sh`, which publishes `dist/` to the `gh-pages` branch.
 
 A college football confidence pool for Grant's family. Four people, 20 games a week,
@@ -41,7 +41,7 @@ python scripts/cfb_weeks.py --current          # week in progress
 python scripts/seed_weeks.py --dry-run
 python scripts/seed_weeks.py
 
-# rebuild a week's game pool (40 games, best 20 pre-selected)
+# rebuild a week's pool: every FBS game in the window, best 20 pre-selected
 python scripts/suggest_slate.py --current --out outputs/week01_pool.json
 python scripts/suggest_slate.py --next         # build next week in advance
 python scripts/build_mock_data.py              # refresh the offline demo data
@@ -99,12 +99,16 @@ cfb-pickem/
   CLAUDE.md      <- you are here, always loaded
   memory/        <- durable truth. decisions.md is @-imported.
   docs/          <- handoffs/ for workstreams, project-log.md for history
-  app/           <- backend
-  static/        <- frontend, plus logos/ (138 FBS teams, light and dark)
-  tests/         <- pytest, the gate. fixtures/ is a saved ESPN week, so tests run offline.
-  scripts/       <- fetch_slate, suggest_slate, fetch_teams, resolve_slate
+  src/           <- the React app. screens/, components/, lib/, theme.css + app.css
+  migrations/    <- the backend. Postgres RPCs and RLS; ALL.sql is generated, never edited
+  static/        <- publicDir, copied to the site root: logos/, icons/, manifest, sw.js,
+                    and data/week01.json, the offline demo week
+  tests/         <- pytest, the gate. fixtures/ is a saved ESPN week, so tests run offline
+  scripts/       <- fetch_slate, suggest_slate, sync_supabase, cfb_weeks, seed_weeks,
+                    fetch_teams, resolve_slate, build_mock_data, build_combined_migration
   inputs/        <- source data, read-only
-  outputs/       <- generated, disposable
+  outputs/       <- generated, disposable. harness/ holds throwaway pages that mount the
+                    real screens against a stubbed network; see memory/ui-patterns.md
 ```
 
 ## Detailed reference
