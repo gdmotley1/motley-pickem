@@ -36,6 +36,11 @@ npm run build                                 # must stay clean
 python scripts/cfb_weeks.py                    # whole season
 python scripts/cfb_weeks.py --current          # week in progress
 
+# create a row for all 15 regular season weeks, empty. Safe to re-run; never
+# unpublishes a week. The pool for each is built the week of, when lines exist.
+python scripts/seed_weeks.py --dry-run
+python scripts/seed_weeks.py
+
 # rebuild a week's game pool (40 games, best 20 pre-selected)
 python scripts/suggest_slate.py --current --out outputs/week01_pool.json
 python scripts/suggest_slate.py --next         # build next week in advance

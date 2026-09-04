@@ -136,3 +136,60 @@ def test_every_odds_column_the_row_builder_writes_is_frozen_together():
         "game_row and ODDS_COLUMNS disagree; unfrozen: %s"
         % sorted(from_odds - set(sync.ODDS_COLUMNS))
     )
+
+
+# --------------------------------------------------------------- seeding weeks
+
+# scripts/seed_weeks.py creates a row for all fifteen regular season weeks up front and
+# is safe to re-run. The property that makes it safe is that ensure_week never sends
+# `published`: re-seeding must not unpublish a week the commissioner has already put in
+# front of the family, and week 1 was live with twenty games when this was first run.
+
+
+class RecordingSB:
+    """Captures upsert payloads instead of talking to PostgREST."""
+
+    def __init__(self, existing=None):
+        self.existing = existing or []
+        self.upserts = []
+
+    def select(self, table, query=""):
+        return self.existing
+
+    def upsert(self, table, rows, on_conflict):
+        self.upserts.append({"table": table, "rows": rows, "on_conflict": on_conflict})
+        return rows
+
+
+A_WEEK = {
+    "week": 1,
+    "label": "Week 1",
+    "start": "2026-08-22T07:00:00Z",
+    "end": "2026-09-08T06:59:00Z",
+}
+
+
+def test_reseeding_never_unpublishes_a_live_week():
+    sb = RecordingSB(existing=[{"id": 1, "published": True}])
+    sync.ensure_week(sb, 2026, A_WEEK)
+    sent = sb.upserts[0]["rows"][0]
+    assert "published" not in sent, "re-seeding would hide a published week from the family"
+    assert "published_at" not in sent
+
+
+def test_reseeding_updates_the_existing_row_rather_than_adding_one():
+    sb = RecordingSB(existing=[{"id": 7, "published": False}])
+    sync.ensure_week(sb, 2026, A_WEEK)
+    sent = sb.upserts[0]
+    assert sent["rows"][0]["id"] == 7, "a second row would orphan the week's games"
+    assert sent["on_conflict"] == "season,week_no"
+
+
+def test_a_brand_new_week_carries_the_espn_boundaries():
+    sb = RecordingSB(existing=[])
+    sync.ensure_week(sb, 2026, A_WEEK)
+    sent = sb.upserts[0]["rows"][0]
+    assert "id" not in sent, "serial id must be left to Postgres"
+    assert sent["starts_at"] == A_WEEK["start"]
+    assert sent["ends_at"] == A_WEEK["end"]
+    assert sent["week_no"] == 1
