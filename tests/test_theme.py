@@ -122,3 +122,74 @@ def test_the_display_face_is_actually_loaded():
     assert "family=%s" % name in link.group(1), (
         "%s is the display face but index.html never loads it" % family.group(1)
     )
+
+
+# ------------------------------------------------------ zoom, and the 16px input floor
+
+# The viewport meta used to carry maximum-scale=1. That did suppress the double-tap zoom
+# delay, but it also blocked pinch zoom outright, in an app memory/traps.md describes as
+# "read by every age in the family" and which already had one contrast bug for the same
+# reason. touch-action: manipulation does the double-tap job properly, so the scale cap
+# came off on 2026-09-04.
+#
+# The cap was load-bearing in one place. iOS zooms the page when a focused input renders
+# text under 16px, and .adm__input sat at 14px with a comment saying that was safe
+# because of the cap. With the cap gone, tapping the Setup search box would have zoomed
+# the page. These two tests hold both halves together: they fail if the cap comes back,
+# and they fail if any input drops below the floor that replaced it.
+
+INPUT_FLOOR_PX = 16
+HTML = os.path.join(ROOT, "index.html")
+APP_CSS = os.path.join(SRC, "app.css")
+
+
+def input_classes():
+    """Every className actually used on an <input> in the app."""
+    found = set()
+    for name in os.listdir(os.path.join(SRC, "screens")):
+        if not name.endswith(".jsx"):
+            continue
+        text = read(os.path.join(SRC, "screens", name))
+        for tag in re.findall(r"<input\b[^>]*?/?>", text, re.S):
+            for cls in re.findall(r'className="([^"]+)"', tag):
+                found.update(cls.split())
+    return found
+
+
+def font_size_of(css, klass):
+    rule = re.search(r"\.%s\s*\{(.*?)\}" % re.escape(klass), css, re.S)
+    if not rule:
+        return None
+    sizes = re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", rule.group(1))
+    return float(sizes[-1]) if sizes else None
+
+
+def test_the_viewport_does_not_block_pinch_zoom():
+    """Taking zoom away from a family app is an accessibility regression."""
+    meta = re.search(r'<meta name="viewport"[^>]*>', read(HTML)).group(0)
+    for banned in ("maximum-scale", "user-scalable=no", "user-scalable=0"):
+        assert banned not in meta, "the viewport meta blocks zoom again: %r" % banned
+
+
+def test_tappable_controls_opt_out_of_the_double_tap_delay():
+    """What replaced maximum-scale=1. Without it the cap's removal costs responsiveness."""
+    theme = read(THEME)
+    rule = re.search(r"([^}]*?)\{[^}]*touch-action:\s*manipulation", theme, re.S)
+    assert rule, "no touch-action: manipulation anywhere in theme.css"
+    assert "button" in rule.group(1), "the rule does not reach <button>, and every "\
+                                     "tappable thing in this app is a button"
+
+
+def test_no_input_renders_below_the_size_that_makes_ios_zoom():
+    """An input under 16px zooms the page on focus now that the scale cap is gone."""
+    css = read(APP_CSS) + read(THEME)
+    classes = input_classes()
+    assert classes, "found no <input> classNames to check; did the parser break?"
+    for klass in sorted(classes):
+        size = font_size_of(css, klass)
+        # No rule, or no font-size in it, means it inherits body's 16px. That is fine.
+        if size is None:
+            continue
+        assert size >= INPUT_FLOOR_PX, (
+            ".%s renders at %gpx; iOS will zoom the page when it takes focus"
+            % (klass, size))

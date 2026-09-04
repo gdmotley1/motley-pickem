@@ -140,6 +140,20 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Kills the double-tap-to-zoom delay on anything tappable, without taking pinch zoom
+   away from the page the way `maximum-scale=1` in the viewport meta used to. Scoped to
+   controls on purpose: double-tapping ordinary content should still zoom, which is what
+   a reader expects. Every tappable thing here is a real <button> and there are no drag
+   surfaces, so nothing needs a narrower touch-action. */
+button,
+a,
+input,
+select,
+textarea,
+label {
+  touch-action: manipulation;
+}
+
 html,
 body {
   margin: 0;

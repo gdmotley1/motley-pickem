@@ -1833,10 +1833,12 @@
   border: 0;
   background: none;
   font: inherit;
-  font-size: 14px;
+  /* 16px is the floor that stops iOS zooming the page when this field takes focus.
+     It was 14px to match the controls around it, which was only safe while the viewport
+     meta carried maximum-scale=1. That was dropped so the family can pinch zoom, so this
+     floor is load-bearing now rather than cosmetic. tests/test_theme.py holds it. */
+  font-size: 16px;
   color: var(--ink);
-  /* 16px would stop iOS zooming the page on focus, but 14px matches every other
-     control here and the viewport meta already carries maximum-scale=1. */
   -webkit-appearance: none;
   appearance: none;
 }
