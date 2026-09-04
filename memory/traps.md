@@ -135,6 +135,23 @@ three deliberate shapes:
   expand the touch area with an absolutely positioned `::after` (`.grow__preview`).
 - A text link inside a sentence: opt out with `min-height: 0` and say why (`.adm__reset`).
 
+## Early in the week the auto-slate is SHORT, and that is correct
+
+`--mode slate --next` regularly pre-selects fewer than 20 games. On 2026-09-04 week 2 came
+back with 86 games in the pool and only **16** pre-selected, and `maybe_publish` refused
+with "16 games in the slate, expected 20".
+
+**Why:** `select_slate` draws only from `usable`, which needs a tier, which needs a posted
+line. Vegas had priced 16 of week 2's 86 games that far out. Nothing is broken and the fix
+is not to loosen the tier rule: a confidence pool needs a certainty gradient, and a game
+with no line cannot be placed on one.
+
+**How to apply:** it resolves on its own as the week approaches, so re-run `--mode slate`
+closer to the games. The Setup screen already handles it: all 86 are searchable, the CTA
+reads "Add 4 more", and Dad can fill the gap by hand. Do not treat a short auto-slate as a
+bug, and do not auto-publish around it. Grant's rule stands: every week needs an explicit
+publish step.
+
 ## A game with no line still has to be pickable
 
 Eleven of the 91 games in the 2026-09-05 week showed no line when checked on 2026-09-04.

@@ -90,3 +90,15 @@ there was no worker, so it installed and then behaved like a bookmark.
 
 **Method worth keeping:** every live write was snapshotted first and diffed after. That
 is the only reason "the week 1 rebuild lost nothing" is a fact rather than a hope.
+
+**Open at the end of the session, nothing in flight:**
+
+- Push reminders are the natural next build and need the service worker, which now
+  exists. VAPID keys, an edge function, and a pg_cron trigger a couple of hours before
+  the week's first kickoff. iOS only delivers to a home-screen install, which is how the
+  family uses it.
+- Whether `--accent` should stay the same blue as `--pick`. See memory/ui-patterns.md.
+- Season story stats: weeks won, best week, head-to-head, streaks. get_standings returns
+  points, correct, games and weeks_played, so most of it is a view away.
+- Player leaders in the matchup preview, if wanted, belong in sync_supabase writing a
+  column rather than on the phone. See memory/traps.md.

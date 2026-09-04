@@ -25,6 +25,14 @@ Rebuild it against the current components with `python scripts/build_theme_board
 token names are src/theme.css's semantic contract verbatim, so a theme read off the board
 is a copy-paste into the palette block rather than a translation.
 
+**Open, and Grant's call:** `--accent` and `--pick` are the same blue. That is what the
+theme board showed and what he approved, but the board only rendered three game cards. In
+the whole app the accent also carries the eyebrow, every spread, every AP rank, the lock
+notice, the ESPN-top chip, the leader row and the sign-in kicker, so it reads quite
+mono-blue and the ESPN-top flag no longer stands out as editorial. Raised on 2026-09-04
+and left as-is deliberately. Moving `--accent` to a warm amber against the cool ground,
+keeping `--pick` blue, is a four-line change in the palette block if he ever wants it.
+
 ## Components name jobs, never colours
 
 `src/app.css` may use only semantic tokens. The palette ramp (`--s-*`, `--c-*`, `--b-*`,
