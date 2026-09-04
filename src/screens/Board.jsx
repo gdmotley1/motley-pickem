@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
-import { Avatar, IconLock, Screen, Spinner } from '../components/ui.jsx'
+import { Avatar, Empty, IconClock, IconLock, Screen, Spinner } from '../components/ui.jsx'
 import { WeekScore, ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
 import { withLive } from '../lib/espn.js'
 import { weekScore } from '../lib/weekScore.js'
@@ -87,6 +87,18 @@ export default function Board({ me, weekId, week }) {
 
   if (error) return <p className="err">{error}</p>
   if (!games || !rows || !roster) return <Spinner />
+
+  /* This is the screen the app opens on now, so a week with nothing published has to say
+     so. get_slate joins on weeks.published and returns no rows until Dad hits Publish,
+     which otherwise reads as "All 0 games are open." above an empty page. */
+  if (!games.length)
+    return (
+      <Screen eyebrow={week?.label || 'This week'} title="No slate yet">
+        <Empty icon={<IconClock />} title="Nothing published">
+          Your commissioner has not published this week&apos;s twenty games.
+        </Empty>
+      </Screen>
+    )
 
   const open = games.filter((g) => g.locked)
   const upcoming = games.filter((g) => !g.locked)

@@ -26,7 +26,10 @@ const BASE_TABS = [
 
 export default function App() {
   const [me, setMe] = useState(undefined) // undefined = still checking
-  const [tab, setTab] = useState('picks')
+  // The Board is where the week actually is: scores, everyone's picks, and the running
+  // point totals. Picks is a once-a-week errand, so it is somewhere you go, not where
+  // you land.
+  const [tab, setTab] = useState('board')
   const [menu, setMenu] = useState(false)
   const [week, setWeek] = useState(null)
   const [stale, setStale] = useState(false)
@@ -80,7 +83,7 @@ export default function App() {
     await api.signOut()
     setMenu(false)
     setMe(null)
-    setTab('picks')
+    setTab('board')
   }, [])
 
   if (me === undefined) return <Splash />
