@@ -47,6 +47,34 @@ no-line game is never auto-selected but can always be added by hand. Ninety rows
 scroll well on a phone, so the Setup screen carries a search box and conference filters;
 do not remove them without shrinking the pool again.
 
+## Both sync jobs must freeze odds, and both must split their upserts
+
+`sync_slate` upserted whatever ESPN last said, without `freeze_odds`. ESPN drops the odds
+block once a game is final, so rebuilding a week mid-week nulled `spread_line`,
+`favorite_abbr` and `over_under` on every game already played.
+
+**Why:** it never bit while the pool was a fixed 40 built once on Monday. Widening the
+pool to every game made a mid-week rebuild an ordinary thing to do, and on 2026-09-04
+that rebuild would have erased the line on 38 of the 40 week 1 games the family had
+already picked against, with 80 picks stored. `sync_scores` has guarded this since
+migration 006; `sync_slate` was simply missed. The fix then failed live with
+`PGRST102: All object keys must match`, because freezing removes keys from some rows and
+not others and PostgREST rejects a bulk insert whose objects differ in shape. That is
+exactly why `sync_scores` sends two batches, and the comment saying so was already in the
+file, three functions down, unread.
+
+**How to apply:** any new path that upserts `games` needs both halves. Freeze with
+`freeze_odds(row, state)`, then send the frozen and unfrozen rows as separate
+`sb.upsert` calls. `tests/test_sync.py` now asserts both: that a played game keeps its
+line through a rebuild, and that every batch carries identical keys. Read the sibling
+function before adding a third one.
+
+**Before touching live data, snapshot it.** The week 1 rebuild was done against a saved
+copy of the games and pick counts, then diffed: 40 to 91 games, zero lines lost, zero
+`in_slate` changes on the published week, zero graded winners lost, 80 picks unchanged.
+That diff is the only reason "nothing was lost" is a fact rather than a hope. See
+[[never-wipe-family-data]].
+
 ## ESPN has no pre-game player stats on a game summary
 
 The `leaders` block on `summary?event=<id>` is present but EMPTY until the game has been
