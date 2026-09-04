@@ -1321,11 +1321,21 @@
   gap: 5px;
 }
 
+/* The right padding reserves the number column: 8px edge + 29px column + 9px gap. The
+   number itself is positioned out of the flex flow, see .bpick__pts.
+
+   Every row carries a border, transparent unless it is a hidden one. Only .bpick--hidden
+   used to have it, and a border insets the padding box that an absolutely positioned
+   child resolves against, so those rows placed their number a pixel left of every other
+   row and stood 2px taller besides. The padding is one pixel short on each side to pay
+   for the border, so nothing moved when this was added. */
 .bpick {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7px 9px;
+  padding: 6px 46px 6px 8px;
+  border: 1px solid transparent;
   border-radius: var(--r-sm);
   background: var(--n-100);
   font-size: 13px;
@@ -1352,12 +1362,27 @@
   color: var(--ink-2);
 }
 
+/* The number column, anchored to the row's right edge rather than left to sit at the end
+   of the flex line.
+
+   In the flex line its x depended on every text width before it, and those vary: the
+   masked "hidden" span measures 63.641px, and that fraction moved the whole row. Pinned
+   to the edge, the column lands in exactly one place in all eighty rows on a board. The
+   sign is not given a cell of its own; that lined the digits up but left a hole between
+   the plus and a single digit. Right-aligned tabular figures already put the units digits
+   in a column, which is the alignment that matters. */
 .bpick__pts {
+  position: absolute;
+  right: 9px;
+  top: 0;
+  bottom: 0;
+  width: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   font-family: var(--display);
   font-weight: 700;
   font-size: 15px;
-  min-width: 30px;
-  text-align: right;
 }
 
 .bpick.is-right .bpick__pts {

@@ -143,6 +143,26 @@ export default function Board({ me, weekId, week }) {
 }
 
 /**
+ * The points column.
+ *
+ * Sign and number stay glued together and the whole run is right-aligned, so the units
+ * digits line up and a plus simply hangs to the left of its number. Giving the sign a
+ * fixed cell of its own did line the digits up perfectly, but it left a 9px hole between
+ * "+" and a single digit, and "+ 6" reads as two things rather than one.
+ *
+ * What actually made this column ragged was never the alignment: it was the box moving.
+ * See .bpick__pts and .bpick in app.css.
+ */
+function Pts({ sign = '', children }) {
+  return (
+    <span className="bpick__pts num">
+      {sign}
+      {children}
+    </span>
+  )
+}
+
+/**
  * The line and the total, as they stood before kickoff.
  *
  * Both are read off the stored game row and never from the live ESPN poll, so the
@@ -203,7 +223,7 @@ function LockedGame({ game, roster, me }) {
               {mine ? (
                 <>
                   <span className="bpick__team">{game.my_pick || 'no pick yet'}</span>
-                  <span className="bpick__pts num">{game.my_confidence ?? '—'}</span>
+                  <Pts>{game.my_confidence ?? '—'}</Pts>
                 </>
               ) : (
                 <>
@@ -211,7 +231,7 @@ function LockedGame({ game, roster, me }) {
                     <IconLock />
                     hidden
                   </span>
-                  <span className="bpick__pts num">–</span>
+                  <Pts>–</Pts>
                 </>
               )}
             </div>
@@ -286,7 +306,7 @@ function BoardGame({ game, picks, roster, me }) {
                   {mine ? ' (you)' : ''}
                 </span>
                 <span className="bpick__team">no pick</span>
-                <span className="bpick__pts num">—</span>
+                <Pts>—</Pts>
               </div>
             )
           return (
@@ -308,9 +328,9 @@ function BoardGame({ game, picks, roster, me }) {
                   interesting thing about it, since 18 on the upset of the week and 3 on
                   a game nobody watched read the same. A game still to be graded shows
                   the same number in default ink, and the red wash tells the two apart. */}
-              <span className="bpick__pts num">
-                {p.correct ? `+${p.points}` : p.confidence}
-              </span>
+              <Pts sign={p.correct ? '+' : ''}>
+                {p.correct ? p.points : p.confidence}
+              </Pts>
             </div>
           )
         })}
