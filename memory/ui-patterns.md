@@ -228,6 +228,38 @@ half-transparent with the list showing through it. `liftbarIn` translates only.
 **How to apply:** Keyframes for anything that must stay readable should animate transform
 alone, so a paused animation still leaves the element fully opaque.
 
+## The service worker caches the shell and nothing that talks to a server
+
+`static/sw.js`. Shell and hashed assets cached, logos cached on first use, and every
+non-GET or cross-origin request passed straight through untouched.
+
+**Why:** the app had a manifest and icons from the start, so it installed to a home
+screen and then behaved like a bookmark: every cold launch re-fetched the bundle and the
+logos, and on a weak signal it did not open at all. Added 2026-09-04.
+
+The passthrough is the part that matters. Locking and pick visibility are Postgres RLS
+decisions, and a cache is the one thing that could quietly serve a result those policies
+already refused. Supabase RPCs are POSTs and ESPN is cross-origin, so two early returns
+in the fetch handler keep both out entirely. The cost is deliberate: offline you get the
+app instantly and its own error states where data would be, never yesterday's scores
+dressed up as today's.
+
+**How to apply:** `tests/test_service_worker.py` asserts the negatives, so a change that
+starts caching authenticated data fails the gate. Three details that are easy to undo by
+accident:
+
+- The logo cache is NOT versioned. 276 marks, about 12MB, none of which change when the
+  app deploys. Tying it to `VERSION` re-downloads a week of logos every time.
+- `index.html` is network-first because it carries no content hash. Cache-first on it
+  means a deploy is never picked up.
+- `skipWaiting` plus `clients.claim` is safe *only* because the build emits one bundle
+  with no code splitting, so there is no lazy chunk a swap could miss. Introduce code
+  splitting and this needs rethinking.
+
+Registration is production-only, in `src/main.jsx`. In dev the worker would serve cached
+modules over the top of an edit, which reads as "my change did nothing", and it would sit
+under the `outputs/harness/` pages whose whole purpose is a stubbed network.
+
 ## Team logos are vendored into the repo
 
 All 138 FBS teams, light and dark, 276 PNGs, about 12MB in `static/logos/<espn_team_id>.png`.
