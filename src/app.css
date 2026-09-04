@@ -833,6 +833,39 @@
   letter-spacing: 0;
 }
 
+.grow__preview {
+  /* Pinned to the meta line's own 18px so a repeated row stays pixel-identical, which
+     needs min-height and not height: the global `button { min-height: var(--tap) }`
+     constrains the used height and no `height` at any specificity beats it. */
+  min-height: 18px;
+  height: 18px;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--n-000);
+  color: var(--ink-2);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* The pill is 18px because the row demands it; the thing a thumb hits is 44px. Absolutely
+   positioned so the hit area cannot push the row's height back out. */
+.grow__preview::after {
+  content: '';
+  position: absolute;
+  inset: -13px -10px;
+}
+
+.grow__preview:active {
+  background: var(--n-200);
+}
+
 .grow__tv {
   margin-left: auto;
   display: inline-flex;
@@ -1758,6 +1791,181 @@
   box-shadow: var(--sh-1);
 }
 
+/* --- pool filters -------------------------------------------------------
+   The pool is every FBS game in the week, about ninety of them, so it has to be
+   cuttable before it is any use in the hand. Search first, conferences second. */
+
+.adm__filters {
+  padding: 0 12px;
+  margin-bottom: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.adm__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 11px;
+  /* 44px, not 40: the global `button { min-height: var(--tap) }` gives the clear button
+     a 44px tap target whatever height it is set, and a 40px field left it standing
+     proud of the rounded edge as a grey ellipse. Match the field to the target. */
+  height: var(--tap);
+  border-radius: var(--r-md);
+  background: var(--n-000);
+  border: 1px solid var(--line);
+}
+
+.adm__search:focus-within {
+  border-color: var(--g-500);
+}
+
+.adm__searchicon {
+  color: var(--ink-3);
+  flex: none;
+}
+
+.adm__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+  /* 16px would stop iOS zooming the page on focus, but 14px matches every other
+     control here and the viewport meta already carries maximum-scale=1. */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.adm__input::placeholder {
+  color: var(--ink-3);
+}
+
+/* Safari draws its own clear button on type=search and it sits under ours. */
+.adm__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* The button keeps the full 44px tap target; only the disc inside it is small. */
+.adm__clear {
+  flex: none;
+  width: 36px;
+  align-self: stretch;
+  display: grid;
+  place-items: center;
+  background: none;
+}
+
+.adm__clear span {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--n-200);
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.adm__confs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  /* Bleed to the screen edges so the last chip does not look clipped mid-scroll. */
+  margin: 0 -12px;
+  padding: 2px 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.adm__confs::-webkit-scrollbar {
+  display: none;
+}
+
+.fchip {
+  flex: none;
+  /* No height here. `height` cannot beat the global `button { min-height: var(--tap) }`
+     at any specificity, because min-height constrains height rather than competing with
+     it; only another min-height overrides it, which is what .adm__tab does. 44px is the
+     right size for these on a phone anyway, so take it and shape with padding. */
+  padding: 0 13px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--n-000);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fchip.is-on {
+  background: var(--g-600);
+  border-color: var(--g-600);
+  color: #fff;
+}
+
+.fchip__n {
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.fchip.is-on .fchip__n {
+  color: var(--on-field-2);
+}
+
+.adm__count {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+/* A text link inside a sentence, not a standalone control, so it opts out of the 44px
+   tap minimum: at 44px it padded the count line out by more than a row of its own. */
+.adm__reset {
+  min-height: 0;
+  font: inherit;
+  color: var(--g-600);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* --- day sections ------------------------------------------------------- */
+
+.adm__day + .adm__day {
+  margin-top: 14px;
+}
+
+.adm__dayhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 7px;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+.adm__dayhead::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.adm__daycount {
+  order: 1;
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
 .alist {
   padding: 0 12px;
   display: grid;
@@ -1985,3 +2193,240 @@
 
 
 
+
+
+/* ============================================================ matchup preview
+   The sheet behind the Preview pill on a game row. Sized for a 375px phone: one
+   column, nothing that depends on hover, and every block optional because ESPN
+   legitimately returns nothing for several of them. */
+
+.mu {
+  padding: 2px 16px 8px;
+}
+
+.mu__head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mu__team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+}
+
+.mu__team.is-mine {
+  border-color: var(--g-500);
+  background: var(--g-050);
+}
+
+.mu__name {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.mu__rank {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-right: 3px;
+}
+.mu__rank::before {
+  content: '#';
+  opacity: 0.6;
+}
+
+.mu__rec {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ink-3);
+  min-height: 14px;
+}
+
+.mu__at {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+}
+
+.mu__when {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.mu__sec {
+  padding-top: 12px;
+}
+
+.mu__h {
+  font-family: var(--display);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-bottom: 7px;
+}
+
+.mu__msg {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.mu__loading {
+  padding: 26px 0;
+  display: grid;
+  place-items: center;
+}
+
+.mu__where {
+  font-size: 12px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.mu__wx {
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-3);
+}
+
+/* --- win probability ------------------------------------------------------ */
+
+.pbar {
+  display: grid;
+  grid-template-columns: 52px 1fr 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.pbar__abbr {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pbar__track {
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--n-200);
+  overflow: hidden;
+}
+
+.pbar__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--g-400);
+  /* Width only. A backgrounded tab pauses animations, and a bar that faded in from
+     opacity 0 would strand itself invisible. */
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pbar.is-mine .pbar__fill {
+  background: var(--g-600);
+}
+
+.pbar__pct {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pbar.is-mine .pbar__abbr {
+  color: var(--g-600);
+}
+
+.pbar__mine {
+  margin-left: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--g-600);
+}
+
+/* --- recent form ---------------------------------------------------------- */
+
+.form {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.form__abbr {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.form__tiles {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.form__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px;
+  border-radius: var(--r-xs);
+  background: var(--n-100);
+  min-width: 0;
+}
+
+.form__res {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.form__res--w {
+  background: var(--g-500);
+}
+.form__res--l {
+  background: var(--bad);
+}
+
+.form__opp,
+.form__score {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--ink-3);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

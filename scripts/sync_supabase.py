@@ -2,10 +2,10 @@
 
 Two modes:
 
-  --mode slate    Build the week and its 40-game pool. Creates the weeks row, upserts
-                  every candidate game, and pre-selects the best 20. Never touches
-                  in_slate on a week the commissioner has already published, so a
-                  refresh cannot undo his choices.
+  --mode slate    Build the week and its pool. Creates the weeks row, upserts every FBS
+                  game in the window, about 90 of them, and pre-selects the best 20.
+                  Never touches in_slate on a week the commissioner has already
+                  published, so a refresh cannot undo his choices.
 
   --mode scores   Refresh kickoff times, spreads, live scores and finals for games
                   already in the database, then apply the auto-picks for anyone who
@@ -232,13 +232,35 @@ def sync_slate(sb: Supabase, a, week: dict) -> int:
     # A published week keeps whatever the commissioner chose. Refreshing spreads must
     # never silently reshuffle a slate the family is already picking against.
     published = bool(wk.get("published"))
-    rows = [game_row(g, wk["id"], None if published else (int(g["espn_id"]) in chosen))
-            for g in everything]
 
-    sb.upsert("games", rows, "id")
-    print("upserted %d games (%d pre-selected)%s"
-          % (len(rows), len(chosen), " - slate preserved, week already published"
-             if published else ""))
+    # A game that has already kicked off also keeps the line it was priced at. This job
+    # upserts whatever ESPN last said, and ESPN drops the odds block once a game is
+    # final, so without freeze_odds a mid-week rebuild nulls spread_line, favorite_abbr
+    # and over_under on every game already played. That never bit while the pool was a
+    # fixed 40 built once on Monday. Now that the pool is every game in the week, a
+    # rebuild to reach a game the commissioner asked for is an ordinary thing to do
+    # mid-week, and on 2026-09-04 it would have wiped the line off 38 of the 40 week 1
+    # games the family had already picked. sync_scores has guarded this since migration
+    # 006; this path was simply missed.
+    #
+    # Two batches for the same reason sync_scores uses two: PostgREST rejects a bulk
+    # insert whose objects do not all carry the same keys ("All object keys must
+    # match"), and freezing removes keys from some rows and not others. Splitting on
+    # whether the odds survived keeps each batch uniform. in_slate does not need the
+    # same treatment: it is present or absent for the whole run, never per row.
+    def row_for(g):
+        return game_row(g, wk["id"],
+                        None if published else (int(g["espn_id"]) in chosen))
+
+    fresh = [row_for(g) for g in everything if (g.get("state") or "pre") == "pre"]
+    kicked = [freeze_odds(row_for(g), g.get("state"))
+              for g in everything if (g.get("state") or "pre") != "pre"]
+
+    sb.upsert("games", fresh, "id")
+    sb.upsert("games", kicked, "id")
+    print("upserted %d games, %d still to play and %d already under way (%d pre-selected)%s"
+          % (len(fresh) + len(kicked), len(fresh), len(kicked), len(chosen),
+             " - slate preserved, week already published" if published else ""))
 
     maybe_publish(sb, wk)
     return 0

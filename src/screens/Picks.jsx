@@ -10,9 +10,12 @@ import {
   IconLock,
   Portal,
   Screen,
+  Sheet,
   Spinner,
   Toast,
 } from '../components/ui.jsx'
+import Matchup from '../components/Matchup.jsx'
+import { fetchRankings } from '../lib/matchup.js'
 import { kickoffLabel } from '../lib/format.js'
 
 const DRAFT_KEY = 'pickem.draft.v1'
@@ -267,6 +270,27 @@ export default function Picks({ me, weekId, week, onNavigate }) {
  */
 function ChoosePhase({ games, locked, winners, chosenCount, allChosen, onChoose, onDone }) {
   const total = games.length
+  const [preview, setPreview] = useState(null)
+
+  /**
+   * AP ranks for every team on the board, from one cached ESPN call.
+   *
+   * Not from Postgres: get_slate has never returned a rank, so the #6 that TeamPick has
+   * always been written to render was dead in the real app and only ever showed up in
+   * the offline demo. The poll also moves weekly and independently of the sync job, so
+   * the phone asking ESPN is fresher than a stored column would be. A failure here is
+   * silent by design; a missing rank is not worth an error message.
+   */
+  const [ranks, setRanks] = useState(null)
+  useEffect(() => {
+    let alive = true
+    fetchRankings()
+      .then((r) => alive && setRanks(r))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [])
 
   return (
     <div>
@@ -295,12 +319,25 @@ function ChoosePhase({ games, locked, winners, chosenCount, allChosen, onChoose,
       <ul className="games">
         {games.map((g) => (
           <li key={g.game_id}>
-            <GameRow game={g} picked={winners[g.game_id]} onChoose={onChoose} />
+            <GameRow
+              game={g}
+              picked={winners[g.game_id]}
+              onChoose={onChoose}
+              ranks={ranks}
+              onPreview={setPreview}
+            />
           </li>
         ))}
         {locked.map((g) => (
           <li key={g.game_id}>
-            <GameRow game={g} picked={g.my_pick} onChoose={() => {}} isLocked />
+            <GameRow
+              game={g}
+              picked={g.my_pick}
+              onChoose={() => {}}
+              isLocked
+              ranks={ranks}
+              onPreview={setPreview}
+            />
           </li>
         ))}
       </ul>
@@ -310,11 +347,24 @@ function ChoosePhase({ games, locked, winners, chosenCount, allChosen, onChoose,
           {allChosen ? `Rank my ${total} picks` : `${total - chosenCount} still to pick`}
         </button>
       </div>
+
+      {/* Keyed on the game so switching previews refetches, rather than showing the last
+          one's numbers under the new one's teams. */}
+      <Sheet open={!!preview} onClose={() => setPreview(null)} label="Matchup preview">
+        {preview && (
+          <Matchup
+            key={preview.game_id}
+            game={preview}
+            ranks={ranks}
+            picked={winners[preview.game_id] || preview.my_pick}
+          />
+        )}
+      </Sheet>
     </div>
   )
 }
 
-function GameRow({ game, picked, onChoose, isLocked = false }) {
+function GameRow({ game, picked, onChoose, isLocked = false, ranks, onPreview }) {
   return (
     <div className={`grow${picked ? ' is-done' : ''}${isLocked ? ' is-locked' : ''}`}>
       <div className="grow__meta">
@@ -323,6 +373,16 @@ function GameRow({ game, picked, onChoose, isLocked = false }) {
         <span className="grow__spread num">{api.spreadLabel(game)}</span>
         {isLocked && <span className="chip chip--red">locked</span>}
         {game.tv && <span className="grow__tv">{game.tv}</span>}
+        {/* Last in the row and visually quiet: the two team buttons are the point of this
+            card and nothing here may compete with them for a thumb. The 18px pill gets a
+            real tap target from a pseudo-element rather than by growing the row. */}
+        <button
+          className="grow__preview"
+          onClick={() => onPreview(game)}
+          aria-label={`Matchup preview: ${game.away_abbr} at ${game.home_abbr}`}
+        >
+          Preview
+        </button>
       </div>
 
       <div className="grow__teams">
@@ -332,6 +392,7 @@ function GameRow({ game, picked, onChoose, isLocked = false }) {
           selected={picked === game.away_abbr}
           disabled={isLocked}
           onClick={() => onChoose(game, game.away_abbr)}
+          ranks={ranks}
         />
         <span className="grow__at">{game.neutral_site ? 'vs' : '@'}</span>
         <TeamPick
@@ -340,16 +401,19 @@ function GameRow({ game, picked, onChoose, isLocked = false }) {
           selected={picked === game.home_abbr}
           disabled={isLocked}
           onClick={() => onChoose(game, game.home_abbr)}
+          ranks={ranks}
         />
       </div>
     </div>
   )
 }
 
-function TeamPick({ game, side, selected, disabled, onClick }) {
+function TeamPick({ game, side, selected, disabled, onClick, ranks }) {
   const abbr = game[`${side}_abbr`]
   const school = game[`${side}_school`] || abbr
-  const rank = game[`${side}_rank`]
+  // The live AP poll first. game[side_rank] only ever exists in the offline demo data,
+  // because get_slate has never returned a rank column.
+  const rank = ranks?.get(String(game[`${side}_id`])) ?? game[`${side}_rank`]
   const record = game[`${side}_record`]
 
   return (

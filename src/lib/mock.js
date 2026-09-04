@@ -348,8 +348,9 @@ export async function rpc(fn, args = {}) {
     }
 
     case 'get_pool': {
-      // Admin-only view of the 40-game pool. The real backend exposes this through
-      // get_slate on an unpublished week; the mock keeps it simple.
+      // Admin-only view of the pool, which is every FBS game in the week. The real
+      // backend exposes this through get_slate on an unpublished week; the mock keeps
+      // it simple.
       const me = requireMe(args.p_token)
       if (!me.is_admin) fail('Only an admin can see the pool')
       const w = await week()

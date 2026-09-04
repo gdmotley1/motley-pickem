@@ -12,6 +12,25 @@ export function kickoffLabel(iso) {
   return `${DAY[d.getDay()]} ${time}`
 }
 
+/**
+ * "Saturday, Sep 5" — the heading over a day's games on the Setup screen.
+ *
+ * Local, like every other label here, so it agrees with the kickoff times underneath it
+ * rather than with ESPN's Eastern filing date.
+ */
+export function dayLabel(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
+}
+
+/** Sort/group key for dayLabel: the local calendar date, as "2026-09-05". */
+export function dayKey(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-CA')
+}
+
 /** "in 3h", "in 24m", "kicked off" — used on the countdown chip. */
 export function untilLabel(iso) {
   const ms = new Date(iso).getTime() - Date.now()

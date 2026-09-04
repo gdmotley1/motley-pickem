@@ -8,6 +8,8 @@ works offline. Regenerate the fixture with:
 """
 from __future__ import annotations
 
+import copy
+import datetime as dt
 import json
 import os
 import sys
@@ -203,3 +205,92 @@ def test_the_two_tulanes_are_not_confused():
         by = {g["short_name"]: g for g in json.load(f)["games"]}
     assert "TULN @ DUKE" in by, "Tulane at Duke missing"
     assert "OKST @ TLSA" in by, "Oklahoma State at Tulsa missing"
+
+
+# ---------------------------------------------------------------- the whole pool
+
+WINDOW = (dt.date(2026, 9, 3), dt.date(2026, 9, 6))
+
+
+def build_from(gs):
+    """The real build(), with the two network calls stubbed out by the fixture.
+
+    Games are deep-copied by the caller: build() writes featured, selected and reason
+    back onto whatever it is handed, and `games` is shared with every test above.
+    """
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(suggest_slate, "fetch", lambda start, end: gs)
+        mp.setattr(suggest_slate, "featured_ids", lambda: [])
+        return suggest_slate.build(*WINDOW)
+
+
+@pytest.fixture(scope="module")
+def pool(games):
+    return build_from(copy.deepcopy(games))
+
+
+def test_pool_holds_every_game_in_the_window(pool, games):
+    assert pool["pool_size"] == len(games)
+    assert len(pool["slate"]) + len(pool["alternates"]) == len(games)
+
+
+def test_pool_is_not_capped(pool):
+    """The cap that hid fifty of the ninety-one games in the 2026-09-05 week.
+
+    Dad could not reach a game outside the top forty by interest, which is most of the
+    ones a family actually asks for by name. Asserting the constant is gone as well as
+    the count, because a cap reintroduced quietly is exactly how this regressed.
+    """
+    assert not hasattr(suggest_slate, "POOL_SIZE"),         "a pool cap is back: Dad can no longer reach every game"
+    assert len(pool["alternates"]) > 40
+
+
+def test_slate_and_alternates_never_overlap(pool):
+    picked = {suggest_slate.gid(g) for g in pool["slate"]}
+    spare = {suggest_slate.gid(g) for g in pool["alternates"]}
+    assert not (picked & spare)
+    assert len(picked) + len(spare) == pool["pool_size"]
+
+
+def test_a_game_with_no_line_stays_in_the_pool(games):
+    """West Georgia at Kennesaw State, the game Grant named.
+
+    Checked live on 2026-09-04: it had no posted line, and so did ten other games that
+    week, every one of them already final. ESPN drops the odds block once a game ends,
+    which is why a pool rebuilt mid-weekend used to lose the games already played: the
+    old alternates were filtered through tier_of(), which needs a line.
+
+    The fixture was saved while the line was still up, so the missing line is constructed
+    here rather than waiting for ESPN to drop one again. Kennesaw's own exclusion from the
+    old pool was the forty-game cap, not this; test_pool_is_not_capped covers that.
+    """
+    doctored = copy.deepcopy(games)
+    target = next(g for g in doctored if "KENN" in (g["home"]["abbr"], g["away"]["abbr"]))
+    target["odds"] = {"line": None, "favorite": None, "underdog": None, "over_under": None}
+    assert suggest_slate.tier_of(target) is None, "a game with no line cannot be tiered"
+
+    built = build_from(doctored)
+    reachable = {suggest_slate.gid(g) for g in built["slate"] + built["alternates"]}
+    assert suggest_slate.gid(target) in reachable,         "a game with no line must still be one Dad can add"
+
+
+def test_a_game_with_no_line_is_never_auto_selected(games):
+    """It can be added by hand, but it must not land in the twenty on its own.
+
+    Confidence points need a certainty gradient, and a game with no line cannot be
+    placed on one. This is also what keeps the auto-pick rule honest: with no favourite
+    it would fall back to the home team.
+    """
+    doctored = copy.deepcopy(games)
+    for g in doctored:
+        g["odds"] = {"line": None, "favorite": None, "underdog": None, "over_under": None}
+
+    built = build_from(doctored)
+    assert built["slate"] == [], "no game has a line, so nothing can be auto-selected"
+    assert len(built["alternates"]) == len(games), "every game is still addable by hand"
+
+
+def test_every_auto_selected_game_still_has_a_line(pool):
+    for g in pool["slate"]:
+        assert g["odds"].get("line") is not None, g["short_name"]
+        assert suggest_slate.tier_of(g) is not None, g["short_name"]

@@ -25,17 +25,106 @@ to install and pick.
 **How to apply:** The admin backfill screen is a launch requirement, not a nice-to-have. It
 must accept past games with results already known and set picks without tripping lock rules.
 
-## Weekly pool is 40 games, best 20 pre-selected, one-tap swaps
+## Weekly pool is EVERY game, best 20 pre-selected, one-tap swaps
 
-Dad opens the admin screen and sees 20 games already chosen plus 20 alternates. He swaps
-what he wants and publishes.
+Dad opens the admin screen and sees 20 games already chosen plus every other FBS game in
+the week, about 70 more. He swaps what he wants and publishes.
 
-**Why:** Grant's call. It keeps his dad's editorial role while removing the work of
-scanning a 90-game schedule. Measured against Dad's real 2026-09-05 slate, the pool of 40
-already contained 17 of his 20 and the auto-selected 20 matched 12.
+**Why:** Grant's call, widened on 2026-09-04. The pool used to stop at the top 40 by
+interest and dropped any game with no posted line before that cut. Both filters were
+invisible to the one person they affected. The 2026-09-05 week has 91 FBS games, so 50
+never reached his screen.
 
-**How to apply:** `suggest_slate.POOL_SIZE` is 40 and `SLATE_SIZE` is 20. If Dad routinely
-has to hand-add games, widen the pool rather than retuning the interest score.
+Grant named West Georgia at Kennesaw State as a game Dad would want. Measured against the
+saved fixture it ranked **39th of 70 alternates** by interest and only the top 20 made the
+pool, so the cap alone put it out of reach, with its line posted at 22.5. The cap was the
+whole cause; do not blame the no-line filter for this one. The earlier note here already
+said to widen the pool rather than retune the interest score if this happened.
+
+**How to apply:** `suggest_slate.SLATE_SIZE` is 20 and there is no pool cap. `select_slate`
+still draws the auto-20 from `usable`, which requires a tier and therefore a line, so a
+no-line game is never auto-selected but can always be added by hand. Ninety rows do not
+scroll well on a phone, so the Setup screen carries a search box and conference filters;
+do not remove them without shrinking the pool again.
+
+## ESPN has no pre-game player stats on a game summary
+
+The `leaders` block on `summary?event=<id>` is present but EMPTY until the game has been
+played. Once it is played it holds that game's box score, not season form.
+
+**Why:** Grant asked for "top players" in the matchup preview on 2026-09-04 and this is
+why the sheet does not have them. Checked both ways: a Week 1 upcoming game returned five
+named categories with zero leaders in each, and a completed 2025 game returned
+"Ryan Browne 10/19, 76 YDS, 1 INT", which is that single game, not a season line. So the
+block is worthless as a preview and misleading as a season stat.
+
+**How to apply:** season leaders do exist, at
+`sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/<yr>/types/2/teams/<id>/leaders`,
+CORS-open with headshots. It is a `$ref` chase: one call for the team plus one per
+athlete, so roughly eight requests to fill one matchup sheet. That belongs in
+`scripts/sync_supabase.py` writing a column, not on a phone opening a bottom sheet.
+Also note nobody has season stats in Week 1, so it would render blank for the first
+week or two whatever the source.
+
+## AP rankings are not in the database, and should not be
+
+`get_slate` returns no rank column, so the `#6` that `TeamPick` has always rendered was
+dead in the real app and only ever appeared in the offline demo data.
+
+**Why:** found while wiring the matchup preview. Rather than add a column, the phone now
+fetches the AP poll itself from `/rankings`, once per session, cached, ~35KB, and maps it
+by ESPN **team id**. The poll moves weekly and independently of the sync job, so asking
+ESPN is fresher than a stored column, and it is the same call the Board already makes for
+live scores in spirit: display data the client can own.
+
+**How to apply:** `fetchRankings()` in `src/lib/matchup.js`. Map by team id, never by
+abbreviation. Unranked teams are absent from the map rather than stored as ESPN's 99
+sentinel, so `ranks.get(id)` being undefined is the whole check. A failure is swallowed
+on purpose: a missing rank is not worth an error message on a pick screen.
+
+## A global `button { min-height: var(--tap) }` overrides every smaller height
+
+`--tap` is 44px and the rule is on the bare `button` selector. `height: 24px` on a class
+does not beat it at any specificity, because min-height constrains the used height rather
+than competing with `height` as the same property. Only another `min-height` overrides it,
+which is why `.adm__tab { min-height: 38px }` works and `.adm__clear { height: 24px }` did
+not.
+
+**Why:** cost real time on 2026-09-04 building the Setup screen's filters. Three controls
+were written at their intended size and all three silently came out 44px tall. Only one
+was visible as a bug: a 24px round clear button inside a 40px search field rendered as a
+24x44 grey ellipse standing proud of the field's rounded edge. The other two, a 30px
+conference chip and an inline "show all" text link, just quietly grew, and the text link
+padded its line out by more than a whole row.
+
+**How to apply:** never assume a height you set on a button is the height you get.
+Measure it: `getBoundingClientRect()` in the preview, not the stylesheet. Then pick one of
+three deliberate shapes:
+
+- Free-standing on a phone: take the 44px, it is the right size. `.fchip` does.
+- Must look small but stay tappable: keep the 44px button invisible and put the visible
+  shape in a child (`.adm__clear span`), or pin the visible size with `min-height` and
+  expand the touch area with an absolutely positioned `::after` (`.grow__preview`).
+- A text link inside a sentence: opt out with `min-height: 0` and say why (`.adm__reset`).
+
+## A game with no line still has to be pickable
+
+Eleven of the 91 games in the 2026-09-05 week showed no line when checked on 2026-09-04.
+They render "no line" where the spread goes and carry no tier chip.
+
+**Why:** Checked, and worth knowing before chasing it: all eleven were `state=post`. None
+was a genuinely unpriced upcoming game. ESPN drops the odds block once a game goes final,
+which migration 006 already documents, so this is the same behaviour seen from the pool
+side. The consequence is real anyway: a pool rebuilt mid-weekend used to lose every game
+already played, and now keeps them. Every downstream consumer has to survive a null
+`spread_line`, `favorite_abbr`, `underdog_abbr` and `tier`. `api.spreadLabel` already
+returned "no line"; `api.totalLabel` already returned null.
+
+**How to apply:** Auto-pick falls back to the home team when there is no favourite, which
+is the rule `migrations/005_autopick_favorite_on_cron.sql` already documents. Auto-rank in
+`Picks.jsx` scores a no-line game 0, so it lands mid-table rather than at either extreme.
+Never render a tier chip for a null tier: `.arow__meta` is a fixed 18px, so an empty chip
+element is fine but a missing one must not change the row height.
 
 ## Slate selection order: Georgia, then SEC, then certainty tiers
 

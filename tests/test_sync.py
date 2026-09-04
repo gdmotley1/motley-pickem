@@ -193,3 +193,134 @@ def test_a_brand_new_week_carries_the_espn_boundaries():
     assert sent["starts_at"] == A_WEEK["start"]
     assert sent["ends_at"] == A_WEEK["end"]
     assert sent["week_no"] == 1
+
+
+# ---------------------------------------------------- the slate job freezes odds too
+#
+# freeze_odds being correct is only half of it: both jobs that upsert games have to
+# actually call it. sync_scores has since migration 006; sync_slate did not, and nobody
+# noticed because a fixed 40-game pool was built once on Monday and never rebuilt.
+#
+# Widening the pool to every game in the week changed that. Rebuilding mid-week to reach
+# a game the commissioner asked for is now an ordinary thing to do, and on 2026-09-04 it
+# would have nulled spread_line, favorite_abbr and over_under on 38 of the 40 week 1
+# games the family had already picked, along with 80 stored picks priced against them.
+
+
+class SlateRecorder(FakeSB):
+    """Captures the rows sync_slate upserts. Distinct from the RecordingSB above,
+    which models ensure_week rather than the games upsert."""
+
+    def __init__(self, published):
+        super().__init__(hours_to_kickoff=1, games=20)
+        self._published = published
+        self.rows = []
+        self.batches = []
+
+    def upsert(self, table, rows, on_conflict):
+        # Batches are kept apart as well as accumulated: sync_slate sends two, and the
+        # uniform-keys rule applies within each one rather than across both.
+        if table == "games":
+            self.batches.append(rows)
+            self.rows.extend(rows)
+        return [{"id": 1, "published": self._published}]
+
+    def _request(self, method, path, body=None, prefer=""):
+        if method == "PATCH" and "weeks" in path and (body or {}).get("published"):
+            self.published = True
+        return None
+
+
+def a_pool_game(espn_id, state, line):
+    """The shape suggest_slate.build hands back, trimmed to what game_row reads."""
+    return {
+        "espn_id": espn_id,
+        "state": state,
+        "kickoff_utc": "2026-09-05T16:00Z",
+        "home": {"id": "84", "abbr": "IU", "school": "Indiana", "conference_id": "5"},
+        "away": {"id": "249", "abbr": "UNT", "school": "North Texas", "conference_id": "151"},
+        "odds": {"line": line, "favorite": "IU" if line else None,
+                 "underdog": "UNT" if line else None, "over_under": 56.5 if line else None},
+        "interest": 10.0,
+        "featured": False,
+    }
+
+
+def run_slate(monkeypatch, pool_games, published):
+    sb = SlateRecorder(published)
+    slate = pool_games[:1]
+    monkeypatch.setattr(sync, "build_pool", lambda *a, **k: {
+        "slate": slate, "alternates": pool_games[1:]})
+    monkeypatch.setattr(sync, "ensure_week", lambda *a, **k: {"id": 1, "published": published})
+    monkeypatch.setattr(sync, "date_range", lambda w: (dt.date(2026, 9, 3), dt.date(2026, 9, 6)))
+    monkeypatch.setattr(sync, "maybe_publish", lambda *a, **k: None)
+    sync.sync_slate(sb, type("A", (), {"season": 2026})(), {"label": "Week 1"})
+    run_slate.last = sb
+    return {r["id"]: r for r in sb.rows}
+
+
+@pytest.mark.parametrize("published", [True, False])
+def test_rebuilding_a_week_never_nulls_the_line_on_a_played_game(monkeypatch, published):
+    """ESPN returns no odds for a final, so the columns must be absent, not null."""
+    rows = run_slate(monkeypatch, [
+        a_pool_game(1, "pre", 6.5),      # still to play: ESPN's line is the live one
+        a_pool_game(2, "post", None),    # already final: ESPN has dropped the block
+    ], published)
+
+    for column in sync.ODDS_COLUMNS:
+        assert column not in rows[2], (
+            "%s reached the upsert for a finished game and would overwrite the stored "
+            "pre-kickoff value with null" % column)
+
+
+@pytest.mark.parametrize("published", [True, False])
+def test_rebuilding_a_week_still_updates_the_line_on_a_game_to_come(monkeypatch, published):
+    """Freezing must not go so far that a line can never move before kickoff."""
+    rows = run_slate(monkeypatch, [
+        a_pool_game(1, "pre", 6.5),
+        a_pool_game(2, "post", None),
+    ], published)
+
+    assert rows[1]["spread_line"] == 6.5
+    assert rows[1]["favorite_abbr"] == "IU"
+    assert rows[1]["over_under"] == 56.5
+
+
+def test_rebuilding_a_published_week_leaves_the_slate_alone(monkeypatch):
+    """The commissioner's twenty survive a rebuild; an unpublished week is re-picked."""
+    games = [a_pool_game(1, "pre", 6.5), a_pool_game(2, "pre", 3.0)]
+
+    published = run_slate(monkeypatch, games, True)
+    assert all("in_slate" not in r for r in published.values()), (
+        "a published week must not have in_slate written at all")
+
+    draft = run_slate(monkeypatch, games, False)
+    assert draft[1]["in_slate"] is True and draft[2]["in_slate"] is False
+
+
+def test_each_upsert_batch_carries_identical_keys(monkeypatch):
+    """PostgREST rejects a bulk insert whose objects differ in shape.
+
+    Found in production on 2026-09-04, not by a test: freezing the odds on the finished
+    games and not on the rest put two shapes in one batch, and the whole week 1 rebuild
+    came back "PGRST102: All object keys must match". The week was left untouched, which
+    is the only reason it was harmless. sync_scores has split its batches for this reason
+    all along; sync_slate now does too.
+    """
+    run_slate(monkeypatch, [
+        a_pool_game(1, "pre", 6.5),
+        a_pool_game(2, "pre", 3.0),
+        a_pool_game(3, "post", None),
+        a_pool_game(4, "in", None),
+    ], published=False)
+
+    batches = [b for b in run_slate.last.batches if b]
+    assert len(batches) == 2, "expected the played and unplayed games to go separately"
+    for batch in batches:
+        shapes = {frozenset(r) for r in batch}
+        assert len(shapes) == 1, (
+            "a batch mixed %d row shapes; PostgREST would reject the whole upsert"
+            % len(shapes))
+
+    # And the two batches really are different shapes, or the split proves nothing.
+    assert frozenset(batches[0][0]) != frozenset(batches[1][0])

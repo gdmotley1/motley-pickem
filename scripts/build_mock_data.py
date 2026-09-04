@@ -16,6 +16,8 @@ import re
 import sys
 import urllib.request
 
+from suggest_slate import conf_id, tier_of
+
 
 def team_id_from_logo(team: dict):
     """ESPN files every logo as .../teamlogos/ncaa/500/<team_id>.png.
@@ -37,6 +39,7 @@ def row(g: dict) -> dict:
         "home_id": team_id_from_logo(g["home"]),
         "home_abbr": g["home"]["abbr"],
         "home_school": g["home"].get("school"),
+        "home_conf": conf_id(g["home"]),
         "home_logo": g["home"].get("logo"),
         "home_rank": None if g["home"].get("rank", 99) >= 99 else g["home"]["rank"],
         "home_record": g["home"].get("record"),
@@ -45,6 +48,7 @@ def row(g: dict) -> dict:
         "away_id": team_id_from_logo(g["away"]),
         "away_abbr": g["away"]["abbr"],
         "away_school": g["away"].get("school"),
+        "away_conf": conf_id(g["away"]),
         "away_logo": g["away"].get("logo"),
         "away_rank": None if g["away"].get("rank", 99) >= 99 else g["away"]["rank"],
         "away_record": g["away"].get("record"),
@@ -56,7 +60,7 @@ def row(g: dict) -> dict:
         "favorite_abbr": o.get("favorite"),
         "underdog_abbr": o.get("underdog"),
         "over_under": o.get("over_under"),
-        "tier": g.get("tier"),
+        "tier": tier_of(g),
         "interest": g.get("interest"),
         "featured": bool(g.get("featured")),
         "state": g.get("state") or "pre",

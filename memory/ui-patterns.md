@@ -87,6 +87,28 @@ applied on arrival rather than behind a button, with "Reset to spread" to get ba
 manual/auto distinction is the `touched` flag in the draft: once a player moves anything,
 the spread sort stops re-applying.
 
+## The matchup preview is a bottom sheet, opened from a quiet pill
+
+Every game row on the choose step carries a small "Preview" pill at the right of its meta
+line. Tapping it opens a `Sheet` with the AP ranks, ESPN's win probability, both records,
+each team's last five games and the venue and weather.
+
+**Why:** Grant asked for it on 2026-09-04. The win probability leads because the only
+question the sheet exists to answer is how confident to be, and "ESPN says 65%" settles
+whether a game is your 20 or your 14 better than any single team statistic.
+
+**How to apply:** the pill is deliberately the quietest thing on the card. The two team
+buttons are the point of that row and nothing may compete with them for a thumb, so the
+pill is 18px, uses the meta line's existing height, and gets a real 44px tap target from
+an absolutely positioned `::after` rather than by growing the row. Data comes from
+`src/lib/matchup.js`; the sheet must render with any of win probability, form, weather or
+venue missing, because ESPN legitimately returns none of them for a finished game.
+
+**Not available after you submit.** The preview lives in `ChoosePhase`, so once picks are
+in, the `Done` screen has no previews and no ranks. That was the scope Grant asked for
+("when you're picking games"). Adding it to `Done` and `Board` is a small change if it
+ever comes up.
+
 ## Repeated rows must be pixel-identical, chip or no chip
 
 Any badge inside a list row is fixed at 18px tall and its meta line is fixed to match.

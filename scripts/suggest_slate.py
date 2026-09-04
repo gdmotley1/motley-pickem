@@ -1,7 +1,19 @@
 """Build the weekly game pool and the auto-selected 20 for Dad to approve.
 
-Produces a POOL of 40 games. The best 20 are pre-selected; the other 20 are alternates
-the admin screen can swap in with one tap.
+Produces a POOL of EVERY FBS game in the window, about 90 of them. The best 20 are
+pre-selected; the rest are alternates the admin screen can swap in with one tap.
+
+The pool used to stop at the top 40 by interest, and dropped any game with no posted
+line before that cut. Both filters were invisible to the person they affected. The
+2026-09-05 week has 90 FBS games, so 50 never reached the admin screen at all.
+
+Measured against the saved fixture, West Georgia at Kennesaw State ranked 39th of the 70
+alternates by interest while only the top 20 made the pool, so the cap alone put it out
+of reach even with its line posted at 22.5. That is the game Grant named. The no-line
+filter is a second cut, and a quieter one: ESPN stops publishing odds once a game goes
+final, so a pool rebuilt mid-weekend loses every game already played.
+
+Dad has to be able to find a game the family cares about, whatever Vegas thinks of it.
 
 Selection order, per Grant on 2026-09-03:
   1. Georgia's game. Always, no matter the spread.
@@ -34,7 +46,6 @@ FEATURED = ("https://site.api.espn.com/apis/v2/scoreboard/header"
             "?sport=football&league=college-football")
 
 SLATE_SIZE = 20
-POOL_SIZE = 40
 
 SEC_CONFERENCE_ID = 8
 SEC_MINIMUM = 5                 # SEC games guaranteed in the 20, Georgia counting as one
@@ -169,8 +180,9 @@ def build(start: dt.date, end: dt.date, week: dict | None = None) -> dict:
     slate, reasons = select_slate(games)
     picked = {gid(g) for g in slate}
 
-    alternates = sorted((g for g in games if gid(g) not in picked and tier_of(g)),
-                        key=rank_key)[:POOL_SIZE - len(slate)]
+    # Everything else, uncut. A game with no line stays in: it cannot be tiered and so
+    # can never be auto-selected into the 20, but Dad can still add it by hand.
+    alternates = sorted((g for g in games if gid(g) not in picked), key=rank_key)
 
     for g in slate:
         g["selected"] = True
