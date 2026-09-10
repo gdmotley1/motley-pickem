@@ -2830,3 +2830,25 @@
   border-radius: 50%;
   flex: none;
 }
+
+/* TEMPORARY, with src/components/Diag.jsx. Delete both once the tab bar gap is fixed. */
+.diag {
+  margin: 0 0 4px;
+  padding: 7px 10px;
+  background: #10151c;
+  color: #7dffb2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9.5px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.diag p {
+  margin: 0;
+}
+
+.diag__h {
+  color: #ffc425;
+  font-weight: 700;
+  margin-bottom: 3px !important;
+}

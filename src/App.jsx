@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import * as api from './lib/api.js'
 import { newBuildAvailable } from './lib/version.js'
 import TeamPicker from './components/TeamPicker.jsx'
+// TEMPORARY: reading the tab bar gap off Grant's phone. Remove with src/components/Diag.jsx.
+import Diag from './components/Diag.jsx'
 import { loadTeams } from './lib/teams.js'
 import SignIn from './screens/SignIn.jsx'
 import Picks from './screens/Picks.jsx'
@@ -222,6 +224,7 @@ export default function App() {
           transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           className="app__page"
         >
+          {me.id === 1 && <Diag />}
           {tab === 'picks' && (
             <Picks me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
