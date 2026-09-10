@@ -413,11 +413,14 @@
   letter-spacing: 0.02em;
 }
 
+/* The pre-mount loader, shown while whoami resolves. `height` to match the rest of the
+   shell: `flex: 1` inside #root already fills it, and a stray min-height: 100dvh is the
+   one declaration that could push a child past a viewport-height parent again. */
 .splash {
   flex: 1;
   display: grid;
   place-items: center;
-  min-height: 100dvh;
+  height: 100%;
   background: var(--field);
 }
 
