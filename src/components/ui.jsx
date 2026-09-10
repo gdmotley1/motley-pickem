@@ -255,6 +255,16 @@ export const IconTrophy = () => (
   </svg>
 )
 
+/* The season: a rising line, which is what that tab's form chart draws. */
+export const IconSeason = () => (
+  <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none">
+    <path d="M4 4v15a1 1 0 0 0 1 1h15" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" />
+    <path d="m8 15 3.5-4 3 2.5L20 7" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+)
+
 export const IconAdmin = () => (
   <svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true" fill="none">
     <path
