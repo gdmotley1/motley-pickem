@@ -7,13 +7,15 @@ import { loadTeams } from './lib/teams.js'
 import SignIn from './screens/SignIn.jsx'
 import Picks from './screens/Picks.jsx'
 import Board from './screens/Board.jsx'
-import Standings from './screens/Standings.jsx'
+import Week from './screens/Week.jsx'
+import Season from './screens/Season.jsx'
 import Admin from './screens/Admin.jsx'
 import {
   Avatar,
   IconAdmin,
   IconBoard,
   IconPicks,
+  IconSeason,
   IconTrophy,
   Sheet,
 } from './components/ui.jsx'
@@ -66,7 +68,8 @@ const rememberedWeek = () => {
 const BASE_TABS = [
   { id: 'picks', label: 'Picks', Icon: IconPicks },
   { id: 'board', label: 'Board', Icon: IconBoard },
-  { id: 'standings', label: 'Standings', Icon: IconTrophy },
+  { id: 'week', label: 'Week', Icon: IconTrophy },
+  { id: 'season', label: 'Season', Icon: IconSeason },
 ]
 
 export default function App() {
@@ -223,7 +226,8 @@ export default function App() {
             <Picks me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
           {tab === 'board' && <Board me={me} weekId={weekId} week={week} />}
-          {tab === 'standings' && <Standings me={me} weekId={weekId} />}
+          {tab === 'week' && <Week me={me} weekId={weekId} week={week} />}
+          {tab === 'season' && <Season />}
           {tab === 'admin' && <Admin me={me} weekId={weekId} />}
         </motion.div>
       </main>

@@ -102,6 +102,15 @@ export const getBoard = (weekId) => rpc('get_board', withToken({ p_week: weekId 
 export const getStandings = () => rpc('get_standings', withToken({}))
 
 /**
+ * One row per player per week, for the Season tab.
+ *
+ * Weekly rather than cumulative because ranking efficiency cannot be recovered from
+ * season totals: a week's ceiling depends on that week's shape, so the season ceiling is
+ * the sum of the weekly ones. See migrations/010_get_season.sql.
+ */
+export const getSeason = () => rpc('get_season', withToken({}))
+
+/**
  * picks: [{ game_id, pick, confidence }] for the whole slate.
  * The server rejects a partial set, a repeated confidence value, or any change to a
  * game that has kicked off, so the UI never has to be the last line of defence.
