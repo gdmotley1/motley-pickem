@@ -1754,6 +1754,63 @@
   color: var(--lead);
 }
 
+/* ---------------------------------------------------------- the light cut ---
+   W1, chosen 2026-09-10. The Week tab is followed by Ranking, Your week, Upsets and the
+   numbers, all light, so the dark bug had nothing to be laid over and read as a slab
+   from another app. On the Board it stays dark, because twenty white game cards
+   underneath are exactly what a broadcast graphic is supposed to sit on.
+
+   Every bone survives: the colour block, the seed, condensed caps, the record, the big
+   tabular score, the progress rule. Only the chrome flips. The blocks need no change at
+   all, since they are the schools' own dark colours and read harder on white than they
+   ever did on black. */
+.bug--light {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  box-shadow: var(--sh-1);
+}
+
+.bug--light .bug__top {
+  background: var(--sunk);
+  border-bottom: 1px solid var(--line);
+}
+
+.bug--light .bug__wk,
+.bug--light .bug__of,
+.bug--light .bugrow__gap,
+.bug--light .bugrow__rec,
+.bug--light .bugrow__you {
+  color: var(--ink-3);
+}
+
+.bug--light .bugrow {
+  border-top: 1px solid var(--line);
+}
+
+/* The one thing that cannot come across. --lead is #ffd25a, which measures 10.8:1 on the
+   bug's near-black and about 1.5:1 on this card. The app's blue is the only colour left
+   that does not already mean right, wrong or live. */
+.bug--light .bugrow.is-leader .bugrow__pts {
+  color: var(--accent-deep);
+}
+
+.bug--light .bugrule {
+  background: var(--well);
+}
+
+/* A white ring reads as nothing on a white card, so the disc keeps only the hairline it
+   uses everywhere else in the app. */
+.bug--light .bugrow__mark {
+  box-shadow: inset 0 0 0 1px rgba(19, 26, 34, 0.12);
+}
+
+.bug--light .bug__foot {
+  background: var(--sunk);
+  color: var(--ink-3);
+  border-top: 1px solid var(--line);
+}
+
 /* The Week tab's extra column. The Board omits it: down there the game cards below ARE
    the record, and a fifth column on a 390px phone costs the name its ellipsis. */
 .bug--rec .bugrow {

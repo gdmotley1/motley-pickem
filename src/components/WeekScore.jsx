@@ -161,14 +161,22 @@ function footline(score, mine) {
  *                  said nothing and looked like the feature was missing.
  * @param record    Show each player's correct-wrong beside the score. The Week tab wants
  *                  it; the Board does not have the room.
+ * @param light     Flip the chrome. The Board keeps the dark cut, where twenty white game
+ *                  cards underneath are what a broadcast graphic is meant to sit on. The
+ *                  Week tab is followed by light content and has nothing to sit on, so
+ *                  the same component there read as a slab from another app.
  */
 export function WeekScore({
-  score, cardRef, me, label = 'This week', skeleton = false, record = false, note, foot,
+  score, cardRef, me, label = 'This week', skeleton = false, record = false,
+  light = false, note, foot,
 }) {
   const { best, players, total } = score
   const mine = players.find((p) => p.id === me?.id)
   return (
-    <div className={`bug bug--dark${record ? ' bug--rec' : ''}`} ref={cardRef}>
+    <div
+      className={`bug bug--${light ? 'light' : 'dark'}${record ? ' bug--rec' : ''}`}
+      ref={cardRef}
+    >
       <Top score={score} label={label} note={note} />
       {players.map((p) => (
         <Row key={p.id} p={p} best={best} total={total} mine={p.id === me?.id}

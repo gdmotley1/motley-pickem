@@ -136,6 +136,7 @@ export default function Week({ me, weekId, week }) {
               label={label}
               skeleton
               record
+              light
               note={`0 of ${score.slateSize}`}
               foot={`Out of ${score.total}. Points appear here as games go final.`}
             />
@@ -170,7 +171,7 @@ export default function Week({ me, weekId, week }) {
             : 'Ties stand. The write-up lands once every game has finished.'
         }
       >
-        <WeekScore score={score} me={me} label={label} record />
+        <WeekScore score={score} me={me} label={label} record light />
 
         {recap.complete && mine && <YourWeek p={mine} />}
         {recap.complete && <Ranking players={recap.players} />}

@@ -1,0 +1,237 @@
+/* Options board: five ways to make the Week tab's scoreboard sit inside a light app.
+   Everything below the doc chrome is the app exactly as it ships, plus one variant
+   block per option. The context matters more than the block here, so every sample is
+   followed by the light Ranking section the real screen puts underneath it. */
+:root{
+  --ground:#eceff3; --panel:#ffffff; --edge:#d8dfe6;
+  --ink:#131a22; --ink-2:#48535e; --ink-3:#5c6873; --mark:#2f6fed; --warn:#b0560f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#11161d; --panel:#1a212a; --edge:#2c3540;
+    --ink:#eef2f6; --ink-2:#b6c1cc; --ink-3:#8c99a6; --mark:#6a9bf5; --warn:#e2934a;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#11161d; --panel:#1a212a; --edge:#2c3540;
+  --ink:#eef2f6; --ink-2:#b6c1cc; --ink-3:#8c99a6; --mark:#6a9bf5; --warn:#e2934a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1340px;margin:0 auto;padding:44px 22px 90px}
+h1,h2,h3{font-family:'Archivo',Helvetica,Arial,sans-serif;letter-spacing:-.025em;margin:0}
+.doc__eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mark);margin:0 0 10px}
+.doc__title{font-size:42px;font-weight:700;line-height:1.06}
+.doc__sub{color:var(--ink-2);max-width:68ch;margin:14px 0 0;font-size:16.5px}
+section{margin-top:54px}
+.sec__h{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);padding-bottom:9px;border-bottom:1px solid var(--edge);margin-bottom:22px}
+.sec__lede{color:var(--ink-2);max-width:74ch;margin:0 0 26px}
+.callout{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--warn);
+  border-radius:0 8px 8px 0;padding:16px 18px;margin:0 0 26px;max-width:78ch}
+.callout p{margin:0 0 10px;color:var(--ink-2);font-size:14.5px}
+.callout p:last-child{margin-bottom:0}
+.callout b{color:var(--ink)}
+.rec{background:var(--panel);border:1px solid var(--edge);border-radius:10px;
+  padding:20px 22px;max-width:78ch}
+.rec h3{font-size:17px;margin-bottom:8px}
+.rec p{margin:0 0 10px;color:var(--ink-2)}
+.rec p:last-child{margin-bottom:0}
+.rec b{color:var(--ink)}
+.mono{font-family:'Cascadia Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px}
+.row{display:flex;flex-wrap:wrap;gap:32px 24px;align-items:flex-start}
+.opt{margin:0;width:372px;flex:0 0 auto}
+.opt__cap{font-family:'Archivo',sans-serif;font-weight:700;font-size:16.5px;
+  margin-bottom:3px;display:flex;align-items:baseline;gap:8px}
+.opt__cap .tag{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:#fff;background:var(--mark);border-radius:99px;padding:2px 8px}
+.opt__kind{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 11px}
+.opt__note{color:var(--ink-2);font-size:13.5px;line-height:1.55;margin:11px 3px 0}
+.opt__note b{color:var(--ink)}
+.ph{width:372px;border:1px solid var(--edge);border-radius:16px;overflow:hidden;
+  box-shadow:0 10px 26px rgba(19,26,34,.16)}
+
+/* ------------------------------------------- the app exactly as it ships today */
+.ph{
+  --page:#f3f6f8; --card:#f8fafb; --surface:#ffffff; --sunk:#eef2f6; --well:#e7ecf1;
+  --line:#dde4eb; --line-strong:#c9d2dc;
+  --ink:#131a22; --ink-2:#48535e; --ink-3:#5c6873;
+  --field:#28313d; --field-deep:#10151c; --on-field:#f2f6fa; --on-field-2:#97a5b3;
+  --accent:#2f6fed; --accent-deep:#1f56c4; --accent-wash:#eaf1fe; --accent-bright:#6a9bf5;
+  --good:#177541; --bad:#c33c2c; --lead:#ffd25a;
+  --display:'Archivo',Helvetica,Arial,sans-serif;
+  --ui:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --sh-1:0 1px 1px rgba(19,26,34,.04), 0 1px 3px rgba(19,26,34,.05);
+  background:var(--page);color:var(--ink);font-family:var(--ui);font-size:16px;
+  line-height:1.45;padding-bottom:12px;
+}
+.ph .num{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:'tnum' 1}
+.apphdr{display:flex;align-items:center;gap:10px;padding:11px 13px;
+  background:var(--field);color:var(--on-field)}
+.apphdr__ttl{flex:1;font-family:var(--display);font-size:15px;font-weight:700}
+.apphdr__wk{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--on-field-2)}
+.wknav{display:flex;align-items:center;gap:8px;padding:8px 12px 4px}
+.wknav__arrow{width:30px;height:30px;border-radius:8px;background:var(--card);
+  border:1px solid var(--line);color:var(--ink-2);display:grid;place-items:center;
+  font-size:13px;font-weight:700}
+.wknav__mid{flex:1;text-align:center}
+.wknav__mid b{display:block;font-family:var(--display);font-size:14px;font-weight:700}
+.wknav__mid i{font-style:normal;font-size:10px;color:var(--ink-3)}
+.screen{padding:12px 13px 6px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent-deep);margin-bottom:5px}
+.h1{font-family:var(--display);font-size:23px;font-weight:700;letter-spacing:-.025em;
+  margin:0;line-height:1.15}
+.h2{font-family:var(--display);font-size:17px;font-weight:700;margin:0}
+.sub{color:var(--ink-3);font-size:12.5px;line-height:1.5;margin:5px 0 0}
+.avatar{display:grid;place-items:center;border-radius:50%;color:#fff;
+  font-family:var(--display);font-weight:700;flex:none;line-height:1}
+.avatar--team{overflow:hidden;box-shadow:inset 0 0 0 1px rgba(19,26,34,.12)}
+.avatar--team img{object-fit:contain;display:block}
+
+/* the shipped scorebug, with the Week tab's record column */
+.bug{margin:9px 12px 12px;border-radius:6px;overflow:hidden;font-family:var(--display);
+  background:var(--field-deep);color:var(--on-field);box-shadow:0 2px 6px rgba(19,26,34,.18)}
+.bug__top{display:flex;align-items:center;gap:8px;padding:6px 9px;
+  background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.1)}
+.bug__wk{flex:1;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  font-stretch:condensed;color:var(--on-field-2)}
+.bug__of{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  font-stretch:condensed;color:var(--on-field-2)}
+.bugrow{position:relative;display:grid;grid-template-columns:46px 1fr auto auto 26px;
+  align-items:center;gap:8px;min-height:44px;padding-right:9px;
+  border-top:1px solid rgba(255,255,255,.07)}
+.bugrow:first-of-type{border-top:0}
+.bugrow__block{position:relative;align-self:stretch;display:grid;place-items:center}
+.bugrow__seed{position:absolute;top:2px;left:5px;font-size:9px;font-weight:700;
+  font-stretch:condensed;color:rgba(255,255,255,.92)}
+.bugrow__mark{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.bugrow__name{min-width:0;font-size:15px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;font-stretch:condensed;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.bugrow__you{margin-left:6px;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+  font-stretch:condensed;color:var(--on-field-2)}
+.bugrow__rec{font-size:10.5px;font-weight:700;font-stretch:condensed;color:var(--on-field-2)}
+.bugrow__pts{font-size:20px;font-weight:700;text-align:right}
+.bugrow.is-leader .bugrow__pts{color:var(--lead)}
+.bugrow__gap{font-size:10.5px;font-weight:700;font-stretch:condensed;text-align:right;
+  color:var(--on-field-2)}
+.bugrule{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.07)}
+.bugrule i{position:absolute;top:0;bottom:0;left:0;display:block}
+.bug__foot{padding:7px 9px;font-family:var(--ui);font-size:10px;font-weight:600;
+  color:var(--on-field-2);background:rgba(255,255,255,.04);
+  border-top:1px solid rgba(255,255,255,.08)}
+
+/* the light Ranking block the real screen puts underneath, for context */
+.ctx{padding:4px 13px 0}
+.ctx h3{font-family:var(--display);font-size:16px;font-weight:700;margin:8px 0 2px}
+.ctx p{margin:0 0 9px;font-size:12px;color:var(--ink-3);line-height:1.45}
+.bars{padding:0 12px;display:grid;gap:7px}
+.bar{display:grid;grid-template-columns:52px 1fr 34px;align-items:center;gap:9px}
+.bar__name{font-size:12px;font-weight:700}
+.bar__track{height:11px;border-radius:99px;background:var(--well);overflow:hidden}
+.bar__fill{display:block;height:100%;border-radius:99px}
+.bar__val{font-family:var(--display);font-size:14px;font-weight:700;text-align:right}
+
+/* ======================================================== THE FIVE ======== */
+
+/* W1 LIGHT BUG. Every structural thing that makes it read as a scoreboard survives;
+   only the chrome flips. Gold cannot: on a light card it is illegible, so the leader
+   takes the app's accent instead. */
+.wk1 .bug{background:var(--card);border:1px solid var(--line);color:var(--ink);
+  box-shadow:var(--sh-1)}
+.wk1 .bug__top{background:var(--sunk);border-bottom:1px solid var(--line)}
+.wk1 .bug__wk,.wk1 .bug__of,.wk1 .bugrow__gap,.wk1 .bugrow__rec,.wk1 .bugrow__you,
+.wk1 .bug__foot{color:var(--ink-3)}
+.wk1 .bugrow{border-top:1px solid var(--line)}
+.wk1 .bugrow.is-leader .bugrow__pts{color:var(--accent-deep)}
+.wk1 .bugrule{background:var(--well)}
+.wk1 .bug__foot{background:var(--sunk);border-top:1px solid var(--line)}
+.wk1 .bugrow__mark{box-shadow:0 0 0 2px var(--card),inset 0 0 0 1px rgba(19,26,34,.12)}
+
+/* W2 DARK HEAD, LIGHT ROWS. The band that says which week and how far through stays a
+   broadcast graphic; the people underneath are app. */
+.wk2 .bug{background:var(--card);border:1px solid var(--line);color:var(--ink)}
+.wk2 .bug__top{background:var(--field-deep);color:var(--on-field);
+  border-bottom:0;padding:8px 10px}
+.wk2 .bug__wk,.wk2 .bug__of{color:var(--on-field-2)}
+.wk2 .bugrow{border-top:1px solid var(--line)}
+.wk2 .bugrow:first-of-type{border-top:0}
+.wk2 .bugrow.is-leader .bugrow__pts{color:var(--accent-deep)}
+.wk2 .bugrow__gap,.wk2 .bugrow__rec,.wk2 .bugrow__you{color:var(--ink-3)}
+.wk2 .bugrule{background:var(--well)}
+.wk2 .bug__foot{background:var(--sunk);color:var(--ink-3);border-top:1px solid var(--line)}
+.wk2 .bugrow__mark{box-shadow:0 0 0 2px var(--card),inset 0 0 0 1px rgba(19,26,34,.12)}
+
+/* W3 DARK EVERYWHERE IT MATTERS. The bug does not move. Instead the section heads
+   underneath become the same dark band, so the dark is a recurring device rather than
+   one slab that wandered in. */
+.wk3 .ctx{padding:0}
+.wk3 .ctx h3{margin:10px 12px 0;padding:8px 11px;background:var(--field-deep);
+  color:var(--on-field);border-radius:6px 6px 0 0;font-size:11px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;font-stretch:condensed}
+.wk3 .ctx p{margin:0 12px 9px;padding:9px 11px 10px;background:var(--card);
+  border:1px solid var(--line);border-top:0;border-radius:0 0 6px 6px}
+
+/* W4 NO FRAME AT ALL. Four light cards, keeping the broadcast bones: a colour block, a
+   condensed cap name, a big tabular score. The bug shape is what made it a visitor, so
+   the bug shape is what goes. */
+.wk4 .wkrows{padding:0 12px;display:grid;gap:7px}
+.wk4 .wkrow{position:relative;display:grid;grid-template-columns:46px 1fr auto auto 26px;
+  align-items:center;gap:9px;min-height:52px;padding-right:11px;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r,10px);overflow:hidden;
+  box-shadow:var(--sh-1);font-family:var(--display)}
+.wk4 .wkrow__block{align-self:stretch;display:grid;place-items:center;position:relative}
+.wk4 .wkrow__seed{position:absolute;top:3px;left:6px;font-size:9px;font-weight:700;
+  font-stretch:condensed;color:rgba(255,255,255,.95)}
+.wk4 .wkrow__mark{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.wk4 .wkrow__name{font-size:15px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;font-stretch:condensed;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.wk4 .wkrow__you{margin-left:6px;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+  font-stretch:condensed;color:var(--ink-3)}
+.wk4 .wkrow__rec{font-size:11px;font-weight:700;font-stretch:condensed;color:var(--ink-3)}
+.wk4 .wkrow__pts{font-size:21px;font-weight:700}
+.wk4 .wkrow__gap{font-size:10.5px;font-weight:700;font-stretch:condensed;
+  color:var(--ink-3);text-align:right}
+.wk4 .wkrow.is-leader{border-color:var(--accent-bright);
+  background:linear-gradient(180deg,var(--accent-wash),var(--card) 68%)}
+.wk4 .wkrow.is-leader .wkrow__pts{color:var(--accent-deep)}
+.wk4 .wkcap{padding:4px 13px 8px;font-size:10.5px;color:var(--ink-3)}
+
+/* W5 THE WINNER IS THE GRAPHIC. Same four cards, but whoever took the week gets the
+   broadcast treatment. The dark stops being decoration and starts being the prize. */
+.wk5 .wkrows{padding:0 12px;display:grid;gap:7px}
+.wk5 .wkrow{position:relative;display:grid;grid-template-columns:46px 1fr auto auto 26px;
+  align-items:center;gap:9px;min-height:52px;padding-right:11px;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--sh-1);
+  font-family:var(--display)}
+.wk5 .wkrow__block{align-self:stretch;display:grid;place-items:center;position:relative}
+.wk5 .wkrow__seed{position:absolute;top:3px;left:6px;font-size:9px;font-weight:700;
+  font-stretch:condensed;color:rgba(255,255,255,.95)}
+.wk5 .wkrow__mark{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.wk5 .wkrow__name{font-size:15px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;font-stretch:condensed;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.wk5 .wkrow__you{margin-left:6px;font-size:8.5px;font-weight:700;letter-spacing:.1em;
+  font-stretch:condensed;color:var(--ink-3)}
+.wk5 .wkrow__rec{font-size:11px;font-weight:700;font-stretch:condensed;color:var(--ink-3)}
+.wk5 .wkrow__pts{font-size:21px;font-weight:700}
+.wk5 .wkrow__gap{font-size:10.5px;font-weight:700;font-stretch:condensed;
+  color:var(--ink-3);text-align:right}
+.wk5 .wkrow.is-leader{background:var(--field-deep);border-color:var(--field-deep);
+  color:var(--on-field);min-height:60px;
+  box-shadow:0 2px 6px rgba(19,26,34,.2),0 10px 22px -12px rgba(19,26,34,.5)}
+.wk5 .wkrow.is-leader .wkrow__pts{color:var(--lead);font-size:24px}
+.wk5 .wkrow.is-leader .wkrow__rec,
+.wk5 .wkrow.is-leader .wkrow__gap,
+.wk5 .wkrow.is-leader .wkrow__you{color:var(--on-field-2)}
+.wk5 .wkrow__crown{position:absolute;top:4px;right:9px;font-size:8px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;font-stretch:condensed;color:var(--lead)}
+.wk5 .wkcap{padding:4px 13px 8px;font-size:10.5px;color:var(--ink-3)}
