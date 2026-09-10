@@ -1754,6 +1754,32 @@
   color: var(--lead);
 }
 
+/* The Week tab's extra column. The Board omits it: down there the game cards below ARE
+   the record, and a fifth column on a 390px phone costs the name its ellipsis. */
+.bug--rec .bugrow {
+  grid-template-columns: 46px 1fr auto auto 26px;
+  gap: 8px;
+}
+
+.bugrow__rec {
+  font-size: 10.5px;
+  font-weight: 700;
+  font-stretch: condensed;
+  letter-spacing: 0.02em;
+  color: var(--on-field-2);
+}
+
+/* A published week nobody has played yet. The frame is real and the numbers are not, so
+   the rows sit back rather than reading as four players on nothing. */
+.bugrow.is-skeleton .bugrow__pts,
+.bugrow.is-skeleton .bugrow__name {
+  opacity: 0.62;
+}
+
+.bugrow.is-skeleton .bugrow__block {
+  filter: saturate(0.55);
+}
+
 .bugrow__gap {
   font-size: 10.5px;
   font-weight: 700;

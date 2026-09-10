@@ -52,12 +52,14 @@ export function useHeaderOffset() {
  * colour the disc did not take, which is the same idea and cannot collide. A seat with no
  * school falls back to the player's own colour, exactly as the avatar does.
  */
-function Block({ p, size = 24 }) {
+function Block({ p, size = 24, skeleton }) {
   const team = teamById(p.team_id)
   const bg = team?.alt || p.color
   return (
     <span className="bugrow__block" style={{ background: bg }}>
-      <span className="bugrow__seed num">{p.rank}</span>
+      {/* Nothing to rank before anyone has scored: everyone ties on zero, so a real
+          rank would print "1" four times down the block. */}
+      {!skeleton && <span className="bugrow__seed num">{p.rank}</span>}
       {team ? (
         <span
           className="avatar avatar--team bugrow__mark"
@@ -88,32 +90,44 @@ function Block({ p, size = 24 }) {
  * old bar survives: a full-width track was four near-identical bars, because everyone is
  * within a few points of everyone else on a 210 scale.
  */
-function Row({ p, best, total, mine }) {
+function Row({ p, best, total, mine, record, skeleton }) {
   const gap = best - p.points
   /* `best > 0` matters at the first kickoff, when nobody has scored: without it all four
-     rows go gold for a lead nobody holds. */
+     rows go gold for a lead nobody holds. A skeleton is that case by definition. */
+  const leader = !skeleton && best > 0 && gap === 0
   return (
-    <div className={`bugrow${best > 0 && gap === 0 ? ' is-leader' : ''}`}>
-      <Block p={p} />
+    <div className={`bugrow${leader ? ' is-leader' : ''}${skeleton ? ' is-skeleton' : ''}`}>
+      <Block p={p} skeleton={skeleton} />
       <span className="bugrow__name">
         {p.name}
         {mine && <span className="bugrow__you">You</span>}
       </span>
-      <span className="bugrow__pts num">{p.points}</span>
-      <span className="bugrow__gap num">{gap === 0 ? '—' : `-${gap}`}</span>
+      {/* The Week tab wants a record beside the score; the Board does not have room and
+          does not need one, because the game cards underneath are the record. */}
+      {record && !skeleton && (
+        <span className="bugrow__rec num">
+          {p.correct}-{p.played - p.correct}
+        </span>
+      )}
+      <span className="bugrow__pts num">{skeleton ? '—' : p.points}</span>
+      <span className="bugrow__gap num">
+        {skeleton ? '' : gap === 0 ? '—' : `-${gap}`}
+      </span>
       <span className="bugrule">
-        {p.live > 0 && (
+        {!skeleton && p.live > 0 && (
           <i className="is-live"
              style={{ width: `${((p.points + p.live) / total) * 100}%`, background: p.color }} />
         )}
-        <i style={{ width: `${(p.points / total) * 100}%`, background: p.color }} />
+        {!skeleton && (
+          <i style={{ width: `${(p.points / total) * 100}%`, background: p.color }} />
+        )}
       </span>
     </div>
   )
 }
 
 /** The header strip: which week, how many games are on, how far through the slate. */
-function Top({ score, label }) {
+function Top({ score, label, note }) {
   return (
     <div className="bug__top">
       <span className="bug__wk">{label}</span>
@@ -124,7 +138,7 @@ function Top({ score, label }) {
         </span>
       )}
       <span className="bug__of num">
-        {score.graded} of {score.slateSize}
+        {note || `${score.graded} of ${score.slateSize}`}
       </span>
     </div>
   )
@@ -141,20 +155,30 @@ function footline(score, mine) {
   return `Out of ${total}. ${where[0].toUpperCase()}${where.slice(1)}${left}.`
 }
 
-export function WeekScore({ score, cardRef, me, label = 'This week' }) {
+/**
+ * @param skeleton  Draw the frame with no numbers in it. Used for a published week
+ *                  nobody has played yet, where the alternative was an empty state that
+ *                  said nothing and looked like the feature was missing.
+ * @param record    Show each player's correct-wrong beside the score. The Week tab wants
+ *                  it; the Board does not have the room.
+ */
+export function WeekScore({
+  score, cardRef, me, label = 'This week', skeleton = false, record = false, note, foot,
+}) {
   const { best, players, total } = score
   const mine = players.find((p) => p.id === me?.id)
   return (
-    <div className="bug bug--dark" ref={cardRef}>
-      <Top score={score} label={label} />
+    <div className={`bug bug--dark${record ? ' bug--rec' : ''}`} ref={cardRef}>
+      <Top score={score} label={label} note={note} />
       {players.map((p) => (
-        <Row key={p.id} p={p} best={best} total={total} mine={p.id === me?.id} />
+        <Row key={p.id} p={p} best={best} total={total} mine={p.id === me?.id}
+             record={record} skeleton={skeleton} />
       ))}
       {/* Built as one sentence rather than three appended fragments. The first cut
           appended ", shared" and then " with N still to play for", which ran together
           into "you lead, shared with 210 still to play for": read as being shared with
           the 210 rather than with the other players. */}
-      <p className="bug__foot">{footline(score, mine)}</p>
+      <p className="bug__foot">{foot || footline(score, mine)}</p>
     </div>
   )
 }

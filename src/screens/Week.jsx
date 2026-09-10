@@ -4,6 +4,8 @@ import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../c
 import { withLive } from '../lib/espn.js'
 import { useLiveScores } from '../lib/useLiveScores.js'
 import { weekRecap } from '../lib/weekRecap.js'
+import { weekScore } from '../lib/weekScore.js'
+import { WeekScore } from '../components/WeekScore.jsx'
 import { isComplete, weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 
 /**
@@ -85,6 +87,14 @@ export default function Week({ me, weekId, week }) {
     [games, rows, roster],
   )
 
+  /* The same object the Board's scorebug reads, so the two screens can never disagree
+     about who is where. Grant asked on 2026-09-10 for this tab to carry the bug rather
+     than its own light table. */
+  const score = useMemo(
+    () => (games && rows && roster ? weekScore(games, rows, roster) : null),
+    [games, rows, roster],
+  )
+
   if (error) return <p className="err">{error}</p>
 
   const nav = weekNav(weeks, week?.week_no, viewId)
@@ -109,6 +119,31 @@ export default function Week({ me, weekId, week }) {
      week and "nothing yet" was the only possibility. */
   if (!played.length) {
     const status = weekStatus(viewing)
+
+    /* A published week with a slate that simply has not started is not "nothing to
+       show": the players are known, the twenty games are known, and only the numbers are
+       missing. Drawing the real scorebug with no numbers in it says that, where the old
+       empty state said the tab was broken. The other two statuses genuinely have nothing
+       to frame, so they keep their message. */
+    if (status === 'not started' && score) {
+      return (
+        <>
+          {pager}
+          <Screen eyebrow={label} title="Not started yet">
+            <WeekScore
+              score={score}
+              me={me}
+              label={label}
+              skeleton
+              record
+              note={`0 of ${score.slateSize}`}
+              foot={`Out of ${score.total}. Points appear here as games go final.`}
+            />
+          </Screen>
+        </>
+      )
+    }
+
     return (
       <>
         {pager}
@@ -135,7 +170,7 @@ export default function Week({ me, weekId, week }) {
             : 'Ties stand. The write-up lands once every game has finished.'
         }
       >
-        <Standings players={recap.players} />
+        <WeekScore score={score} me={me} label={label} record />
 
         {recap.complete && mine && <YourWeek p={mine} />}
         {recap.complete && <Ranking players={recap.players} />}
@@ -171,30 +206,6 @@ function headline(recap) {
 
 const list = (xs) =>
   xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`
-
-function Standings({ players }) {
-  return (
-    <div className="stand">
-      {players.map((p) => (
-        <div key={p.id} className={`srow${p.rank === 1 ? ' is-leader' : ''}`}>
-          <span className="srow__pos num">{p.rank}</span>
-          <Avatar name={p.name} color={p.color} teamId={p.team_id} size={36} />
-          <span className="srow__body">
-            <span className="srow__name">{p.name}</span>
-            <span className="srow__meta num">
-              {p.correct}-{p.wrong}
-              {p.autos > 0 && ` · ${p.autos} auto`}
-            </span>
-          </span>
-          <span>
-            <span className="srow__pts num">{p.points}</span>
-            <span className="srow__ptslabel">pts</span>
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
 
 /**
  * The signed-in player's own week.

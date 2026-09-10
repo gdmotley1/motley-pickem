@@ -80,3 +80,62 @@ def test_the_entrance_never_starts_invisible():
     block = block[: block.index("}\n}") + 3]
     assert "opacity: 0.55" in block, "nudgeIn must not start from opacity 0"
     assert "opacity: 0;" not in block, "nudgeIn starts invisible; see CLAUDE.md"
+
+
+# ------------------------------------------------- the Week tab's scorebug
+
+def test_the_week_tab_uses_the_scorebug():
+    """Grant asked on 2026-09-10 for the Week tab to carry the bug rather than its own
+    light table. Both screens must read the same `weekScore` object, or they will
+    eventually disagree about who is where."""
+    body = read("src", "screens", "Week.jsx")
+    # TWO call sites, not one. The first version of this guard only checked that
+    # `<WeekScore` appeared somewhere, and the skeleton branch satisfied it: swapping the
+    # settled week back to a light table left the guard green. Verified by doing exactly
+    # that and watching it pass.
+    assert body.count("<WeekScore") == 2, (
+        "expected the scorebug at both call sites, the skeleton and the settled week; "
+        "found %d" % body.count("<WeekScore")
+    )
+    assert "weekScore(games, rows, roster)" in body, (
+        "the Week tab is deriving its own standings instead of reading weekScore"
+    )
+    assert "function Standings" not in body and "<Standings" not in body, (
+        "the old light standings table is back; it and the bug would drift"
+    )
+
+
+def test_a_published_week_that_has_not_started_shows_the_frame():
+    """The state Grant hit: Week 2 published, twenty games, nothing kicked off. The tab
+    used to show an empty state, which reads as the feature being missing rather than as
+    the week not having happened. The other two empty statuses genuinely have nothing to
+    frame and keep their message."""
+    body = read("src", "screens", "Week.jsx")
+    assert "status === 'not started' && score" in body, (
+        "a published-but-unstarted week no longer draws the skeleton"
+    )
+    assert "skeleton" in body, "the skeleton prop is not passed"
+    for kept in ("'not published'", "'no slate yet'"):
+        assert kept in body, "%s lost its empty state" % kept
+
+
+def test_the_skeleton_shows_no_numbers_and_no_rank():
+    """Everyone ties on zero before a game finishes, so a real rank prints "1" four times
+    and a real score prints four zeroes. Both read as data rather than as an empty
+    frame."""
+    body = read("src", "components", "WeekScore.jsx")
+    assert "{!skeleton && <span className=\"bugrow__seed num\">" in body, (
+        "the skeleton is printing a rank nobody holds"
+    )
+    assert "{skeleton ? '—' : p.points}" in body, "the skeleton is printing scores"
+
+
+def test_only_the_week_tab_pays_for_the_record_column():
+    """A fifth column on a 390px phone costs the name its ellipsis, and the Board does not
+    need one: the game cards underneath it ARE the record."""
+    css = read("src", "app.css")
+    assert ".bug--rec .bugrow" in css, "the record column is no longer opt-in"
+    board = read("src", "screens", "Board.jsx")
+    assert "record" not in board.split("<WeekScore")[1].split("/>")[0], (
+        "the Board is asking for the record column"
+    )
