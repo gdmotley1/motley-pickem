@@ -107,20 +107,40 @@
 
 /* ------------------------------------------------------------------ tab bar */
 
+/* Nothing here may composite. Both of the properties this rule used to carry are known
+   iOS triggers for a fixed element painting in the wrong place on a cold launch and
+   snapping back on the first scroll, which is exactly what Grant saw from his home
+   screen on 2026-09-10: the bar sat about 50px off, with the header and the page content
+   in the right place, until he scrolled.
+
+   `backdrop-filter` was the blur behind the bar. Safari composites that against a
+   snapshot of the page taken before layout has settled, so on a launch where first paint
+   and layout land close together the bar is placed against a stale backdrop. `--card`
+   is the opaque twin of the `--card-a` this used; the `border-top` below was already
+   doing the work of separating the bar from the scroll, so losing the alpha does not
+   leave the seam that theme.css warns about for the sticky bars.
+
+   `left: 50%` with `translateX(-50%)` was the centring. A transform on a fixed element
+   is the same class of trigger, and `left/right: 0` with `margin-inline: auto` centres
+   identically with nothing to composite. Both are needed: the transform alone can hold
+   the bug open after the filter is gone.
+
+   Do not reintroduce either one here. The sticky bars (.topbar, .choose__top,
+   .rank__head) keep their blur and are fine, because sticky paints with the scroll
+   rather than against a snapshot of it. */
 .tabbar {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   bottom: 0;
+  margin-inline: auto;
   width: 100%;
   max-width: 460px;
   z-index: 40;
   display: grid;
   gap: 2px;
   padding: 6px 8px calc(6px + var(--safe-bottom));
-  background: var(--card-a);
-  backdrop-filter: blur(16px) saturate(1.4);
-  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  background: var(--card);
   border-top: 1px solid var(--line);
 }
 
