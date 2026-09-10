@@ -2954,9 +2954,19 @@
 .aprank {
   flex: none;
   margin-right: 3px;
+  /* Set explicitly. Without it the rank inherits, which meant Inter on the Board and in
+     Setup but Archivo inside a Picks tile: the same number in two typefaces depending on
+     the screen. */
+  font-family: var(--ui);
   font-size: 10px;
   font-weight: 800;
   color: var(--accent);
+  /* Only bites in the inline contexts. .bgame__side is a flex row and centres its items
+     already (measured 0.2px off the abbreviation and 0.2px off the crest), but Setup's
+     .arow__match is an inline line, where a 10px number sits on the same baseline as a
+     13.5px abbreviation and its glyphs come out a pixel low. vertical-align is ignored on
+     a flex item, so this corrects Setup without touching the Board. */
+  vertical-align: middle;
 }
 
 .aprank::before {

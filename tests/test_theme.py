@@ -248,3 +248,18 @@ def test_the_board_does_not_double_its_gap():
     assert m and re.search(r"margin-right:\s*0", m.group(1)), (
         "without this the rank sits 9px from the abbreviation and 6px from the logo"
     )
+
+
+def test_the_rank_pins_its_own_typeface():
+    """Otherwise it inherits, and inherits differently on different screens.
+
+    Before this was set, the rank rendered in Inter on the Board and in Setup and in
+    Archivo inside a Picks tile: the same number in two faces depending where you looked.
+    Nobody would catch it side by side, and it is the sort of thing that makes a shared
+    component feel not quite right.
+    """
+    body = rank_rule(read(APP_CSS))
+    assert re.search(r"font-family:\s*var\(--ui\)", body), (
+        ".aprank must name its own font-family or it inherits from whatever screen it "
+        "happens to be on"
+    )
