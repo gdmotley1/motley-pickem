@@ -110,6 +110,39 @@ abbreviation. Unranked teams are absent from the map rather than stored as ESPN'
 sentinel, so `ranks.get(id)` being undefined is the whole check. A failure is swallowed
 on purpose: a missing rank is not worth an error message on a pick screen.
 
+## `min-height` on the shell means `.app__body` never scrolls, and iOS shows it
+
+The app looks like a fixed shell with one inner scroller. Until 2026-09-10 it was not
+one. `html, body` were `min-height: 100%`, `#root` and `.app` were `min-height: 100dvh`,
+and nothing in the chain had a definite height, so `.app__body { flex: 1; overflow-y:
+auto }` had nothing to be `1` of. It grew to fit its content and the **document** scrolled
+instead: measured on the Board, `.app__body` was 5383px tall in an 812px viewport with the
+document overflowing by 4640px.
+
+**Why it matters:** every desktop browser renders that perfectly, which is how it reached
+production and sat there. Installed on an iPhone it does not. The tab bar is
+`position: fixed`, and iOS detaches fixed elements during momentum scroll and rubber-band
+on a scrolling document, so it settles above the bottom of the screen and leaves a band of
+page colour under it until the next scroll puts it back. Grant reported it from his home
+screen and it was invisible in every tool here.
+
+**How to apply:** `height`, never `min-height`, the whole way down: `html, body` →
+`#root` → `.app`. `overflow: hidden` on the document, `overflow-y: auto` plus
+`overscroll-behavior: contain` on `.app__body` only. If you ever need a screen taller
+than the viewport, give it its own inner scroller rather than letting the shell grow.
+
+`.signin` is the exception that catches people twice. It is its own root with no inner
+scroller and it carries `overflow-x: hidden` to clip the `::before` glow, which is 155%
+wide. A flat `overflow: hidden` there does clip the glow and also makes the seat tiles
+and PIN pad unreachable on a short phone, because the shell no longer grows to fit them.
+Horizontal clipped, vertical scrollable.
+
+**The guard:** four tests in `tests/test_theme.py` (`test_the_document_itself_cannot_
+scroll`, `test_the_shell_chain_has_a_definite_height`, `test_the_app_body_is_the_only_
+scroller`, `test_sign_in_can_still_scroll_itself`). They were checked by reintroducing the
+old CSS and confirming they fail, which is the only reason to trust them: nothing else in
+this repo can see an iPhone.
+
 ## A global `button { min-height: var(--tap) }` overrides every smaller height
 
 `--tap` is 44px and the rule is on the bare `button` selector. `height: 24px` on a class
