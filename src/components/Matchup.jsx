@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import * as api from '../lib/api.js'
 import { fetchMatchup } from '../lib/matchup.js'
 import TeamLogo from '../components/TeamLogo.jsx'
-import { Spinner } from './ui.jsx'
+import { Rank, Spinner } from './ui.jsx'
 import { kickoffLabel } from '../lib/format.js'
 
 /**
@@ -133,7 +133,7 @@ function Side({ game, side, ranks, data, picked }) {
     <div className={`mu__team${picked === abbr ? ' is-mine' : ''}`}>
       <TeamLogo teamId={game[`${side}_id`]} abbr={abbr} size={44} />
       <span className="mu__name">
-        {rank ? <span className="mu__rank num">{rank}</span> : null}
+        <Rank n={rank} />
         {game[`${side}_school`] || abbr}
       </span>
       {/* Reserved whether or not a record has loaded, so the header does not jump when

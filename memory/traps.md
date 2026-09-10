@@ -110,6 +110,23 @@ abbreviation. Unranked teams are absent from the map rather than stored as ESPN'
 sentinel, so `ranks.get(id)` being undefined is the whole check. A failure is swallowed
 on purpose: a missing rank is not worth an error message on a pick screen.
 
+**Since 2026-09-10 there is one of everything.** Grant asked for ranks throughout the app
+and for them to look the same everywhere. `useRanks()` in `src/lib/useRanks.js` is the
+only fetch, `<Rank>` in `ui.jsx` the only markup, `.aprank` the only style, used by Picks,
+the Board, Setup and the matchup sheet. It replaced `.tpick__rank` and `.mu__rank`, which
+were byte-identical copies and would have become three the moment Setup needed one.
+
+**The slot is always drawn, ranked or not,** and has to be WIDER than its widest content
+rather than merely wide enough. At 10px/800 with tabular figures `#12` measures 19.5px, so
+a `min-width: 19px` let two-digit ranks widen their own slot by half a pixel and the
+columns stopped lining up, which is precisely what Grant asked to avoid. It is 21px.
+Guarded by three tests in `tests/test_theme.py`, checked by putting the 19px and a
+duplicate rule back and confirming they fail.
+
+Ranks are deliberately NOT on the Week or Season tabs. Those screens are about players,
+and the only teams they name are inside sentences like "COLO at GT", where a `#` would be
+noise rather than information.
+
 ## A stale home-screen PWA can survive any number of deploys, and it looks like a bug
 
 On 2026-09-10 Grant reported the tab bar painting about 50px too high on his iPhone 16,

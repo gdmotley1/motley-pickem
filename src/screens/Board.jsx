@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
-import { Avatar, Empty, IconClock, IconLock, Screen, Spinner } from '../components/ui.jsx'
+import { Avatar, Empty, IconClock, IconLock, Rank, Screen, Spinner } from '../components/ui.jsx'
 import { WeekScore, ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
 import { withLive } from '../lib/espn.js'
 import { weekScore } from '../lib/weekScore.js'
 import { useLiveScores } from '../lib/useLiveScores.js'
+import { rankOf, useRanks } from '../lib/useRanks.js'
 import { kickoffLabel } from '../lib/format.js'
 
 /**
@@ -37,6 +38,7 @@ export default function Board({ me, weekId, week }) {
   }, [weekId])
 
   const live = useLiveScores(slate)
+  const ranks = useRanks()
 
   /* Score, status and winner all come from ESPN once a game is under way, so a final
      marks the loser and fills in everyone's points the moment it happens rather than
@@ -132,9 +134,10 @@ export default function Board({ me, weekId, week }) {
               picks={byGame.get(g.game_id) || []}
               roster={roster}
               me={me}
+              ranks={ranks}
             />
           ) : (
-            <LockedGame key={g.game_id} game={g} roster={roster} me={me} />
+            <LockedGame key={g.game_id} game={g} roster={roster} me={me} ranks={ranks} />
           ),
         )}
       </div>
@@ -187,18 +190,20 @@ function Odds({ game }) {
 }
 
 /** A game that has not kicked off: your pick is shown, everyone else's is hidden. */
-function LockedGame({ game, roster, me }) {
+function LockedGame({ game, roster, me, ranks }) {
   return (
     <div className="bgame bgame--locked">
       <div className="bgame__head">
         <div className="bgame__score">
           <span className="bgame__side">
             <TeamLogo teamId={game.away_id} abbr={game.away_abbr} size={22} />
+            <Rank n={rankOf(ranks, game.away_id)} />
             {game.away_abbr}
           </span>
           <span className="bgame__sep">{game.neutral_site ? 'vs' : '@'}</span>
           <span className="bgame__side">
             <TeamLogo teamId={game.home_id} abbr={game.home_abbr} size={22} />
+            <Rank n={rankOf(ranks, game.home_id)} />
             {game.home_abbr}
           </span>
         </div>
@@ -256,7 +261,7 @@ function graded(pick, winner) {
   return { ...pick, correct, points: correct ? pick.confidence : 0 }
 }
 
-function BoardGame({ game, picks, roster, me }) {
+function BoardGame({ game, picks, roster, me, ranks }) {
   const done = !!game.winner_abbr
   const homeWon = done && game.winner_abbr === game.home_abbr
   const awayWon = done && game.winner_abbr === game.away_abbr
@@ -267,6 +272,7 @@ function BoardGame({ game, picks, roster, me }) {
         <div className="bgame__score">
           <span className={`bgame__side${done && !awayWon ? ' is-loser' : ''}`}>
             <TeamLogo teamId={game.away_id} abbr={game.away_abbr} size={22} />
+            <Rank n={rankOf(ranks, game.away_id)} />
             {game.away_abbr}
             {game.away_score != null && (
               <span className="bgame__pts num">{game.away_score}</span>
@@ -275,6 +281,7 @@ function BoardGame({ game, picks, roster, me }) {
           <span className="bgame__sep">{game.neutral_site ? 'vs' : '@'}</span>
           <span className={`bgame__side${done && !homeWon ? ' is-loser' : ''}`}>
             <TeamLogo teamId={game.home_id} abbr={game.home_abbr} size={22} />
+            <Rank n={rankOf(ranks, game.home_id)} />
             {game.home_abbr}
             {game.home_score != null && (
               <span className="bgame__pts num">{game.home_score}</span>

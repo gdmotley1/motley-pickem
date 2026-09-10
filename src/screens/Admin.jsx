@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
-import { Empty, IconClock, Screen, Spinner, Toast } from '../components/ui.jsx'
+import { Empty, IconClock, Rank, Screen, Spinner, Toast } from '../components/ui.jsx'
+import { rankOf, useRanks } from '../lib/useRanks.js'
 import { dayKey, dayLabel, kickoffLabel } from '../lib/format.js'
 import { availableConferences, inConference } from '../lib/conferences.js'
 
@@ -40,6 +41,7 @@ function byDay(rows) {
  * and the conference chips are for.
  */
 export default function Admin({ weekId }) {
+  const ranks = useRanks()
   const [pool, setPool] = useState(null)
   const [chosen, setChosen] = useState(() => new Set())
   const [view, setView] = useState('slate') // slate | pool
@@ -259,7 +261,10 @@ export default function Admin({ weekId }) {
                     </span>
                     <span className="arow__body">
                       <span className="arow__match">
-                        {g.away_abbr} {g.neutral_site ? 'vs' : '@'} {g.home_abbr}
+                        <Rank n={rankOf(ranks, g.away_id)} />
+                        {g.away_abbr} {g.neutral_site ? 'vs' : '@'}{' '}
+                        <Rank n={rankOf(ranks, g.home_id)} />
+                        {g.home_abbr}
                       </span>
                       {/* One status chip only. Three of them wrapped onto a second line
                           and made every row twice as tall. A game with no line has no

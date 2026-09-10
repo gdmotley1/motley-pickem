@@ -193,6 +193,22 @@ export function Avatar({ name, color, teamId, size = 26 }) {
   )
 }
 
+/**
+ * A team's AP rank, or the exact space one would take.
+ *
+ * Always renders the slot, even unranked. Grant asked for the gap to be equal either way,
+ * and it is the difference between a tidy column of games and one where every team name
+ * starts at a different place depending on who happened to be ranked that week. It also
+ * means nothing shifts when the poll arrives a moment after the slate: the space is
+ * already reserved before the numbers exist.
+ *
+ * The slot fits `#25` and right-aligns inside it, so `#7` and `#25` both end flush
+ * against the team beside them.
+ */
+export function Rank({ n }) {
+  return <span className={`aprank num${n ? '' : ' is-none'}`} aria-hidden={!n}>{n || ''}</span>
+}
+
 export function Empty({ icon, title, children }) {
   return (
     <div className="empty">

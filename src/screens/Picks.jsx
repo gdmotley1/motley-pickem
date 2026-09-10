@@ -9,6 +9,7 @@ import {
   IconGrip,
   IconLock,
   Portal,
+  Rank,
   Screen,
   Sheet,
   Spinner,
@@ -426,7 +427,7 @@ function TeamPick({ game, side, selected, disabled, onClick, ranks }) {
     >
       <TeamLogo teamId={game[`${side}_id`]} abbr={abbr} size={38} />
       <span className="tpick__name">
-        {rank ? <span className="tpick__rank num">{rank}</span> : null}
+        <Rank n={rank} />
         {school}
       </span>
       {record ? <span className="tpick__rec num">{record}</span> : null}
