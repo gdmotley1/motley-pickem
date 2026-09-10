@@ -225,7 +225,9 @@ export default function App() {
           {tab === 'picks' && (
             <Picks me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
-          {tab === 'board' && <Board me={me} weekId={weekId} week={week} />}
+          {tab === 'board' && (
+            <Board me={me} weekId={weekId} week={week} onNavigate={setTab} />
+          )}
           {tab === 'week' && <Week me={me} weekId={weekId} week={week} />}
           {tab === 'season' && <Season />}
           {tab === 'admin' && <Admin me={me} weekId={weekId} />}

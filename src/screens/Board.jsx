@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
+import PickNudge from '../components/PickNudge.jsx'
 import { Avatar, Empty, IconClock, IconLock, Rank, Screen, Spinner } from '../components/ui.jsx'
 import { WeekScore, ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
 import { withLive } from '../lib/espn.js'
@@ -16,7 +17,7 @@ import { kickoffLabel } from '../lib/format.js'
  * kickoff has passed. Nothing here filters for secrecy, so there is no way for the
  * client to leak an unplayed pick.
  */
-export default function Board({ me, weekId, week }) {
+export default function Board({ me, weekId, week, onNavigate }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
@@ -115,6 +116,10 @@ export default function Board({ me, weekId, week }) {
           : `${open.length} of ${games.length} open. The rest unlock as they kick off.`
       }
     >
+      {/* Above the score on purpose. Whatever this week has already become, the thing
+          you can still do about it comes first. */}
+      <PickNudge games={games} onGo={() => onNavigate?.('picks')} />
+
       {showScore && (
         <>
           <WeekScore score={score} cardRef={cardRef} me={me} label={week?.label || 'This week'} />

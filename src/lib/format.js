@@ -31,15 +31,26 @@ export function dayKey(iso) {
   return d.toLocaleDateString('en-CA')
 }
 
-/** "in 3h", "in 24m", "kicked off" — used on the countdown chip. */
+/**
+ * "in 25h", "in 24m", "any moment", "kicked off".
+ *
+ * Written for a countdown chip that was never built, and unused until the pick nudge
+ * shipped on 2026-09-10. Hours run all the way to 48 rather than rolling into days at
+ * 24, which is the change the nudge needed: Week 2's first kickoff was 24.8 hours out
+ * and "in 1d" is not something anyone can act on, while "in 25h" is.
+ *
+ * The last minute says "any moment" instead of "in 0m", because a countdown that reaches
+ * zero and sits there reads as broken.
+ */
 export function untilLabel(iso) {
   const ms = new Date(iso).getTime() - Date.now()
   if (Number.isNaN(ms)) return ''
   if (ms <= 0) return 'kicked off'
   const mins = Math.round(ms / 60000)
+  if (mins < 1) return 'any moment'
   if (mins < 60) return `in ${mins}m`
   const hrs = Math.round(mins / 60)
-  if (hrs < 24) return `in ${hrs}h`
+  if (hrs < 48) return `in ${hrs}h`
   return `in ${Math.round(hrs / 24)}d`
 }
 
