@@ -116,12 +116,13 @@ only fetch, `<Rank>` in `ui.jsx` the only markup, `.aprank` the only style, used
 the Board, Setup and the matchup sheet. It replaced `.tpick__rank` and `.mu__rank`, which
 were byte-identical copies and would have become three the moment Setup needed one.
 
-**The slot is always drawn, ranked or not,** and has to be WIDER than its widest content
-rather than merely wide enough. At 10px/800 with tabular figures `#12` measures 19.5px, so
-a `min-width: 19px` let two-digit ranks widen their own slot by half a pixel and the
-columns stopped lining up, which is precisely what Grant asked to avoid. It is 21px.
-Guarded by three tests in `tests/test_theme.py`, checked by putting the 19px and a
-duplicate rule back and confirming they fail.
+**Nothing is reserved for an unranked team.** The first version kept an equal-width slot
+either way, which is what Grant asked for and looked wrong the moment it was on real data:
+fourteen of the twenty games in a week carry exactly ONE ranked team, so most rows had a
+number on one side of the matchup and an empty hole on the other, in the same line. It was
+uniform in the strict sense and read as a rendering fault. `<Rank>` returns null with no
+rank, and the fixed-size logo beside it is what actually lines the rows up. Guarded in
+`tests/test_theme.py`, checked by putting a min-width back and confirming it fails.
 
 Ranks are deliberately NOT on the Week or Season tabs. Those screens are about players,
 and the only teams they name are inside sentences like "COLO at GT", where a `#` would be

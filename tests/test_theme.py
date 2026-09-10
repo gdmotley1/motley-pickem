@@ -195,19 +195,18 @@ def test_no_input_renders_below_the_size_that_makes_ios_zoom():
             % (klass, size))
 
 
-# --------------------------------------------------------------- the AP rank slot
+# ------------------------------------------------------------------- the AP rank
 
-# Grant asked for ranks throughout the app, looking the same everywhere, with an equal
-# gap left for teams without one.
+# Grant asked for ranks throughout the app, looking the same everywhere.
 #
 # It began as two byte-identical rules, .tpick__rank and .mu__rank, one per screen that
 # happened to need it. That is how a look drifts the moment a third screen wants one, so
-# there is now a single .aprank and a single <Rank> component behind it.
+# there is a single .aprank and a single <Rank> behind it.
 #
-# The slot has to be WIDER than its widest content, not merely wide enough for it.
-# Measured in the browser at 10px/800 with tabular figures, "#12" is 19.5px, so the first
-# attempt at min-width: 19px let two-digit ranks push their slot half a pixel wider than
-# one-digit ones and the gap stopped being equal. Anything from 20px up is safe.
+# Nothing is reserved for an unranked team. A version that kept an equal-width slot either
+# way shipped and was wrong: on real data fourteen of the twenty games in a week have
+# exactly one ranked team, so most rows carried a number on one side of the matchup and an
+# empty hole on the other, in the same line. The fixed-size logo is what lines rows up.
 
 
 def rank_rule(css):
@@ -216,30 +215,19 @@ def rank_rule(css):
     return m.group(1)
 
 
-def test_the_rank_slot_is_wider_than_its_widest_content():
-    body = rank_rule(read(APP_CSS))
-    m = re.search(r"min-width:\s*([\d.]+)px", body)
-    assert m, ".aprank must set a min-width, or the gap is not equal"
-    assert float(m.group(1)) >= 20, (
-        f"min-width is {m.group(1)}px. '#12' measures 19.5px at this size, so anything "
-        f"below 20 lets a two-digit rank widen its own slot and the columns stop lining up."
-    )
-    assert re.search(r"text-align:\s*right", body), (
-        "the number is right-aligned so #7 and #25 both finish flush against the team"
-    )
-    assert re.search(r"display:\s*inline-block", body), (
-        "an inline element ignores min-width, so the empty slot would collapse"
-    )
-
-
-def test_the_unranked_slot_still_takes_its_space():
+def test_no_space_is_reserved_for_an_unranked_team():
     css = re.sub(r"/\*.*?\*/", "", read(APP_CSS), flags=re.S)
-    m = re.search(r"\.aprank\.is-none::before\s*\{([^}]*)\}", css)
-    assert m, "unranked teams need the '#' suppressed but the slot kept"
-    assert "content: none" in m.group(1) or "content:none" in m.group(1)
-    # The slot itself must never be hidden: that is the whole requirement.
-    assert not re.search(r"\.aprank\.is-none\s*\{[^}]*display:\s*none", css), (
-        "hiding the unranked slot is exactly the thing Grant asked not to happen"
+    body = rank_rule(css)
+    assert "min-width" not in body, (
+        "a min-width on .aprank is the reserved slot coming back. It leaves a hole beside "
+        "every unranked team, which is the thing that got this rebuilt."
+    )
+    assert "width" not in body.replace("min-width", ""), (
+        "any fixed width on .aprank reserves space by another name"
+    )
+    assert not re.search(r"\.aprank\.is-none", css), (
+        "an is-none rule means the component is rendering an empty slot again; <Rank> "
+        "should return null when there is no rank"
     )
 
 
@@ -251,3 +239,12 @@ def test_there_is_only_one_rank_style():
         assert not re.search(re.escape(gone) + r"\s*[,{]", css), (
             f"{gone} is back. One rank style, .aprank, or the screens drift apart again."
         )
+
+
+def test_the_board_does_not_double_its_gap():
+    """.bgame__side is a flex row with its own gap, so the rank must not add a margin."""
+    css = re.sub(r"/\*.*?\*/", "", read(APP_CSS), flags=re.S)
+    m = re.search(r"\.bgame__side\s+\.aprank\s*\{([^}]*)\}", css)
+    assert m and re.search(r"margin-right:\s*0", m.group(1)), (
+        "without this the rank sits 9px from the abbreviation and 6px from the logo"
+    )

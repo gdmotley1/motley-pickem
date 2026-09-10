@@ -2941,26 +2941,19 @@
   margin-left: 4px;
 }
 
-/* --------------------------------------------------------------- the AP rank slot
+/* ------------------------------------------------------------------- the AP rank
 
    One rule for every screen. This began as two byte-identical copies, .tpick__rank and
    .mu__rank, which is exactly how a look drifts the moment a third place needs one.
 
-   The slot is always drawn, ranked or not. Grant asked for an equal gap either way, and
-   without it a column of games has every team name starting somewhere different
-   depending on who was ranked that week. It also stops the whole board shifting when the
-   AP poll lands a moment after the slate: the space is already there. */
+   Nothing is reserved for an unranked team. An earlier version kept an equal-width slot
+   either way; on real data that put a number on one side of a matchup and an empty hole
+   on the other in most rows, because fourteen of twenty games in a week have exactly one
+   ranked team. The fixed-size logo beside this is what actually lines the rows up. */
 
 .aprank {
-  display: inline-block;
   flex: none;
-  /* Wider than the widest content, not merely wide enough for it. Measured at 10px/800
-     with tabular figures, "#12" is 19.5px, so a 19px min-width let two-digit ranks push
-     the slot half a pixel wider than one-digit ones and the gap stopped being equal.
-     21px is above the maximum, so every slot is exactly 21px whatever it holds. */
-  min-width: 21px;
   margin-right: 3px;
-  text-align: right;
   font-size: 10px;
   font-weight: 800;
   color: var(--accent);
@@ -2971,7 +2964,8 @@
   opacity: 0.6;
 }
 
-/* Empty, but still the same width. */
-.aprank.is-none::before {
-  content: none;
+/* The board's team side is a flex row with its own 6px gap, so a margin here as well
+   would sit the rank 9px from the abbreviation and 6px from the logo. */
+.bgame__side .aprank {
+  margin-right: 0;
 }

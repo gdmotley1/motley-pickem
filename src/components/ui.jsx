@@ -194,19 +194,21 @@ export function Avatar({ name, color, teamId, size = 26 }) {
 }
 
 /**
- * A team's AP rank, or the exact space one would take.
+ * A team's AP rank, and nothing at all when it has none.
  *
- * Always renders the slot, even unranked. Grant asked for the gap to be equal either way,
- * and it is the difference between a tidy column of games and one where every team name
- * starts at a different place depending on who happened to be ranked that week. It also
- * means nothing shifts when the poll arrives a moment after the slate: the space is
- * already reserved before the numbers exist.
+ * The first version reserved an equal-width slot either way, which is what Grant asked
+ * for and looked wrong once it was on real data: fourteen of the twenty games in a week
+ * carry exactly one ranked team, so most rows ended up with a number on one side of the
+ * matchup and an empty hole on the other, in the same line. Uniform in the strict sense,
+ * and it read as a rendering fault.
  *
- * The slot fits `#25` and right-aligns inside it, so `#7` and `#25` both end flush
- * against the team beside them.
+ * Rows still share a left edge, because the logo beside this is a fixed size and is what
+ * actually anchors them. The only thing that moves is the abbreviation, on the side that
+ * has a rank.
  */
 export function Rank({ n }) {
-  return <span className={`aprank num${n ? '' : ' is-none'}`} aria-hidden={!n}>{n || ''}</span>
+  if (!n) return null
+  return <span className="aprank num">{n}</span>
 }
 
 export function Empty({ icon, title, children }) {
