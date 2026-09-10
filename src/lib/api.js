@@ -111,6 +111,16 @@ export const getStandings = () => rpc('get_standings', withToken({}))
 export const getSeason = () => rpc('get_season', withToken({}))
 
 /**
+ * Every week of the current season, with its label, whether it is published, and how many
+ * of its games are graded.
+ *
+ * Carries the week id as well as the number, which is the whole reason it exists:
+ * get_season returns week_no only, and a slate is loaded by id. See
+ * migrations/011_list_weeks.sql.
+ */
+export const listWeeks = () => rpc('list_weeks', withToken({}))
+
+/**
  * picks: [{ game_id, pick, confidence }] for the whole slate.
  * The server rejects a partial set, a repeated confidence value, or any change to a
  * game that has kicked off, so the UI never has to be the last line of defence.

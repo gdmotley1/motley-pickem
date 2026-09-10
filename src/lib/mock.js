@@ -240,6 +240,20 @@ export async function rpc(fn, args = {}) {
       return [{ ...w.week, slate_size: w.slate.length }]
     }
 
+    /* The offline week is a single week, so the Week tab's pager renders with both arrows
+       disabled and a one-row jump list. That is the correct demo of the edge state. */
+    case 'list_weeks': {
+      requireMe(args.p_token)
+      const w = await week()
+      return [{
+        ...w.week,
+        starts_at: w.week.starts_at ?? null,
+        ends_at: w.week.ends_at ?? null,
+        slate_size: w.slate.length,
+        graded: w.slate.filter((g) => g.winner_abbr).length,
+      }]
+    }
+
     case 'get_slate': {
       const me = requireMe(args.p_token)
       const w = await week()

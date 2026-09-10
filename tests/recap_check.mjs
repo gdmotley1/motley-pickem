@@ -302,5 +302,76 @@ check('an all-zero season still has a scale', formGeometry({
   max: 0, weeks: s.form.weeks, series: [],
 }).top === 25)
 
+
+/* ==========================================================================
+   src/lib/weekNav.js
+
+   The arrows on the Week tab. Edges are where this kind of control goes wrong: one that
+   stays live at week 1, or one that walks off the end of the season into a week nobody
+   has played, which would also quietly show a slate Dad has not published. */
+
+const { visitableWeeks, weekStatus, isComplete, weekNav, winnersByWeek } = await import(
+  pathToFileURL(join(root, 'src', 'lib', 'weekNav.js')).href
+)
+
+const wk = (id, no, over = {}) => ({
+  id, week_no: no, label: `Week ${no}`, published: true,
+  starts_at: null, ends_at: null, slate_size: 20, graded: 20, ...over,
+})
+
+// Ids deliberately do NOT equal week numbers here: they do in production today, and
+// building navigation on that coincidence is exactly what migration 011 exists to avoid.
+const WEEKS = [
+  wk(101, 1),
+  wk(102, 2, { graded: 7 }),                       // in progress
+  wk(103, 3, { published: false, slate_size: 0, graded: 0 }),
+  wk(104, 4, { published: true, slate_size: 0, graded: 0 }),
+  wk(105, 5, { graded: 0 }),
+]
+const CURRENT = 2
+
+check('you can look back but never forward past the current week',
+  visitableWeeks(WEEKS, CURRENT).map((w) => w.week_no).join(',') === '1,2')
+check('an unknown current week does not hide everything',
+  visitableWeeks(WEEKS, null).length === 5)
+check('weeks come back oldest first',
+  visitableWeeks([wk(3, 3), wk(1, 1), wk(2, 2)], 9).map((w) => w.week_no).join(',') === '1,2,3')
+
+const atCurrent = weekNav(WEEKS, CURRENT, 102)
+const atFirst = weekNav(WEEKS, CURRENT, 101)
+check('on the current week the forward arrow is dead', atCurrent.next === null)
+check('and the back arrow goes to week 1', atCurrent.prev && atCurrent.prev.id === 101)
+check('the current week knows it is current', atCurrent.isCurrent === true)
+check('on week 1 the back arrow is dead', atFirst.prev === null)
+check('and forward goes to week 2', atFirst.next && atFirst.next.id === 102)
+check('an earlier week knows it is not current', atFirst.isCurrent === false)
+check('navigation is by id, not by week number',
+  atFirst.next.id === 102 && atFirst.next.week_no === 2)
+
+check('a week outside the visitable range has no arrows and no current',
+  (() => { const n = weekNav(WEEKS, CURRENT, 105); return !n.current && !n.prev && !n.next })())
+check('no weeks at all does not throw',
+  (() => { const n = weekNav(null, 2, 1); return n.list.length === 0 && !n.current })())
+
+check('an unpublished week says so', weekStatus(WEEKS[2]) === 'not published')
+check('a published week with no slate says so', weekStatus(WEEKS[3]) === 'no slate yet')
+check('a published slate with nothing graded says so', weekStatus(WEEKS[4]) === 'not started')
+check('a part-graded week is in progress', weekStatus(WEEKS[1]) === 'in progress')
+check('a finished week has no status, so a result shows instead',
+  weekStatus(WEEKS[0]) === null)
+check('complete means every game graded',
+  isComplete(WEEKS[0]) === true && isComplete(WEEKS[1]) === false)
+check('a week with no slate is never complete', isComplete(WEEKS[3]) === false)
+
+const wins = winnersByWeek([
+  row(1, 1, 'Week 1', 186, 16, 20), row(2, 1, 'Week 1', 179, 16, 20),
+  row(1, 2, 'Week 2', 150, 13, 20), row(2, 2, 'Week 2', 150, 13, 20),
+  row(1, 3, 'Week 3', 0, 0, 0),
+])
+check('the week winner is found', wins.get(1).names.join() === 'Grant' && wins.get(1).points === 186)
+check('a tied week names both', wins.get(2).names.sort().join(' & ') === 'Grant & James')
+check('a week with nothing graded has no winner', wins.get(3) === undefined)
+
+
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
 process.exit(failed ? 1 : 0)

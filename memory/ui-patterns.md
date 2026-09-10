@@ -241,6 +241,33 @@ Chart geometry lives in `formGeometry`, not in the JSX, because a chart is the o
 here that can look right and be wrong. A point outside the viewBox and a gridline labelled
 with a value the scale never reaches both render silently.
 
+## The Week tab's week is local to that screen, and the pager is its own row
+
+Grant asked for arrows to step back through previous weeks on 2026-09-10 and chose option
+C from a board of five: an arrow either side, and a label that opens a jump-to-a-week
+sheet.
+
+**The week being viewed is local to Week.jsx, never `weekId`.** `weekId` in App is one
+setting shared by Picks, Board, Week and Setup. Stepping it from the Week tab would drag
+the others back with it, so you would flip to Week 1 to settle an argument, open Picks,
+and find the whole slate locked. It resets on its own when the tab changes, because App
+unmounts the screen.
+
+**You may look back, never forward past the current week.** Stepping into an unplayed week
+would show four zeroes and would also reveal a slate Dad has not published yet.
+`visitableWeeks` enforces it and the forward arrow is null at the edge.
+
+**How to apply:** navigation logic goes in `src/lib/weekNav.js` as pure functions with
+assertions in `tests/recap_check.mjs`, never inline in the screen. The fixture there uses
+week ids that deliberately do NOT equal week numbers: they do in production today because
+`seed_weeks.py` created all fifteen in order, and `list_weeks` (migration 011) exists
+precisely so nothing is built on that coincidence.
+
+The bar lands at 56px rather than the 46 the design board estimated, because the arrows
+ask for 36px and the global `button { min-height: var(--tap) }` gives them 44. That is the
+right height for a thumb; the padding was trimmed instead of fighting it. See
+`memory/traps.md`.
+
 ## Do not use framer-motion AnimatePresence in this app
 
 Screen transitions animate in on a fresh `key` with no exit. Sheets and toasts are the

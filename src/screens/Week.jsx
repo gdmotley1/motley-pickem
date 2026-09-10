@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
-import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
+import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../components/ui.jsx'
 import { withLive } from '../lib/espn.js'
 import { useLiveScores } from '../lib/useLiveScores.js'
 import { weekRecap } from '../lib/weekRecap.js'
+import { isComplete, weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 
 /**
  * One week, settled: who won it, and what the numbers say about how.
@@ -25,11 +26,38 @@ export default function Week({ me, weekId, week }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
+  const [weeks, setWeeks] = useState(null)
   const [error, setError] = useState(null)
+
+  /* Which week this screen is looking at.
+
+     Local on purpose. `weekId` is one setting shared by every tab, so stepping it here
+     would drag Picks and Board back with it: you would flip to Week 1 to settle an
+     argument, open Picks, and find the whole slate locked. This resets on its own when
+     the tab changes, because App unmounts the screen. */
+  const [viewId, setViewId] = useState(weekId)
+
+  /* Follow the app when it resolves the real current week, which arrives after first
+     paint. Once the user has stepped somewhere themselves that only happens on a week
+     rollover, which should pull them forward anyway. */
+  useEffect(() => setViewId(weekId), [weekId])
 
   useEffect(() => {
     let alive = true
-    Promise.all([api.getSlate(weekId), api.getBoard(weekId), api.listSeats()])
+    api
+      .listWeeks()
+      .then((w) => alive && setWeeks(w))
+      .catch((e) => alive && setError(e.message))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let alive = true
+    setSlate(null)
+    setRows(null)
+    Promise.all([api.getSlate(viewId), api.getBoard(viewId), api.listSeats()])
       .then(([s, b, seats]) => {
         if (!alive) return
         setSlate(s)
@@ -40,7 +68,7 @@ export default function Week({ me, weekId, week }) {
     return () => {
       alive = false
     }
-  }, [weekId])
+  }, [viewId])
 
   const live = useLiveScores(slate)
 
@@ -58,43 +86,81 @@ export default function Week({ me, weekId, week }) {
   )
 
   if (error) return <p className="err">{error}</p>
-  if (!recap) return <Spinner />
 
-  const label = week?.label || 'This week'
+  const nav = weekNav(weeks, week?.week_no, viewId)
+  const viewing = nav.current
+  const label = viewing?.label || week?.label || 'This week'
+  const pager = (
+    <Pager nav={nav} onGo={setViewId} weeks={weeks} currentWeekNo={week?.week_no} />
+  )
+
+  if (!recap)
+    return (
+      <>
+        {pager}
+        <Spinner />
+      </>
+    )
+
   const played = recap.players.filter((p) => p.games > 0)
 
-  if (!played.length)
+  /* An empty week is now a place you can deliberately arrive at, so it has to say which
+     kind of empty it is. Before the arrows existed you could only ever be on the current
+     week and "nothing yet" was the only possibility. */
+  if (!played.length) {
+    const status = weekStatus(viewing)
     return (
-      <Screen eyebrow={label} title="This week">
-        <Empty icon={<IconTrophy />} title="Nothing to show yet">
-          Once games start going final, the table fills in here. The full write-up lands
-          when the last game of the week ends.
-        </Empty>
-      </Screen>
+      <>
+        {pager}
+        <Screen eyebrow={label} title="Nothing to show">
+          <Empty icon={<IconTrophy />} title={emptyTitle(status)}>
+            {emptyBody(status)}
+          </Empty>
+        </Screen>
+      </>
     )
+  }
 
   const mine = recap.players.find((p) => p.id === me?.id)
 
   return (
-    <Screen
-      eyebrow={`${label} · ${recap.complete ? 'final' : 'in progress'}`}
-      title={recap.complete ? headline(recap) : 'This week'}
-      sub={
-        recap.complete
-          ? undefined
-          : 'Ties stand. The write-up lands once every game has finished.'
-      }
-    >
-      <Standings players={recap.players} />
+    <>
+      {pager}
+      <Screen
+        eyebrow={recap.complete ? 'Final' : 'In progress'}
+        title={recap.complete ? headline(recap) : label}
+        sub={
+          recap.complete
+            ? undefined
+            : 'Ties stand. The write-up lands once every game has finished.'
+        }
+      >
+        <Standings players={recap.players} />
 
-      {recap.complete && mine && <YourWeek p={mine} />}
-      {recap.complete && <Ranking players={recap.players} />}
-      {recap.complete && <Decisive recap={recap} />}
-      {recap.complete && <Upsets list={recap.upsets} />}
-      {recap.complete && <InNumbers recap={recap} />}
-    </Screen>
+        {recap.complete && mine && <YourWeek p={mine} />}
+        {recap.complete && <Ranking players={recap.players} />}
+        {recap.complete && <Decisive recap={recap} />}
+        {recap.complete && <Upsets list={recap.upsets} />}
+        {recap.complete && <InNumbers recap={recap} />}
+      </Screen>
+    </>
   )
 }
+
+const emptyTitle = (status) =>
+  ({
+    'not published': 'Not published yet',
+    'no slate yet': 'No slate yet',
+    'not started': 'No games finished',
+  })[status] || 'Nothing to show yet'
+
+const emptyBody = (status) =>
+  ({
+    'not published': 'Your commissioner has not published this week’s twenty games.',
+    'no slate yet': 'The twenty games for this week have not been chosen.',
+    'not started': 'The table fills in here as games go final.',
+  })[status] ||
+  'Once games start going final, the table fills in here. The full write-up lands when the last game of the week ends.'
 
 /** "Grant takes it by 7", or the shared version. Both are statements of the score. */
 function headline(recap) {
@@ -359,5 +425,132 @@ function InNumbers({ recap }) {
         </div>
       )}
     </>
+  )
+}
+
+/**
+ * The week pager: an arrow either side, and a label that opens a jump list.
+ *
+ * Option C from the board Grant chose on 2026-09-10. The arrows are the common case,
+ * one step back; the sheet is what stops week 3 being eleven taps away in November.
+ *
+ * Both arrows are real 36px targets rather than glyphs on the eyebrow line, which is the
+ * whole reason this is its own row and costs 46px. An edge is a null in `nav`, so a
+ * disabled arrow is a fact from weekNav rather than a condition restated here.
+ */
+function Pager({ nav, onGo, weeks, currentWeekNo }) {
+  const [open, setOpen] = useState(false)
+  const [season, setSeason] = useState(null)
+  const viewing = nav.current
+
+  /* The winners are only ever read by the sheet, so they load on first open and stay.
+     The pager itself never needs them, and the screen already makes three calls. */
+  const openPicker = useCallback(() => {
+    setOpen(true)
+    setSeason((prev) => {
+      if (prev) return prev
+      api.getSeason().then(setSeason).catch(() => setSeason([]))
+      return prev
+    })
+  }, [])
+
+  const status = weekStatus(viewing)
+  const sub = status || (isComplete(viewing) ? 'final' : dateRange(viewing))
+
+  return (
+    <>
+      <div className="wknav">
+        <button
+          className="wknav__arrow"
+          onClick={() => nav.prev && onGo(nav.prev.id)}
+          disabled={!nav.prev}
+          aria-label={nav.prev ? `Go to ${nav.prev.label}` : 'No earlier week'}
+        >
+          <Chevron dir="left" size={17} />
+        </button>
+
+        <button className="wknav__mid" onClick={openPicker} aria-label="Choose a week">
+          <b>
+            {viewing?.label || 'This week'}
+            <Chevron dir="down" size={13} />
+          </b>
+          <i>{sub}</i>
+        </button>
+
+        <button
+          className="wknav__arrow"
+          onClick={() => nav.next && onGo(nav.next.id)}
+          disabled={!nav.next}
+          aria-label={nav.next ? `Go to ${nav.next.label}` : 'No later week'}
+        >
+          <Chevron dir="right" size={17} />
+        </button>
+      </div>
+
+      {!nav.isCurrent && nav.list.length > 0 && (
+        <button
+          className="wknav__back"
+          onClick={() => onGo(nav.list[nav.list.length - 1].id)}
+        >
+          Back to this week
+        </button>
+      )}
+
+      <Sheet open={open} onClose={() => setOpen(false)} label="Choose a week">
+        <div className="screen">
+          <h3 className="h2">Jump to a week</h3>
+        </div>
+        <WeekList
+          weeks={nav.list}
+          season={season}
+          viewId={viewing?.id}
+          currentWeekNo={currentWeekNo}
+          onGo={(id) => {
+            onGo(id)
+            setOpen(false)
+          }}
+        />
+      </Sheet>
+    </>
+  )
+}
+
+/** "Sep 8 - Sep 14", or nothing when the week has no boundaries stored. */
+function dateRange(w) {
+  if (!w?.starts_at || !w?.ends_at) return ''
+  const f = (iso) =>
+    new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  return `${f(w.starts_at)} - ${f(w.ends_at)}`
+}
+
+function WeekList({ weeks, season, viewId, currentWeekNo, onGo }) {
+  const winners = useMemo(() => winnersByWeek(season), [season])
+
+  return (
+    <div className="wklist">
+      {weeks.map((w) => {
+        const won = winners.get(w.week_no)
+        const status = weekStatus(w)
+        return (
+          <button
+            key={w.id}
+            className={`wkrow${w.id === viewId ? ' is-on' : ''}${status ? ' is-quiet' : ''}`}
+            onClick={() => onGo(w.id)}
+          >
+            <span className="wkrow__n">{w.label}</span>
+            <span className="wkrow__v">
+              {won ? (
+                <>
+                  {won.names.join(' & ')} <b className="num">{won.points}</b>
+                </>
+              ) : (
+                status || (season === null ? '…' : 'no result')
+              )}
+            </span>
+            {w.week_no === currentWeekNo && <span className="chip chip--accent">now</span>}
+          </button>
+        )
+      })}
+    </div>
   )
 }

@@ -122,7 +122,12 @@ export function Back({ onClick, label = 'Back' }) {
 }
 
 export function Chevron({ dir = 'left', size = 16 }) {
-  const d = { left: 'M13 4 7 10l6 6', right: 'M7 4l6 6-6 6' }[dir]
+  const d = {
+    left: 'M13 4 7 10l6 6',
+    right: 'M7 4l6 6-6 6',
+    // The Week pager's label is a button that opens a picker, and needs to look like one.
+    down: 'M4 7l6 6 6-6',
+  }[dir]
   return (
     <svg viewBox="0 0 20 20" width={size} height={size} aria-hidden="true">
       <path
