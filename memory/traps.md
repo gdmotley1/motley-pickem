@@ -110,6 +110,44 @@ abbreviation. Unranked teams are absent from the map rather than stored as ESPN'
 sentinel, so `ranks.get(id)` being undefined is the whole check. A failure is swallowed
 on purpose: a missing rank is not worth an error message on a pick screen.
 
+## A stale home-screen PWA can survive any number of deploys, and it looks like a bug
+
+On 2026-09-10 Grant reported the tab bar painting about 50px too high on his iPhone 16,
+leaving a band of page colour under it, cleared by switching tabs. It cost an entire day
+and three deployed "fixes", none of which were needed. The app code was never wrong. His
+installed instance was serving a stale mix, and deleting the home screen icon and
+re-adding it from Safari fixed it on the exact build that had supposedly caused it.
+
+**Why it fooled everyone, including him:** the symptom appeared right after a deploy, so
+it read as a regression. It was not. Reverting the entire session to the previous build
+did NOT clear it, which is the fact that finally gave it away: a bug that survives a
+byte-identical revert to a known-good build is not in the build.
+
+**Why a reload is not enough.** `static/sw.js` is network-first on the document, so a
+deploy IS picked up on a reload, and that is what makes this so misleading. But an
+installed standalone instance keeps its own worker and caches, `VERSION` has never been
+bumped off `v1`, and `/assets/` is cacheFirst forever. Five deploys in one day is exactly
+the situation where an instance ends up on a combination nothing else has.
+
+**How to apply:**
+
+- When a phone-only visual bug is reported, the FIRST thing to establish is whether the
+  device is running the build you think it is. Before touching CSS, have him delete the
+  icon and re-add it from Safari. It costs him thirty seconds and it is the only way to
+  get a genuinely clean install of a standalone PWA.
+- A bug that persists across a full revert is never in the code. Stop and look at the
+  environment.
+- Do not accept "it started with your update" as cause. Grant said it in good faith and
+  it was true as timing and false as causation, and taking it as causation is what drove
+  three wrong fixes.
+- Three real findings came out of the wild goose chase and are worth keeping even though
+  none of them was this bug. `.app__body` is not actually a scroll container: `min-height`
+  down the chain leaves its `flex: 1` nothing to resolve against, so the document scrolls
+  (5383px of body in an 812px viewport). Locking that down with `height` plus
+  `overflow: hidden` broke scrolling on his phone and was reverted, so do not attempt it
+  without a device to test on. And `backdrop-filter` or `transform` on a `position: fixed`
+  element is a genuine iOS compositing trigger, just not the cause here.
+
 ## A global `button { min-height: var(--tap) }` overrides every smaller height
 
 `--tap` is 44px and the rule is on the bare `button` selector. `height: 24px` on a class
