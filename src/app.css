@@ -3,9 +3,6 @@
 
 /* ==================================================================== shell */
 
-/* Exactly the viewport, never taller. See the note on html/body in theme.css: with
-   min-height here instead, .app__body never became a scroll container and the document
-   scrolled, which is what put a band of whitespace under the fixed tab bar on iOS. */
 .app,
 .signin {
   width: 100%;
@@ -14,8 +11,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
+  min-height: 100dvh;
   background: var(--page);
   position: relative;
 }
@@ -97,13 +93,10 @@
   white-space: nowrap;
 }
 
-/* The one scroll container in the app. `contain` stops a flick at the end of the list
-   from chaining up and rubber-banding the document behind the fixed tab bar. */
 .app__body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -413,14 +406,11 @@
   letter-spacing: 0.02em;
 }
 
-/* The pre-mount loader, shown while whoami resolves. `height` to match the rest of the
-   shell: `flex: 1` inside #root already fills it, and a stray min-height: 100dvh is the
-   one declaration that could push a child past a viewport-height parent again. */
 .splash {
   flex: 1;
   display: grid;
   place-items: center;
-  height: 100%;
+  min-height: 100dvh;
   background: var(--field);
 }
 
@@ -467,13 +457,7 @@
   color: var(--on-field);
   padding: calc(var(--safe-top) + 34px) 22px calc(var(--safe-bottom) + 26px);
   justify-content: flex-start;
-  /* Horizontal stays clipped, which is what keeps the ::before glow (155% wide, pulled
-     up and out) from spilling. Vertical has to scroll: the shell is now exactly the
-     viewport, and the PIN pad under four seat tiles runs past the bottom of a 667px
-     phone. A flat `overflow: hidden` here made those keys unreachable on an iPhone SE. */
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 /* One soft pool of light instead of drawn-on yard lines, which read as wireframe
