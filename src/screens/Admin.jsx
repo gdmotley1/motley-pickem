@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import { Empty, IconClock, Rank, Screen, Spinner, Toast } from '../components/ui.jsx'
-import { rankOf, useRanks } from '../lib/useRanks.js'
+import { hasRankedTeam, rankOf, rankedCount, useRanks } from '../lib/useRanks.js'
 import { dayKey, dayLabel, kickoffLabel } from '../lib/format.js'
 import { availableConferences, inConference } from '../lib/conferences.js'
 
@@ -47,6 +47,10 @@ export default function Admin({ weekId }) {
   const [view, setView] = useState('slate') // slate | pool
   const [query, setQuery] = useState('')
   const [conf, setConf] = useState(null) // conference id, or null for every conference
+  /* Ranked is its own axis, not another conference. It ANDs with the conference chips so
+     "SEC and ranked" is reachable, which is most of why it is worth having: on a 91-game
+     pool the two together cut it to a handful. */
+  const [ranked, setRanked] = useState(false)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
@@ -67,6 +71,7 @@ export default function Admin({ weekId }) {
   }, [weekId])
 
   const conferences = useMemo(() => availableConferences(pool), [pool])
+  const nRanked = useMemo(() => rankedCount(pool, ranks), [pool, ranks])
 
   const shown = useMemo(() => {
     if (!pool) return []
@@ -74,16 +79,18 @@ export default function Admin({ weekId }) {
     if (view === 'slate') return pool.filter((g) => chosen.has(g.game_id))
     let rows = pool
     if (conf !== null) rows = rows.filter((g) => inConference(g, conf))
+    if (ranked) rows = rows.filter((g) => hasRankedTeam(g, ranks))
     const needle = query.trim().toLowerCase()
     if (needle) rows = rows.filter((g) => haystack(g).includes(needle))
     return rows
-  }, [pool, view, chosen, conf, query])
+  }, [pool, view, chosen, conf, ranked, ranks, query])
 
   const sections = useMemo(() => byDay(shown), [shown])
 
   function clearFilters() {
     setQuery('')
     setConf(null)
+    setRanked(false)
   }
 
   function toggle(g) {
@@ -134,7 +141,7 @@ export default function Admin({ weekId }) {
 
   const count = chosen.size
   const ready = count === SLATE_SIZE
-  const filtered = view === 'pool' && (conf !== null || query.trim() !== '')
+  const filtered = view === 'pool' && (conf !== null || ranked || query.trim() !== '')
 
   return (
     <Screen
@@ -186,7 +193,22 @@ export default function Admin({ weekId }) {
 
           {/* Horizontal scroll rather than a wrapping grid: eleven conference chips wrap
               to three rows on a 375px phone and push the games off the screen. */}
-          <div className="adm__confs" role="group" aria-label="Filter by conference">
+          <div className="adm__confs" role="group" aria-label="Filter the games">
+            {/* Only offered once the AP poll has actually landed. Without this the chip
+                sits there reading "Ranked 0" on a slow connection, and filters the pool
+                to nothing if tapped. */}
+            {nRanked > 0 && (
+              <>
+                <button
+                  className={`fchip fchip--rank${ranked ? ' is-on' : ''}`}
+                  onClick={() => setRanked((v) => !v)}
+                  aria-pressed={ranked}
+                >
+                  Ranked <span className="fchip__n">{nRanked}</span>
+                </button>
+                <span className="adm__confsep" aria-hidden="true" />
+              </>
+            )}
             <button
               className={`fchip${conf === null ? ' is-on' : ''}`}
               onClick={() => setConf(null)}
@@ -226,8 +248,7 @@ export default function Admin({ weekId }) {
 
       {view === 'pool' && shown.length === 0 && (
         <Empty icon={<IconClock />} title="No game matches">
-          Nothing this week{' '}
-          {query.trim() ? `matches “${query.trim()}”` : 'is in that conference'}.
+          Nothing this week {noMatchReason(query, conf, ranked)}.
           <br />
           <button className="adm__reset" onClick={clearFilters}>
             Clear the filters
@@ -307,6 +328,24 @@ export default function Admin({ weekId }) {
       <Toast message={toast} onDone={() => setToast(null)} />
     </Screen>
   )
+}
+
+/**
+ * Why the pool came back empty, in the reader's own terms.
+ *
+ * Three filters can now combine, so "is in that conference" was wrong as often as it was
+ * right: with Ranked on and a search typed, the sentence blamed the conference for a
+ * miss the search caused. Named parts, joined, so it can only ever say what is actually
+ * switched on.
+ */
+function noMatchReason(query, conf, ranked) {
+  const parts = []
+  if (query.trim()) parts.push(`matches “${query.trim()}”`)
+  if (ranked) parts.push('has a ranked team')
+  if (conf !== null) parts.push('is in that conference')
+  if (!parts.length) return 'is in the pool'
+  if (parts.length === 1) return parts[0]
+  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`
 }
 
 const SearchIcon = () => (

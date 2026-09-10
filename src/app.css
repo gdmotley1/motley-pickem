@@ -1996,6 +1996,23 @@
   color: var(--on-field-2);
 }
 
+/* Ranked is a different axis from the conferences, so it gets a rule between it and
+   them rather than sitting in the run as if it were another league. Its own accent when
+   on, for the same reason: --pick means "one of these", and this one ANDs with them. */
+.adm__confsep {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 20px;
+  margin: 0 3px;
+  background: var(--line-strong);
+}
+
+.fchip--rank.is-on {
+  background: var(--accent-deep);
+  border-color: var(--accent-deep);
+}
+
 .adm__count {
   font-size: 11.5px;
   color: var(--ink-3);

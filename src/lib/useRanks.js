@@ -33,3 +33,21 @@ export function useRanks() {
 /** The rank for one side of a game, or undefined. Ids are strings in the ranking map. */
 export const rankOf = (ranks, teamId) =>
   teamId == null ? undefined : ranks?.get(String(teamId))
+
+/**
+ * True when either team in a game is in the AP Top 25.
+ *
+ * The setup screen's counterpart to `inConference`. The poll only ever contains ranked
+ * teams, so presence in the map IS the answer and there is no sentinel to filter out.
+ * (ESPN's scoreboard payload does use 99 for unranked, but that is a different endpoint
+ * and never reaches this map.)
+ *
+ * A null `ranks` means the poll has not landed or never will, in which case no game can
+ * be shown to be ranked and the chip should not be offered at all.
+ */
+export const hasRankedTeam = (game, ranks) =>
+  !!ranks && (rankOf(ranks, game.home_id) != null || rankOf(ranks, game.away_id) != null)
+
+/** How many games in the pool have a ranked team, for the chip's count. */
+export const rankedCount = (pool, ranks) =>
+  !ranks ? 0 : (pool || []).filter((g) => hasRankedTeam(g, ranks)).length
