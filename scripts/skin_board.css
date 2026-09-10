@@ -1,0 +1,274 @@
+/* Options board: taking the scorebug language across the whole app.
+   Doc chrome, then ONE set of component rules written against tokens, then four skins
+   that override those tokens and add only what the token layer cannot express. That
+   split is the point of the board: it shows how much of each direction is a palette
+   change and how much is real work. */
+:root{
+  --ground:#eceff3; --panel:#ffffff; --edge:#d8dfe6;
+  --ink:#131a22; --ink-2:#48535e; --ink-3:#5c6873; --mark:#2f6fed; --warn:#b0560f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#11161d; --panel:#1a212a; --edge:#2c3540;
+    --ink:#eef2f6; --ink-2:#b6c1cc; --ink-3:#8c99a6; --mark:#6a9bf5; --warn:#e2934a;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#11161d; --panel:#1a212a; --edge:#2c3540;
+  --ink:#eef2f6; --ink-2:#b6c1cc; --ink-3:#8c99a6; --mark:#6a9bf5; --warn:#e2934a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1580px;margin:0 auto;padding:44px 22px 90px}
+h1,h2,h3{font-family:'Archivo',Helvetica,Arial,sans-serif;letter-spacing:-.025em;margin:0;
+  text-wrap:balance}
+.doc__eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mark);margin:0 0 10px}
+.doc__title{font-size:42px;font-weight:700;line-height:1.06}
+.doc__sub{color:var(--ink-2);max-width:68ch;margin:14px 0 0;font-size:16.5px}
+section{margin-top:54px}
+.sec__h{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);padding-bottom:9px;border-bottom:1px solid var(--edge);margin-bottom:22px}
+.sec__lede{color:var(--ink-2);max-width:72ch;margin:0 0 26px}
+.callout{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--warn);
+  border-radius:0 8px 8px 0;padding:16px 18px;margin:0 0 26px;max-width:78ch}
+.callout p{margin:0 0 10px;color:var(--ink-2);font-size:14.5px}
+.callout p:last-child{margin-bottom:0}
+.callout b{color:var(--ink)}
+.rec{background:var(--panel);border:1px solid var(--edge);border-radius:10px;padding:22px 24px;
+  max-width:80ch}
+.rec h3{font-size:19px;margin-bottom:10px}
+.rec p{margin:0 0 12px;color:var(--ink-2)}
+.rec p:last-child{margin-bottom:0}
+.rec b{color:var(--ink)}
+.mono{font-family:'Cascadia Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px}
+
+.row{display:flex;flex-wrap:wrap;gap:34px 26px;align-items:flex-start}
+.opt{margin:0;width:372px;flex:0 0 auto}
+.opt__cap{font-family:'Archivo',sans-serif;font-weight:700;font-size:17px;margin-bottom:3px;
+  color:var(--ink);display:flex;align-items:baseline;gap:9px}
+.opt__cap .tag{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:#fff;background:var(--ink-3);border-radius:99px;padding:2px 8px}
+.opt__cap .tag--pick{background:var(--mark)}
+.opt__kind{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 12px}
+.opt__note{color:var(--ink-2);font-size:13.5px;line-height:1.55;margin:12px 3px 0}
+.opt__note b{color:var(--ink)}
+.opt__cost{margin:12px 3px 0;font-size:12px;color:var(--ink-3);
+  font-family:'Cascadia Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.opt__cost b{color:var(--ink);font-weight:700}
+
+/* palette + type specimen above each phone */
+.spec{display:flex;gap:4px;margin:0 0 10px}
+.spec i{flex:1;height:26px;border-radius:3px;border:1px solid rgba(19,26,34,.16);
+  position:relative}
+.spec i::after{content:attr(data-k);position:absolute;left:0;right:0;bottom:-15px;
+  font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-3);text-align:center}
+.specwrap{margin-bottom:24px}
+
+.ph{width:372px;border:1px solid var(--edge);border-radius:18px;overflow:hidden;
+  box-shadow:0 12px 30px rgba(19,26,34,.18)}
+
+/* ============================================================ BASE TOKENS ===
+   The shipped Slate values. Every skin below re-declares only what it changes. */
+.ph{
+  --page:#f3f6f8; --card:#f8fafb; --sunk:#eef2f6; --well:#e7ecf1; --line:#dde4eb;
+  --ink:#131a22; --ink-2:#48535e; --ink-3:#5c6873;
+  --field:#28313d; --field-deep:#10151c; --on-field:#f2f6fa; --on-field-2:#97a5b3;
+  --accent:#2f6fed; --accent-deep:#1f56c4; --accent-bright:#6a9bf5; --accent-wash:#eaf1fe;
+  --good:#177541; --good-wash:#e4f3ea; --bad:#c33c2c; --bad-wash:#fbeae7;
+  --lead:#ffd25a;
+  --display:'Archivo',Helvetica,Arial,sans-serif;
+  --ui:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --r:10px; --r-sm:7px; --seed:0px;
+  --name-case:none; --name-stretch:normal; --name-track:0;
+  --score:17px;
+  background:var(--page);color:var(--ink);font-family:var(--ui);font-size:16px;
+  line-height:1.45;
+}
+.ph .num{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:'tnum' 1}
+
+/* --------------------------------------------------------------- app shell */
+.apphdr{display:flex;align-items:center;gap:10px;padding:11px 13px;
+  background:var(--field);color:var(--on-field)}
+.apphdr__ttl{flex:1;font-family:var(--display);font-size:15px;font-weight:700}
+.apphdr__wk{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--on-field-2)}
+.screen{padding:15px 13px 4px}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent-deep);margin-bottom:5px}
+.h1{font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.025em;
+  margin:0;line-height:1.15}
+.sub{color:var(--ink-3);font-size:13px;line-height:1.5;margin:5px 0 0}
+.tabbar{display:flex;background:var(--field);padding:6px 0 8px;margin-top:10px}
+.tabbar b{flex:1;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--on-field-2)}
+.tabbar b.is-on{color:var(--on-field)}
+.tabbar i{display:block;width:16px;height:16px;margin:0 auto 3px;border-radius:4px;
+  background:currentColor;opacity:.85}
+
+/* --------------------------------------------------------------- scorebug */
+.bug{margin:9px 12px 12px;border-radius:6px;overflow:hidden;font-family:var(--display);
+  background:var(--field-deep);color:var(--on-field);
+  box-shadow:0 2px 6px rgba(19,26,34,.18)}
+.bug__top{display:flex;align-items:center;gap:8px;padding:6px 9px;
+  background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.1)}
+.bug__wk{flex:1;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  font-stretch:condensed;color:var(--on-field-2)}
+.bug__live{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:3px;
+  background:var(--bad);color:#fff;font-size:9px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;font-stretch:condensed}
+.bug__live i{width:4px;height:4px;border-radius:50%;background:#fff;display:block}
+.bugrow{position:relative;display:grid;grid-template-columns:42px 1fr auto 24px;
+  align-items:center;gap:9px;min-height:40px;padding-right:9px;
+  border-top:1px solid rgba(255,255,255,.07)}
+.bugrow:first-of-type{border-top:0}
+.bugrow__block{position:relative;align-self:stretch;display:grid;place-items:center}
+.bugrow__seed{position:absolute;top:2px;left:4px;font-size:8.5px;font-weight:700;
+  font-stretch:condensed;color:rgba(255,255,255,.92)}
+.bugrow__mark{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.bugrow__name{min-width:0;font-size:14px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;font-stretch:condensed;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.bugrow__pts{font-size:19px;font-weight:700;text-align:right}
+.bugrow.is-leader .bugrow__pts{color:var(--lead)}
+.bugrow__gap{font-size:10px;font-weight:700;font-stretch:condensed;text-align:right;
+  color:var(--on-field-2)}
+.bugrule{position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.07)}
+.bugrule i{position:absolute;top:0;bottom:0;left:0;display:block}
+.bugrule .is-live{opacity:.35}
+.bug__foot{padding:6px 9px;font-family:var(--ui);font-size:9.5px;font-weight:600;
+  color:var(--on-field-2);background:rgba(255,255,255,.04);
+  border-top:1px solid rgba(255,255,255,.08)}
+
+/* --------------------------------------------------------------- game card */
+.avatar{display:grid;place-items:center;border-radius:50%;color:#fff;
+  font-family:var(--display);font-weight:700;flex:none;line-height:1}
+.avatar--team{overflow:hidden;box-shadow:inset 0 0 0 1px rgba(19,26,34,.12)}
+.avatar--team img{object-fit:contain;display:block}
+.bgame{position:relative;margin:0 12px 9px;padding:10px 11px 11px;background:var(--card);
+  border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.bgame__head{display:flex;align-items:center;gap:8px;min-height:25px;margin-bottom:9px}
+.bgame__score{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.bgame__side{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;
+  text-transform:var(--name-case);font-stretch:var(--name-stretch);
+  letter-spacing:var(--name-track)}
+.bgame__side.is-loser{opacity:.42}
+.bgame__pts{font-family:var(--display);font-size:var(--score);font-weight:700}
+.bgame__sep{color:var(--ink-3);font-size:10.5px}
+.bgame__odds{margin:-5px 0 8px;font-size:10.5px;font-weight:600;color:var(--ink-3)}
+.bgame__oddsep{padding:0 5px;opacity:.5}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:17px;
+  padding:0 7px;border-radius:99px;background:var(--well);color:var(--ink-2);
+  font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.chip--live{background:var(--bad);color:#fff}
+.bpicks{display:grid;gap:4px}
+.bpick{position:relative;display:flex;align-items:center;gap:8px;
+  padding:5px 44px 5px 7px;border-radius:var(--r-sm);background:var(--sunk);font-size:12.5px}
+.bpick.is-right{background:var(--good-wash)}
+.bpick.is-wrong{background:var(--bad-wash)}
+.bpick__who{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.bpick__team{font-weight:600;color:var(--ink-2)}
+.bpick__pts{position:absolute;right:8px;top:0;bottom:0;width:28px;display:flex;
+  align-items:center;justify-content:flex-end;font-family:var(--display);font-weight:700;
+  font-size:14px}
+.bpick.is-right .bpick__pts{color:var(--good)}
+.bpick.is-wrong .bpick__pts{color:var(--bad);opacity:.55}
+.bpick--hidden{opacity:.55}
+.bgame--locked .bgame__side{opacity:.75}
+
+/* the colour seed a couple of skins put down the edge of a card */
+.bgame::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--seed);
+  background:linear-gradient(180deg,var(--seed-a) 50%,var(--seed-b) 50%)}
+
+/* ================================================================= SKIN A ===
+   BROADCAST DARK. The bug's chrome taken across everything: the page, the cards,
+   the wells. Almost entirely a token swap, which is the argument for it. */
+.sk-a{
+  --page:#0d1218; --card:#171f29; --sunk:#1d2632; --well:#26313e;
+  --line:#2a3542;
+  --ink:#eef3f7; --ink-2:#b4c1cd; --ink-3:#8a97a5;
+  --field:#161d26; --field-deep:#0a0e13;
+  --accent:#6a9bf5; --accent-deep:#8fb4f8; --accent-wash:#1b2740;
+  --good:#3ec27c; --good-wash:#14301f; --bad:#ff6b57; --bad-wash:#33161a;
+  --r:6px; --r-sm:4px; --score:19px;
+  --name-case:uppercase; --name-stretch:condensed; --name-track:.03em;
+}
+.sk-a .avatar--team{box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+.sk-a .bgame{box-shadow:0 1px 0 rgba(255,255,255,.03)}
+.sk-a .bpick.is-right{box-shadow:inset 2px 0 0 var(--good)}
+.sk-a .bpick.is-wrong{box-shadow:inset 2px 0 0 var(--bad)}
+
+/* ================================================================= SKIN B ===
+   BROADCAST BONES. The light app keeps its ground; only the bones change.
+   Condensed caps, hard corners, a team seed down every card, bigger scores. */
+.sk-b{
+  --r:4px; --r-sm:3px; --score:21px; --seed:4px;
+  --name-case:uppercase; --name-stretch:condensed; --name-track:.04em;
+}
+.sk-b .bgame{padding-left:15px}
+.sk-b .eyebrow{color:var(--ink-3)}
+.sk-b .h1{text-transform:uppercase;font-stretch:condensed;letter-spacing:.01em}
+.sk-b .bgame__head{border-bottom:1px solid var(--line);padding-bottom:7px}
+.sk-b .chip{border-radius:3px}
+.sk-b .bpick__who{text-transform:uppercase;font-stretch:condensed;letter-spacing:.04em}
+
+/* ================================================================= SKIN C ===
+   DARK FURNITURE, LIGHT FIELD. What a broadcast actually is: dark graphics
+   composited over a bright picture. Only the score strip goes dark, and it is
+   lifted out of the card so it reads as a graphic laid on top of it. */
+.sk-c{
+  --r:8px; --r-sm:5px; --score:18px;
+  --name-case:uppercase; --name-stretch:condensed; --name-track:.03em;
+}
+.sk-c .bgame{padding:0 0 10px}
+.sk-c .bgame__head{margin:0 0 9px;padding:8px 10px;min-height:34px;
+  background:var(--field-deep);color:var(--on-field);
+  border-radius:var(--r) var(--r) 0 0}
+.sk-c .bgame__sep{color:var(--on-field-2)}
+.sk-c .bgame__side.is-loser{opacity:.5}
+.sk-c .bgame__odds{margin:-4px 10px 8px}
+.sk-c .bpicks{padding:0 10px}
+.sk-c .chip{background:rgba(255,255,255,.14);color:var(--on-field)}
+.sk-c .chip--live{background:var(--bad);color:#fff}
+.sk-c .avatar--team{box-shadow:0 0 0 1.5px rgba(255,255,255,.55)}
+.sk-c .screen .h1{text-transform:uppercase;font-stretch:condensed;letter-spacing:.01em}
+
+/* ================================================================= SKIN D ===
+   GRAPHICS PACKAGE. Dark, plus the wedge vocabulary a network uses for its
+   lower thirds: skewed colour blocks, a heavy accent rule, oversized numerals. */
+.sk-d{
+  --page:#0b0f14; --card:#141b24; --sunk:#1a222c; --well:#232d39; --line:#27313d;
+  --ink:#f2f6fa; --ink-2:#b8c4d0; --ink-3:#8b98a6;
+  --field:#0f151c; --field-deep:#080b0f;
+  --accent:#ffc12b; --accent-deep:#ffc12b; --accent-wash:#2a2210;
+  --good:#3ec27c; --good-wash:#14301f; --bad:#ff6b57; --bad-wash:#33161a;
+  --r:2px; --r-sm:2px; --score:24px;
+  --name-case:uppercase; --name-stretch:extra-condensed; --name-track:.05em;
+}
+.sk-d .apphdr{border-bottom:3px solid var(--accent)}
+.sk-d .eyebrow{color:var(--accent);display:inline-flex;align-items:center;gap:6px}
+.sk-d .eyebrow::before{content:'';width:9px;height:11px;background:var(--accent);
+  transform:skewX(-14deg);display:block}
+.sk-d .h1{text-transform:uppercase;font-stretch:condensed;letter-spacing:.005em;
+  font-size:27px}
+.sk-d .bgame{border-left:0;padding-left:16px}
+/* An angled flash, not a skewed bar. transform:skewX on a full-height stripe turns it
+   into a parallelogram that sweeps sideways by height/2 * tan(14deg), which on a 200px
+   card is 25px each way: it slid straight over the pick rows and read as a rendering
+   fault. clip-path angles the shape without moving it. */
+.sk-d .bgame::before{width:14px;left:0;clip-path:polygon(0 0,100% 0,58% 100%,0 100%)}
+.sk-d .bgame__head{border-bottom:2px solid var(--accent);padding-bottom:7px}
+.sk-d .bgame__pts{font-size:var(--score);letter-spacing:-.02em}
+.sk-d .chip{border-radius:0;transform:skewX(-14deg)}
+.sk-d .chip > span{display:block;transform:skewX(14deg)}
+.sk-d .bpick{border-radius:0}
+.sk-d .bpick.is-right{box-shadow:inset 3px 0 0 var(--good)}
+.sk-d .bpick.is-wrong{box-shadow:inset 3px 0 0 var(--bad)}
+.sk-d .avatar--team{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.sk-d .tabbar{border-top:3px solid var(--accent)}

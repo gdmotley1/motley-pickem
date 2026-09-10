@@ -2013,6 +2013,15 @@
   border-color: var(--accent-deep);
 }
 
+/* The spread bands are a third axis again, and they get the chrome rather than the
+   accent so the row reads as three groups: what is ranked, how close it is, and who is
+   playing. --field is the only strong colour left that does not already mean something
+   else in this app. */
+.fchip--band.is-on {
+  background: var(--field);
+  border-color: var(--field);
+}
+
 .adm__count {
   font-size: 11.5px;
   color: var(--ink-3);

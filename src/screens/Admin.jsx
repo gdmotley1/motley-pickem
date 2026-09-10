@@ -5,6 +5,7 @@ import { Empty, IconClock, Rank, Screen, Spinner, Toast } from '../components/ui
 import { hasRankedTeam, rankOf, rankedCount, useRanks } from '../lib/useRanks.js'
 import { dayKey, dayLabel, kickoffLabel } from '../lib/format.js'
 import { availableConferences, inConference } from '../lib/conferences.js'
+import { availableBands, inBand } from '../lib/spreads.js'
 
 const SLATE_SIZE = 20
 
@@ -51,6 +52,9 @@ export default function Admin({ weekId }) {
      "SEC and ranked" is reachable, which is most of why it is worth having: on a 91-game
      pool the two together cut it to a handful. */
   const [ranked, setRanked] = useState(false)
+  /* Which spread band, or null. Its own axis again: it ANDs with both the conference and
+     Ranked, because "close SEC games" is the question Dad is actually asking. */
+  const [band, setBand] = useState(null)
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
   const [toast, setToast] = useState(null)
@@ -72,6 +76,7 @@ export default function Admin({ weekId }) {
 
   const conferences = useMemo(() => availableConferences(pool), [pool])
   const nRanked = useMemo(() => rankedCount(pool, ranks), [pool, ranks])
+  const bands = useMemo(() => availableBands(pool), [pool])
 
   const shown = useMemo(() => {
     if (!pool) return []
@@ -80,10 +85,11 @@ export default function Admin({ weekId }) {
     let rows = pool
     if (conf !== null) rows = rows.filter((g) => inConference(g, conf))
     if (ranked) rows = rows.filter((g) => hasRankedTeam(g, ranks))
+    if (band) rows = rows.filter((g) => inBand(g, band))
     const needle = query.trim().toLowerCase()
     if (needle) rows = rows.filter((g) => haystack(g).includes(needle))
     return rows
-  }, [pool, view, chosen, conf, ranked, ranks, query])
+  }, [pool, view, chosen, conf, ranked, ranks, band, query])
 
   const sections = useMemo(() => byDay(shown), [shown])
 
@@ -91,6 +97,7 @@ export default function Admin({ weekId }) {
     setQuery('')
     setConf(null)
     setRanked(false)
+    setBand(null)
   }
 
   function toggle(g) {
@@ -141,7 +148,8 @@ export default function Admin({ weekId }) {
 
   const count = chosen.size
   const ready = count === SLATE_SIZE
-  const filtered = view === 'pool' && (conf !== null || ranked || query.trim() !== '')
+  const filtered =
+    view === 'pool' && (conf !== null || ranked || band !== null || query.trim() !== '')
 
   return (
     <Screen
@@ -209,6 +217,20 @@ export default function Admin({ weekId }) {
                 <span className="adm__confsep" aria-hidden="true" />
               </>
             )}
+            {/* Spread bands. Thresholds rather than buckets, so tapping one clears any
+                other: "one score or less" legitimately contains every toss-up. */}
+            {bands.map((b) => (
+              <button
+                key={b.id}
+                className={`fchip fchip--band${band === b.id ? ' is-on' : ''}`}
+                onClick={() => setBand(band === b.id ? null : b.id)}
+                aria-pressed={band === b.id}
+                title={`Line of ${b.hint}`}
+              >
+                {b.name} <span className="fchip__n">{b.count}</span>
+              </button>
+            ))}
+            {bands.length > 0 && <span className="adm__confsep" aria-hidden="true" />}
             <button
               className={`fchip${conf === null ? ' is-on' : ''}`}
               onClick={() => setConf(null)}
@@ -248,7 +270,7 @@ export default function Admin({ weekId }) {
 
       {view === 'pool' && shown.length === 0 && (
         <Empty icon={<IconClock />} title="No game matches">
-          Nothing this week {noMatchReason(query, conf, ranked)}.
+          Nothing this week {noMatchReason(query, conf, ranked, band, bands)}.
           <br />
           <button className="adm__reset" onClick={clearFilters}>
             Clear the filters
@@ -338,10 +360,16 @@ export default function Admin({ weekId }) {
  * miss the search caused. Named parts, joined, so it can only ever say what is actually
  * switched on.
  */
-function noMatchReason(query, conf, ranked) {
+function noMatchReason(query, conf, ranked, band, bands) {
   const parts = []
   if (query.trim()) parts.push(`matches “${query.trim()}”`)
   if (ranked) parts.push('has a ranked team')
+  if (band) {
+    const b = bands.find((x) => x.id === band)
+    // Named by its threshold rather than its label: "is a Toss-up" reads like a proper
+    // noun, and the number is the thing that explains an empty list.
+    parts.push(`has a line of ${b ? b.hint : 'that size'}`)
+  }
   if (conf !== null) parts.push('is in that conference')
   if (!parts.length) return 'is in the pool'
   if (parts.length === 1) return parts[0]
