@@ -200,47 +200,6 @@ database still read 11.
 order must prefer it, and must set `orderTouched` so the spread sort cannot overwrite a
 saved ranking.
 
-## Week and Season are two tabs, and the recap is arithmetic
-
-Standings was one season-only screen that printed the same two numbers three times: a
-table with points and accuracy, then a points bar chart, then an accuracy bar chart. It
-split on 2026-09-10 into **Week** (`src/screens/Week.jsx`) and **Season**
-(`src/screens/Season.jsx`). Five tabs for an admin, four for a player, which is the
-practical ceiling on a phone.
-
-Week carries the settled result plus a recap; Season carries every cumulative number.
-Nothing cumulative belongs on Week, or the two tabs go back to being copies.
-
-**Why the recap is generated and not written:** Grant's words were "worried its gonna be
-innaccurate or ai slop". He was right about the specific case that prompted it. A draft
-claimed "UNLV at Hawaii decided it" because that game held a 7 point swing between the top
-two and the final margin was 7. That is empty: the margin is the *sum* of every game they
-differed on, so every game with a 7 point swing has an identical claim, and there were
-three. The rule now is that a line either counts something or recomputes something.
-
-**How to apply:** anything new on these screens goes in `src/lib/weekRecap.js` or
-`src/lib/seasonStats.js` as a pure function, never inline in the screen, and gets an
-assertion in `tests/recap_check.mjs`. That file runs against the real Week 1 board, so a
-detector that drifts drifts away from a week the family remembers. Two rules that already
-caught bugs:
-
-- **A "what decided it" claim must be recomputed.** `decisiveGames` flips one result at a
-  time and re-runs the standings, keeping only games where the winner set actually
-  changes. An empty list is a real answer and gets printed as one.
-- **A season ceiling is the sum of the weekly ceilings.** Ranking efficiency compares
-  points banked to the most that ranking could have been worth. That figure depends on one
-  week's shape, so applying the formula to season totals gives nonsense: for a player two
-  weeks in it reported 45% instead of 88%. This is why `get_season` returns a row per week
-  rather than a total.
-
-The recap renders only once every game has a winner. That is taste, not safety: a locked
-game's picks are already public, so a running recap would be legal, but a number that
-moves while somebody reads it is worse than one that arrives Monday.
-
-Chart geometry lives in `formGeometry`, not in the JSX, because a chart is the one thing
-here that can look right and be wrong. A point outside the viewBox and a gridline labelled
-with a value the scale never reaches both render silently.
-
 ## Do not use framer-motion AnimatePresence in this app
 
 Screen transitions animate in on a fresh `key` with no exit. Sheets and toasts are the

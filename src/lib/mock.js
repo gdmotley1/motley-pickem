@@ -318,47 +318,6 @@ export async function rpc(fn, args = {}) {
         .sort((a, b) => b.points - a.points || b.correct - a.correct)
     }
 
-    /* One row per player per week, the shape migrations/010_get_season.sql returns.
-       The offline week is a single week, so the season tab renders its thin state here:
-       totals equal to that week, and no form chart. That is the correct demo, because
-       it is exactly what the family saw on the real site after week one. */
-    case 'get_season': {
-      requireMe(args.p_token)
-      const w = await week()
-      const byId = Object.fromEntries(w.slate.map((g) => [g.game_id, g]))
-      return s.players
-        .filter((p) => p.name)
-        .map((p) => {
-          let correct = 0
-          let games = 0
-          let points = 0
-          for (const [k, v] of Object.entries(s.picks)) {
-            const [pid, gid] = k.split(':')
-            if (Number(pid) !== p.id) continue
-            const g = byId[Number(gid)]
-            if (!g?.winner_abbr) continue
-            games += 1
-            if (v.pick === g.winner_abbr) {
-              correct += 1
-              points += v.confidence
-            }
-          }
-          return {
-            player_id: p.id,
-            player_name: p.name,
-            player_color: p.color,
-            player_team: p.team_id ?? null,
-            week_no: w.week?.week_no ?? 1,
-            week_label: w.week?.label ?? 'Week 1',
-            points,
-            correct,
-            games,
-          }
-        })
-        .filter((r) => r.games > 0)
-        .sort((a, b) => b.points - a.points)
-    }
-
     case 'save_picks': {
       const me = requireMe(args.p_token)
       const w = await week()
