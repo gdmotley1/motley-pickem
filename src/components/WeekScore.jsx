@@ -10,12 +10,18 @@ import { Portal } from './ui.jsx'
 /**
  * How far down the viewport the readable area actually starts.
  *
- * `.app__body` looks like the scroll container but is not one: `.app` is sized by
- * min-height, so the flex child grows with its content and the document is what scrolls.
- * That makes the sticky header overlap the top of the scroll, and anything else pinned
- * to `top: 0` lands underneath it at a lower z-index and is never seen. Measuring beats
- * hard-coding the height, which is padding plus two lines of type plus the safe-area
- * inset and would silently drift the first time any of them changes.
+ * This is the header's height, which is also the top edge of `.app__body`. Two things
+ * use it: the pinned strip sits at `top: this`, and the Board's IntersectionObserver
+ * takes it as a negative top rootMargin so the strip appears exactly as the card leaves
+ * the scroll container rather than as it leaves the screen.
+ *
+ * Measuring beats hard-coding: the height is padding plus two lines of type plus the
+ * safe-area inset, and would silently drift the first time any of those changes.
+ *
+ * This used to carry a longer note explaining that `.app__body` was not really a scroll
+ * container, because `.app` was sized by min-height and the document scrolled instead.
+ * That was fixed on 2026-09-10 (see the shell note in theme.css) and the header no longer
+ * overlaps anything. Both uses above stayed correct through the change.
  */
 export function useHeaderOffset() {
   const [h, setH] = useState(0)

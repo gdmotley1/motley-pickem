@@ -154,11 +154,29 @@ label {
   touch-action: manipulation;
 }
 
+/* The shell is exactly the viewport, and only .app__body scrolls.
+
+   This used to be `min-height: 100%` here and `min-height: 100dvh` on #root and .app,
+   which reads like the same thing and is not. Nothing in the chain had a definite
+   height, so `.app__body { flex: 1; overflow-y: auto }` had nothing to be 1 of: it grew
+   to fit its content, its overflow never engaged, and the *document* scrolled instead.
+   Measured on the Board it was 5383px tall inside an 812px viewport.
+
+   On a desktop browser that looks fine, which is why it survived. Installed on an iPhone
+   it does not: the tab bar is `position: fixed`, and iOS detaches fixed elements during
+   momentum scroll and rubber-band on a scrolling document, so it settles above the bottom
+   of the screen and leaves a band of page colour under it until the next scroll puts it
+   back. Grant reported exactly that on 2026-09-10.
+
+   `height` rather than `min-height`, all the way down, is what makes the flex child
+   resolve. `overflow: hidden` on the document is what stops iOS rubber-banding the whole
+   page behind the fixed bar. */
 html,
 body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  height: 100%;
+  overflow: hidden;
   background: var(--page);
 }
 
@@ -173,7 +191,7 @@ body {
 }
 
 #root {
-  min-height: 100dvh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }

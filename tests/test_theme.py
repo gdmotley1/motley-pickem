@@ -193,3 +193,115 @@ def test_no_input_renders_below_the_size_that_makes_ios_zoom():
         assert size >= INPUT_FLOOR_PX, (
             ".%s renders at %gpx; iOS will zoom the page when it takes focus"
             % (klass, size))
+
+
+# --------------------------------------------------------------- the app shell
+
+# The shell has to be EXACTLY the viewport, with .app__body as the only scroller.
+#
+# It was not, until 2026-09-10. html/body were `min-height: 100%`, #root and .app were
+# `min-height: 100dvh`, and nothing in the chain had a definite height, so the flex child
+# `.app__body { flex: 1; overflow-y: auto }` had nothing to be 1 of. It grew to fit its
+# content and the document scrolled instead: 5383px of .app__body inside an 812px
+# viewport, measured on the Board.
+#
+# On a desktop browser that looks completely fine, which is how it reached production.
+# Installed on an iPhone it does not: the tab bar is position: fixed, and iOS detaches
+# fixed elements during momentum scroll and rubber-band on a scrolling document, so it
+# settles above the bottom of the screen and leaves a band of page colour beneath it.
+# Grant reported exactly that from his home screen.
+#
+# These assert the shape rather than an exact declaration, so a refactor can move things
+# around but cannot quietly go back to min-height and reintroduce a bug that is invisible
+# on every machine this project is developed on.
+
+COMMENT = re.compile(r"/\*.*?\*/", re.S)
+RULE = re.compile(r"([^{}]*)\{([^{}]*)\}", re.S)
+
+
+def rules_for(css, selector):
+    """Every (selector list, declarations) pair whose list names `selector` exactly.
+
+    Comments are stripped first: they contain prose about the very properties under test
+    and would otherwise be matched as selectors. Rules nested in @media are found too,
+    because the prelude cannot match a body containing a brace.
+    """
+    out = []
+    for sels, body in RULE.findall(COMMENT.sub("", css)):
+        if any(s.strip() == selector for s in sels.split(",")):
+            out.append(body)
+    return out
+
+
+def last_rule(css, selector):
+    """The last rule wins at equal specificity, and that is the one that applies.
+
+    Last rather than first on purpose: a `.signin { overflow: hidden }` further down the
+    file is exactly what defeated the first attempt at this fix.
+    """
+    found = rules_for(css, selector)
+    assert found, f"no rule found for {selector}"
+    return found[-1]
+
+
+def declared(css, selector, prop):
+    """Every value given to `prop` for `selector`, across all of its rules, in order."""
+    return [
+        m.group(1).strip()
+        for body in rules_for(css, selector)
+        for m in re.finditer(re.escape(prop) + r"\s*:\s*([^;]+);", body)
+    ]
+
+
+def test_the_document_itself_cannot_scroll():
+    """The whole class of bug starts with the document being scrollable."""
+    css = read(THEME)
+    assert "hidden" in declared(css, "body", "overflow"), (
+        "html/body must set overflow: hidden. Without it iOS rubber-bands the whole page "
+        "behind the fixed tab bar and leaves whitespace under it."
+    )
+    assert "100%" in declared(css, "body", "height"), (
+        "html/body must be height: 100%, not min-height. min-height lets the shell grow "
+        "with its content, which stops .app__body from ever becoming a scroll container."
+    )
+
+
+@pytest.mark.parametrize("selector", ["#root", ".app"])
+def test_the_shell_chain_has_a_definite_height(selector):
+    """Without a definite height down the chain, flex: 1 on .app__body means nothing."""
+    css = read(THEME if selector == "#root" else APP_CSS)
+    heights = declared(css, selector, "height")
+    assert heights, f"{selector} must set an explicit height"
+    assert any(h in ("100%", "100dvh") for h in heights), (
+        f"{selector} height is {heights}, expected 100% or 100dvh"
+    )
+    assert "100dvh" not in declared(css, selector, "min-height"), (
+        f"{selector} is back on min-height: 100dvh. That is the exact regression: the "
+        f"shell grows past the viewport and the document scrolls instead of .app__body."
+    )
+
+
+def test_the_app_body_is_the_only_scroller():
+    body = last_rule(read(APP_CSS), ".app__body")
+    assert re.search(r"overflow-y:\s*auto", body)
+    assert re.search(r"overscroll-behavior:\s*contain", body), (
+        "without overscroll-behavior: contain, a flick at the end of the list chains up "
+        "and rubber-bands the document behind the tab bar"
+    )
+
+
+def test_sign_in_can_still_scroll_itself():
+    """SignIn is its own root with no inner scroller, and it clips its glow horizontally.
+
+    A flat `overflow: hidden` is the trap here: it does contain the ::before glow, and it
+    also makes the seat tiles unreachable on a short phone now that the shell no longer
+    grows. Horizontal clipped, vertical scrollable is the combination that does both.
+    """
+    css = read(APP_CSS)
+    assert "hidden" not in declared(css, ".signin", "overflow"), (
+        "a blanket overflow: hidden on .signin clips content the user has to reach; "
+        "use overflow-x: hidden with overflow-y: auto"
+    )
+    body = last_rule(css, ".signin")
+    assert re.search(r"overflow-x:\s*hidden", body), "the ::before glow must stay clipped"
+    assert re.search(r"overflow-y:\s*auto", body), "the seats must stay reachable"
