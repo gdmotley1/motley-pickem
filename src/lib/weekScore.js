@@ -34,6 +34,10 @@ export function weekScore(games, rows, roster) {
         id: p.id,
         name: p.name,
         color: p.color,
+        // Carried through for the scorebug, which draws each player's school mark and
+        // sets their block to that school's other colour. Reading it off the roster
+        // here keeps <WeekScore> a pure function of `score` with nothing else to join.
+        team_id: p.team_id,
         points: 0,
         correct: 0,
         played: 0,
@@ -66,5 +70,25 @@ export function weekScore(games, rows, roster) {
 
   // Ties stand, so the lead is a value rather than a person: everyone on it is a leader.
   const best = players[0]?.points || 0
-  return { total, best, players }
+
+  /* Standings position, ties sharing a number and the next player skipping past them:
+     128, 128, 124 is 1, 1, 3 rather than 1, 2, 3. Computed here rather than in the
+     scorebug because the sort that decides it already lives here, and two places
+     deriving a rank is how they come to disagree. Ranked on points alone: `correct` is
+     a tiebreak for row ORDER only, and the pool has no tiebreaker. */
+  let rank = 0
+  players.forEach((p, i) => {
+    if (i === 0 || p.points !== players[i - 1].points) rank = i + 1
+    p.rank = rank
+    p.shared = false
+  })
+  for (const p of players) p.shared = players.filter((q) => q.rank === p.rank).length > 1
+
+  /* How many games are on right now, for the LIVE chip. A game that has kicked off with
+     no winner yet is in progress; `withLive` has already laid ESPN's view over the row,
+     so this is as current as the last poll. */
+  const playing = games.filter((g) => g.locked && !g.winner_abbr).length
+  const graded = games.filter((g) => g.winner_abbr).length
+
+  return { total, best, players, playing, graded, slateSize: n }
 }

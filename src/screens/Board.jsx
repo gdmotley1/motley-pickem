@@ -65,7 +65,7 @@ export default function Board({ me, weekId, week }) {
     [games, rows, roster],
   )
 
-  /* Nothing to show before the first kickoff: four empty bars say less than the
+  /* Nothing to show before the first kickoff: an empty scorebug says less than the
      "unlock as they kick off" line already above them. */
   const showScore = !!score && games.some((g) => g.locked)
 
@@ -117,7 +117,7 @@ export default function Board({ me, weekId, week }) {
     >
       {showScore && (
         <>
-          <WeekScore score={score} cardRef={cardRef} />
+          <WeekScore score={score} cardRef={cardRef} me={me} label={week?.label || 'This week'} />
           <ScoreBug score={score} pinned={pinned} top={headerH} />
         </>
       )}

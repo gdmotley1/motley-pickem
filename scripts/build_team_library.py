@@ -37,6 +37,19 @@ OUT = os.path.join(ROOT, "static", "data", "teams.json")
 
 # Anything closer than this in RGB space reads as the same colour at 22px.
 TOO_CLOSE = 70
+# The bar for `alt`, which is a solid block butted against the solid disc rather than a
+# mark drawn on top of one. Two flat areas separate at a far smaller difference than a
+# logo does, so reusing TOO_CLOSE here rejected Georgia College's own green at a
+# distance of 68 and left Grant's alma mater with no block colour at all.
+ALT_TOO_CLOSE = 40
+# The scorebug's chrome, and the contrast a colour block has to reach against it to read
+# as a block at all. Two of the four schools on the current roster carry black as their
+# second colour: Kennesaw's #0b1315 scored 1.02 against this and Georgia's #2c2a29 scored
+# 1.28, measured in the harness on 2026-09-10, which is to say they were not there. A
+# school's black is still its black; it just has to be lifted far enough off the chrome to
+# be seen, the way a broadcast graphic never puts true black on a black bug.
+BUG_CHROME = (16, 21, 28)
+MIN_BLOCK_CONTRAST = 1.7
 # If more than this share of the drawn mark blends into the background, reject it.
 MAX_BLEND = 0.34
 # The last resort, when neither school colour can host the mark. Two polarities, not
@@ -122,6 +135,66 @@ def choose_bg(team, cuts):
     return (best[1], best[2], best[3]) if best else (NEUTRALS[0][0], "neutral", "light")
 
 
+def _lum(rgb):
+    f = []
+    for v in rgb:
+        v /= 255.0
+        f.append(v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2]
+
+
+def contrast(a, b):
+    x, y = _lum(a) + 0.05, _lum(b) + 0.05
+    return max(x, y) / min(x, y)
+
+
+def lift(rgb, against=BUG_CHROME, target=MIN_BLOCK_CONTRAST):
+    """Raise a colour toward white just far enough to read against the bug's chrome.
+
+    Mixes toward white rather than brightening each channel, so the hue survives: a navy
+    lifts to a lighter navy, and a true black lifts to a neutral charcoal because that is
+    what a true black actually is. Returns the colour unchanged when it already clears.
+    """
+    if contrast(rgb, against) >= target:
+        return rgb, False
+    for step in range(1, 21):
+        t = step / 20.0
+        mixed = tuple(round(c + (255 - c) * t) for c in rgb)
+        if contrast(mixed, against) >= target:
+            return mixed, True
+    return (255, 255, 255), True
+
+
+def choose_alt(team, bg_hex, bg_from):
+    """The school's OTHER colour, for anything drawn beside the avatar rather than under it.
+
+    Grant asked on 2026-09-10 for the scorebug's colour block to be "the secondary colour
+    of each school". Read literally as `alt_color` that fails immediately on this roster:
+    Wyoming's alternate is #ffc425, which is already the disc, so the disc would vanish
+    into the block.
+
+    So secondary is defined here as the school colour the disc is NOT using. Wyoming's
+    disc took the alternate, so its block gets the primary brown; Georgia's disc took the
+    primary red, so its block gets the near-black alternate. That is the same idea and it
+    can never collide by construction.
+
+    Returns None when the school has only one usable colour, or when both are so close
+    that a block would read as the same swatch. The caller falls back to the player's own
+    colour, which is what an unclaimed seat uses anyway.
+    """
+    used = hex_rgb(bg_hex)
+    order = ("color", "alt_color") if bg_from == "alternate" else ("alt_color", "color")
+    for field in order:
+        rgb = hex_rgb(team.get(field))
+        if not rgb or used is None:
+            continue
+        if sum((a - b) ** 2 for a, b in zip(rgb, used)) ** 0.5 < ALT_TOO_CLOSE:
+            continue
+        rgb, lifted = lift(rgb)
+        return "#" + "".join("%02x" % c for c in rgb), ("lifted" if lifted else field)
+    return None, None
+
+
 def load(path):
     if not os.path.exists(path):
         return []
@@ -140,7 +213,7 @@ def build():
             continue
         bg, why, cut = choose_bg(t, cuts)
         stats[why] = stats.get(why, 0) + 1
-        out.append({
+        row = {
             "id": str(t["id"]),
             "abbr": t.get("abbr", ""),
             "school": t.get("short") or t.get("school", ""),
@@ -149,7 +222,12 @@ def build():
             "bg": bg,
             "bg_from": why,
             "cut": cut,
-        })
+        }
+        alt, alt_from = choose_alt(t, bg, why)
+        if alt:
+            row["alt"] = alt
+            row["alt_from"] = alt_from
+        out.append(row)
     return out, stats, missing
 
 

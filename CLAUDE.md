@@ -52,6 +52,16 @@ python scripts/fetch_slate.py --start 2026-09-03 --end 2026-09-06
 # FBS team library + every logo (138 teams, 276 PNGs, ~12MB)
 python scripts/fetch_teams.py --out inputs/fbs_teams.json --download static/logos
 
+# the OTHER logos: FCS opponents that appear in the pool but are in no FBS group.
+# The setup screen lists every game in the window, so it needs these too or it
+# renders a four-letter chip. sync_supabase --mode slate now does this on its own.
+python scripts/fetch_opponent_logos.py --check
+python scripts/fetch_opponent_logos.py
+
+# schools ESPN carries in no list at all (GCSU). Reads inputs/extra_teams.json;
+# an entry with source_file reads local artwork and keys off its flat background.
+python scripts/fetch_extra_teams.py
+
 # turn Dad's handwritten shorthand into real ESPN games
 python scripts/resolve_slate.py --slate inputs/week01_dad_slate.txt \
   --games inputs/slate_2026-09-03_2026-09-06.json --out inputs/week01_resolved.json

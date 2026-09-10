@@ -99,6 +99,13 @@
   --pick-soft: var(--b-400);
   --pick-wash: var(--b-100);
 
+  /* --- the scorebug's leader ---------------------------------------------
+     Gold, and deliberately not --accent. Blue means "this is the one you chose"
+     everywhere else in the app, so on the bug's dark chrome it would read as a
+     selection rather than as first place. Only ever used on --field-deep, where it
+     measures 10.8:1. Ties stand, so more than one row can carry it. */
+  --lead: #ffd25a;
+
   /* --- results ----------------------------------------------------------- */
   --good: var(--gr-600);
   --good-wash: var(--gr-100);

@@ -135,3 +135,20 @@ def test_the_manifest_still_describes_an_installable_app():
     assert m.get("start_url") and m.get("scope")
     sizes = {i.get("sizes") for i in m.get("icons", [])}
     assert {"192x192", "512x512"} <= sizes, "a 192 and a 512 icon are the install minimum"
+
+
+def test_the_team_library_is_never_served_stale():
+    """teams.json carries no content hash and GitHub Pages sets max-age=600 on it, so a
+    plain fetch keeps returning the previous library for ten minutes after a deploy.
+
+    Verified live on 2026-09-10, minutes after shipping the scorebug: a default fetch
+    returned 139 teams with 0 `alt` block colours while `cache: 'reload'` returned 139
+    with 139. Every colour block fell back to the player's own colour, which reads as the
+    feature not working. loadTeams() memoises for the session, so an installed PWA would
+    have held that stale copy far longer than ten minutes."""
+    with open(os.path.join(ROOT, "src", "lib", "teams.js"), encoding="utf-8") as f:
+        body = f.read()
+    assert "cache: 'no-cache'" in body or 'cache: "no-cache"' in body, (
+        "loadTeams() must revalidate teams.json; a plain fetch serves the previous "
+        "library for max-age=600 after every deploy"
+    )

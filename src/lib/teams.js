@@ -27,7 +27,22 @@ const url = () => `${import.meta.env.BASE_URL}data/teams.json`
 export function loadTeams() {
   if (cache) return Promise.resolve(cache)
   if (!inFlight) {
-    inFlight = fetch(url())
+    /* `no-cache` revalidates instead of trusting the stored copy.
+     *
+     * teams.json carries no content hash, and GitHub Pages serves it with
+     * max-age=600, so a plain fetch keeps returning the previous library for ten
+     * minutes after a deploy. Verified live on 2026-09-10: straight after shipping the
+     * scorebug, a default fetch returned 139 teams with 0 `alt` colours while
+     * `cache: 'reload'` returned 139 with 139. Every colour block silently fell back to
+     * the player's own colour, which looks like the feature not working rather than
+     * like a stale file. Worse for an installed PWA, which is never really closed, so
+     * `cache` above would hold that stale library for the rest of the session.
+     *
+     * `no-cache` and not `reload`: this sends a conditional request, so an unchanged
+     * library costs a 304 rather than 23KB, and it still cannot serve a stale body.
+     * Offline it fails and the catch below leaves every avatar as an initial, which is
+     * what it already did. */
+    inFlight = fetch(url(), { cache: 'no-cache' })
       .then((r) => {
         if (!r.ok) throw new Error(`teams.json ${r.status}`)
         return r.json()

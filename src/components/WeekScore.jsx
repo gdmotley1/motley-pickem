@@ -1,11 +1,18 @@
 /**
- * The week's score, shown twice on the board: as a card at the top, and as a strip
- * pinned under the header once that card has scrolled away.
+ * The week's score as a broadcast scorebug, shown twice on the board: full width at the
+ * top, and as a strip pinned under the header once that card has scrolled away.
  *
  * Both read the same object from `weekScore`, so the two can never disagree.
+ *
+ * Option S2 from outputs/scorebug-board.html, chosen by Grant on 2026-09-10: dark chrome,
+ * a solid block of the player's school colour carrying their seed and mark, condensed
+ * caps for the name, and the score set large in tabular figures. The condensed cut is
+ * Archivo's `wdth` axis, which index.html now asks Google Fonts for; it is the same
+ * family the app already loaded, so it costs no extra request.
  */
 import { useEffect, useState } from 'react'
 import { Portal } from './ui.jsx'
+import { teamById, markUrl } from '../lib/teams.js'
 
 /**
  * How far down the viewport the readable area actually starts.
@@ -34,60 +41,126 @@ export function useHeaderOffset() {
   return h
 }
 
+
 /**
- * The race. Solid bar is banked, the pale one behind it is where you can still finish.
- * Both are drawn out of the same weekly total, so the four bars share one scale and the
- * gap between two players is a distance instead of a subtraction.
+ * The block that carries a player's seed and mark.
+ *
+ * Its colour is the school's OTHER colour, not the disc's. Grant asked for "the secondary
+ * colour of each school" and taken as ESPN's `alt_color` that collapses immediately:
+ * Wyoming's alternate IS the disc, so the mark would sit on a block of its own background
+ * and the disc would stop existing. `alt` in teams.json is therefore whichever school
+ * colour the disc did not take, which is the same idea and cannot collide. A seat with no
+ * school falls back to the player's own colour, exactly as the avatar does.
  */
-export function WeekScore({ score, cardRef }) {
-  const { total, best, players } = score
+function Block({ p, size = 24 }) {
+  const team = teamById(p.team_id)
+  const bg = team?.alt || p.color
   return (
-    <div className="wkbars" ref={cardRef}>
-      <div className="wkbars__head">
-        <span className="wkbars__ttl">This week</span>
-        <span className="wkbars__key">
-          <i className="is-banked" />
-          banked
-          <i className="is-live" />
-          still live
+    <span className="bugrow__block" style={{ background: bg }}>
+      <span className="bugrow__seed num">{p.rank}</span>
+      {team ? (
+        <span
+          className="avatar avatar--team bugrow__mark"
+          style={{ width: size, height: size, background: team.bg }}
+        >
+          <img src={markUrl(team)} alt="" width={Math.round(size * 0.72)}
+               height={Math.round(size * 0.72)} loading="lazy" decoding="async" />
         </span>
-      </div>
+      ) : (
+        <span
+          className="avatar bugrow__mark"
+          style={{ width: size, height: size, background: p.color,
+                   fontSize: size * 0.42 }}
+          aria-hidden="true"
+        >
+          {(p.name || '?').slice(0, 1).toUpperCase()}
+        </span>
+      )}
+    </span>
+  )
+}
 
-      <div className="wkbars__rows">
-        {players.map((p) => (
-          <div className="wkbar" key={p.id}>
-            <span className="wkbar__name">{p.name}</span>
-            <span className="wkbar__track">
-              <span
-                className="wkbar__live"
-                style={{
-                  width: `${((p.points + p.live) / total) * 100}%`,
-                  background: p.color,
-                }}
-              />
-              <span
-                className="wkbar__fill"
-                style={{ width: `${(p.points / total) * 100}%`, background: p.color }}
-              />
-            </span>
-            <span
-              className={`wkbar__val num${best > 0 && p.points === best ? ' is-leader' : ''}`}
-            >
-              {p.points}
-            </span>
-          </div>
-        ))}
-      </div>
+/**
+ * One row: colour block, name in condensed caps, score, and the gap to the lead.
+ *
+ * The 2px strip along the bottom is where a real bug draws timeouts, and here it is
+ * banked against the most you can still finish on. It is deliberately the only place the
+ * old bar survives: a full-width track was four near-identical bars, because everyone is
+ * within a few points of everyone else on a 210 scale.
+ */
+function Row({ p, best, total, mine }) {
+  const gap = best - p.points
+  /* `best > 0` matters at the first kickoff, when nobody has scored: without it all four
+     rows go gold for a lead nobody holds. */
+  return (
+    <div className={`bugrow${best > 0 && gap === 0 ? ' is-leader' : ''}`}>
+      <Block p={p} />
+      <span className="bugrow__name">
+        {p.name}
+        {mine && <span className="bugrow__you">You</span>}
+      </span>
+      <span className="bugrow__pts num">{p.points}</span>
+      <span className="bugrow__gap num">{gap === 0 ? '—' : `-${gap}`}</span>
+      <span className="bugrule">
+        {p.live > 0 && (
+          <i className="is-live"
+             style={{ width: `${((p.points + p.live) / total) * 100}%`, background: p.color }} />
+        )}
+        <i style={{ width: `${(p.points / total) * 100}%`, background: p.color }} />
+      </span>
+    </div>
+  )
+}
 
-      <p className="wkbars__foot">
-        Out of {total}. The pale bar is the most you can still finish the week on.
-      </p>
+/** The header strip: which week, how many games are on, how far through the slate. */
+function Top({ score, label }) {
+  return (
+    <div className="bug__top">
+      <span className="bug__wk">{label}</span>
+      {score.playing > 0 && (
+        <span className="bug__live">
+          <i />
+          {score.playing} live
+        </span>
+      )}
+      <span className="bug__of num">
+        {score.graded} of {score.slateSize}
+      </span>
+    </div>
+  )
+}
+
+/** "Out of 210. You are 7 back, with 84 still to play for." */
+function footline(score, mine) {
+  const { total, best } = score
+  if (!mine) return `Out of ${total}.`
+  const where = mine.points === best
+    ? (best === 0 ? 'nobody has scored yet' : mine.shared ? 'you share the lead' : 'you lead')
+    : `you are ${best - mine.points} back`
+  const left = mine.live > 0 ? `, with ${mine.live} still to play for` : ''
+  return `Out of ${total}. ${where[0].toUpperCase()}${where.slice(1)}${left}.`
+}
+
+export function WeekScore({ score, cardRef, me, label = 'This week' }) {
+  const { best, players, total } = score
+  const mine = players.find((p) => p.id === me?.id)
+  return (
+    <div className="bug bug--dark" ref={cardRef}>
+      <Top score={score} label={label} />
+      {players.map((p) => (
+        <Row key={p.id} p={p} best={best} total={total} mine={p.id === me?.id} />
+      ))}
+      {/* Built as one sentence rather than three appended fragments. The first cut
+          appended ", shared" and then " with N still to play for", which ran together
+          into "you lead, shared with 210 still to play for": read as being shared with
+          the 210 rather than with the other players. */}
+      <p className="bug__foot">{footline(score, mine)}</p>
     </div>
   )
 }
 
 /**
- * The same four numbers, welded under the header once the card has scrolled away.
+ * The same numbers welded under the header once the card has scrolled away.
  *
  * Fixed and portalled, exactly like the tab bar, and for two reasons. `position: sticky`
  * cannot work here at all: `.app__body` is `overflow-y: auto`, so it owns the sticky
@@ -106,16 +179,19 @@ export function ScoreBug({ score, pinned, top }) {
     <Portal>
       <div className={`wkbug${pinned ? ' is-on' : ''}`} style={{ top }}>
         <div className="wkbug__bar">
-          {players.map((p) => (
-            <span
-              className={`wkbug__p${best > 0 && p.points === best ? ' is-leader' : ''}`}
-              key={p.id}
-            >
-              <i style={{ background: p.color }} />
-              <span className="wkbug__who">{p.name}</span>
-              <b className="num">{p.points}</b>
-            </span>
-          ))}
+          {players.map((p) => {
+            const team = teamById(p.team_id)
+            return (
+              <span
+                className={`wkbug__p${p.points === best ? ' is-leader' : ''}`}
+                key={p.id}
+              >
+                <i style={{ background: team?.alt || p.color }} />
+                <span className="wkbug__who">{p.name}</span>
+                <b className="num">{p.points}</b>
+              </span>
+            )
+          })}
         </div>
       </div>
     </Portal>

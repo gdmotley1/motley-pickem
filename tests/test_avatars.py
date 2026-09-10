@@ -98,3 +98,63 @@ def test_every_extra_school_records_where_its_mark_came_from():
         for field in ("source", "source_page", "license"):
             assert t.get(field), "%s has no %s" % (t["id"], field)
         assert t["source"].startswith("https://"), t["id"]
+
+
+# ---------------------------------------------------------------- the block colour
+
+BUG_CHROME = (16, 21, 28)
+
+
+def _lum(rgb):
+    f = []
+    for v in rgb:
+        v /= 255.0
+        f.append(v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2]
+
+
+def _contrast(a, b):
+    x, y = _lum(a) + 0.05, _lum(b) + 0.05
+    return max(x, y) / min(x, y)
+
+
+def _rgb(value):
+    v = value.lstrip("#")
+    return tuple(int(v[i:i + 2], 16) for i in (0, 2, 4))
+
+
+def test_every_team_has_a_block_colour(library):
+    """`alt` is what the scorebug paints behind a player's mark. A team without one falls
+    back to the player's own colour, which is fine for an unclaimed seat and wrong for a
+    school, so none should be missing."""
+    missing = [t["abbr"] for t in library if not t.get("alt")]
+    assert not missing, "no block colour for %s" % missing[:6]
+
+
+def test_the_block_is_never_the_disc(library):
+    """The whole reason `alt` is not simply ESPN's alt_color. Wyoming's alternate IS its
+    disc, so read literally the mark would sit on its own background and the disc would
+    stop existing."""
+    same = [t["abbr"] for t in library if t["alt"].lower() == t["bg"].lower()]
+    assert not same, "block equals disc for %s" % same[:6]
+
+
+def test_every_block_reads_against_the_scorebug(library):
+    """Measured, because two of the four schools on the roster carry black as their second
+    colour. Kennesaw's #0b1315 scored 1.02 against the bug's #10151c chrome and Georgia's
+    #2c2a29 scored 1.28: both were invisible in the harness on 2026-09-10."""
+    weak = [(t["abbr"], t["alt"], round(_contrast(_rgb(t["alt"]), BUG_CHROME), 2))
+            for t in library if _contrast(_rgb(t["alt"]), BUG_CHROME) < 1.65]
+    assert not weak, "block would not read on the bug: %s" % weak[:6]
+
+
+def test_lifting_is_recorded_and_rare(library):
+    """`alt_from` says whether a colour is the school's as published or was raised off the
+    chrome to be visible, so a surprising block can be explained without rerunning
+    anything. It should be a minority: if most of the pack needs lifting, the target is
+    wrong rather than the palettes."""
+    lifted = [t for t in library if t.get("alt_from") == "lifted"]
+    assert all(t.get("alt_from") for t in library), "alt_from missing on some teams"
+    assert len(lifted) < len(library) / 2, (
+        "%d of %d blocks had to be lifted; MIN_BLOCK_CONTRAST is probably too high"
+        % (len(lifted), len(library)))

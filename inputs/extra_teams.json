@@ -12,8 +12,11 @@
     "conference_id": 0,
     "source": "https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Georgia_College_Bobcats_logo.svg/500px-Georgia_College_Bobcats_logo.svg.png",
     "source_page": "https://en.wikipedia.org/wiki/Georgia_College_Bobcats",
-    "license": "Fair use: a school mark used to identify the school.",
-    "crop_bottom": 0.3,
-    "why": "Grant's alma mater. Division II Peach Belt, no football team, so it is in none of ESPN's lists. Colour is the school navy rather than the school green because the bobcat is outlined in green and vanishes on it."
+    "license": "Fair use: a school mark used to identify the school, in a private four-person family app. Never redistributed as artwork.",
+    "crop_bottom": 0.0,
+    "why": "Grant's alma mater. Division II Peach Belt, no football team, so it is in none of ESPN's lists. Background is the school navy: build_team_library re-scored it against the new artwork on 2026-09-10 and still chose primary, and green loses 38% of the mark's ink into the field against navy's 6%. The `source` URL is kept for provenance but is no longer what gets built: that file carries a GCSU wordmark overlapping the bobcat's jaw, so no crop_bottom keeps the whole animal and drops the lettering, and the version shipped until 2026-09-10 had its chin cut off.",
+    "source_file": "inputs/logos/gcsu-source.png",
+    "key_background": true,
+    "source_file_note": "Supplied by Grant on 2026-09-10 as a 1254px render of the Georgia College Bobcats primary mark on a flat royal-blue field. Not the school's own file and not the Wikipedia one: it is the wordmark-free cut with a white keyline, which is what makes it usable here. Keyed and shaped by fetch_extra_teams.py."
   }
 ]

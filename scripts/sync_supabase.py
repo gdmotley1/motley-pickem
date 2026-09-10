@@ -5,7 +5,9 @@ Two modes:
   --mode slate    Build the week and its pool. Creates the weeks row, upserts every FBS
                   game in the window, about 90 of them, and pre-selects the best 20.
                   Never touches in_slate on a week the commissioner has already
-                  published, so a refresh cannot undo his choices.
+                  published, so a refresh cannot undo his choices. Also vendors a logo
+                  for any opponent the FBS library does not carry, so the setup screen
+                  never falls back to a four-letter chip.
 
   --mode scores   Refresh kickoff times, spreads, live scores and finals for games
                   already in the database, then apply the auto-picks for anyone who
@@ -40,6 +42,7 @@ import urllib.parse
 import urllib.request
 
 from cfb_weeks import current_week, date_range, fetch_calendar, next_week, week_by_number
+from fetch_opponent_logos import ensure_logos, id_from_logo
 from fetch_slate import is_fbs
 from suggest_slate import build as build_pool
 from suggest_slate import conf_id, tier_of
@@ -267,6 +270,19 @@ def sync_slate(sb: Supabase, a, week: dict) -> int:
     print("upserted %d games, %d still to play and %d already under way (%d pre-selected)%s"
           % (len(fresh) + len(kicked), len(fresh), len(kicked), len(chosen),
              " - slate preserved, week already published" if published else ""))
+
+    # Every team in the pool needs a vendored mark, not just the FBS 138. A third of a
+    # week is an FBS side hosting an FCS side, and the visitor is in none of ESPN's FBS
+    # groups, so the setup screen rendered 42 of them as a four-letter chip until this
+    # ran. Doing it here means a week built the normal way vendors its own opponents.
+    # Failures are printed, never raised: a missing mark degrades to the chip, which is
+    # not worth failing a slate build over.
+    pulled, failed = ensure_logos(
+        [(id_from_logo((g.get(s) or {}).get("logo")), (g.get(s) or {}).get("abbr"))
+         for g in everything for s in ("home", "away")]
+    )
+    if pulled or failed:
+        print("vendored %d new opponent logo(s), %d failed" % (pulled, len(failed)))
 
     maybe_publish(sb, wk)
     return 0
