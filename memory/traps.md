@@ -110,6 +110,42 @@ abbreviation. Unranked teams are absent from the map rather than stored as ESPN'
 sentinel, so `ranks.get(id)` being undefined is the whole check. A failure is swallowed
 on purpose: a missing rank is not worth an error message on a pick screen.
 
+## A fixed element that composites lands in the wrong place on an iOS cold launch
+
+Opening the installed app from the home screen painted the tab bar about 50px above where
+it belongs, with a band of page colour under it. The first scroll snapped it back. Grant
+reported it on 2026-09-10 and it is invisible in every tool in this repo: it needs a real
+iPhone, a real standalone launch, and a first paint that lands close enough to layout.
+
+**What settled it:** two screenshots, on load and after scrolling. The header and the page
+content were in *identical* positions in both, and only the bar moved. Nothing about the
+shell's height, the scroll container or the number of tabs can move one fixed child and
+leave its siblings alone. That is a compositing bug, not a layout one.
+
+**The cause:** `.tabbar` carried both known iOS triggers. `backdrop-filter` makes Safari
+composite a fixed element against a snapshot of the page taken before layout has settled.
+A `transform` on a fixed element is the same class of trigger and will hold the bug open
+by itself, so removing only the filter is not enough. The bar now centres with
+`left/right: 0` and `margin-inline: auto`, and uses the opaque `--card` in place of the
+translucent `--card-a` the blur needed.
+
+**How to apply:** nothing `position: fixed` in this app may carry `backdrop-filter` or
+`transform`. The sticky bars (`.topbar`, `.choose__top`, `.rank__head`) keep their blur
+and are fine: sticky paints with the scroll rather than against a snapshot of it.
+
+**The wrong turn, recorded because it was expensive.** Two earlier attempts rewrote the
+shell instead. The finding behind them was real and measurable: `.app__body` was never a
+scroll container, because `min-height` all the way down left `flex: 1` with nothing to
+resolve against, so the document scrolled (5383px of body in an 812px viewport). Fixing
+that did not fix the gap, and locking the document with `overflow: hidden` cost scrolling
+on the phone entirely. Both were reverted. If that shell work is ever done for its own
+sake, it is `height` not `min-height` down the chain, and `.signin` needs
+`overflow-x: hidden` with `overflow-y: auto` or its seat tiles become unreachable on a
+short phone. It is not a fix for this.
+
+**The guard:** `test_the_tab_bar_never_composites` and `test_the_sticky_bars_keep_their_blur`
+in `tests/test_theme.py`, both checked by restoring the old rule and confirming they fail.
+
 ## A global `button { min-height: var(--tap) }` overrides every smaller height
 
 `--tap` is 44px and the rule is on the bare `button` selector. `height: 24px` on a class
