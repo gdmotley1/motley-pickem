@@ -2672,7 +2672,6 @@
 }
 
 .mu__when {
-  margin: 0; /* see .mu__msg */
   text-align: center;
   font-size: 11px;
   font-weight: 600;
@@ -2699,10 +2698,6 @@
 }
 
 .mu__msg {
-  /* Reset for the same reason as .mu__h, though this one was not the bug: these <p>
-     margins were collapsing harmlessly. Kept because an unreset margin here is a bug
-     waiting for the next layout change. */
-  margin: 0;
   font-size: 12px;
   color: var(--ink-3);
 }
@@ -2733,7 +2728,6 @@
 }
 
 .mu__where {
-  margin: 0; /* see .mu__msg */
   font-size: 12px;
   color: var(--ink-2);
   display: flex;

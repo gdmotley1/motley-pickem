@@ -185,9 +185,17 @@ body {
   flex-direction: column;
 }
 
+/* h4 belongs here as much as the rest, and its absence was a real bug. The app's only
+   <h4> is the matchup sheet's section heading, which therefore kept the browser's
+   default 1.33em top margin: 15.3px of dead space above every section, on top of the
+   section's own padding. The sheet read as empty and spaced out for it.
+   h5 and h6 are unused today and listed so the next one added cannot repeat this. */
 h1,
 h2,
-h3 {
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--display);
   font-weight: 700;
   /* Archivo is a grotesk, not a slab. It carries less negative tracking than Bitter did

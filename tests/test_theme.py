@@ -263,3 +263,35 @@ def test_the_rank_pins_its_own_typeface():
         ".aprank must name its own font-family or it inherits from whatever screen it "
         "happens to be on"
     )
+
+
+def test_every_heading_level_the_app_uses_is_reset():
+    """The reset covered h1, h2 and h3. The app's only <h4> is the matchup sheet's
+    section heading, so it kept the browser's default 1.33em top margin: 15.3px of dead
+    space above every section, on top of the section's own padding. The sheet read as
+    empty and spaced out for it, and Grant reported exactly that on 2026-09-11.
+
+    Walks the JSX for the heading levels actually rendered rather than listing them, so
+    the first <h5> anybody adds is covered or this fails.
+    """
+    import glob
+    import re
+
+    used = set()
+    for path in glob.glob(os.path.join(ROOT, "src", "**", "*.jsx"), recursive=True):
+        with open(path, encoding="utf-8") as f:
+            used.update(re.findall(r"<(h[1-6])[\s>]", f.read()))
+    assert used, "no headings found in the app at all"
+
+    with open(os.path.join(ROOT, "src", "theme.css"), encoding="utf-8") as f:
+        theme = f.read()
+    block = re.search(r"((?:h[1-6],\s*)+h[1-6])\s*\{(.*?)\}", theme, re.S)
+    assert block, "the heading reset block is gone from theme.css"
+    reset = set(re.findall(r"h[1-6]", block.group(1)))
+    assert "margin: 0" in block.group(2), "the heading reset no longer zeroes margin"
+
+    missing = sorted(used - reset)
+    assert not missing, (
+        "these heading levels are rendered but not margin-reset, so each carries the "
+        "browser's default em-based margin: %s" % missing
+    )
