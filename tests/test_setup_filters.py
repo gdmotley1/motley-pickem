@@ -73,3 +73,50 @@ def test_the_chips_are_wired_to_the_helpers():
         'the Ranked chip must be hidden until the AP poll lands, or it reads '
         '"Ranked 0" and filters the pool to nothing when tapped'
     )
+
+
+def test_the_filter_offers_exactly_the_tiers_the_rows_are_chipped_with():
+    """The filter and the chip must be the same five things.
+
+    They were not. The filter defined its own thresholds (Toss-up at 3 or less, One score
+    at 8, Lopsided at 17 or more) while every row printed one of five tier tags cut at 4,
+    10, 18 and 28. A game chipped "toss-up" at 3.5 was therefore hidden by the Toss-up
+    filter, and "close", "medium", "big" and "blowout" could not be filtered for at all.
+    Grant caught it on 2026-09-11.
+
+    This reads the tier names out of the Python that WRITES them and the JS that OFFERS
+    them, and requires the two sets to be equal. Copying the numbers across would have
+    been the easy fix and would drift the first time either side moved; this cannot.
+    """
+    import re
+
+    with open(os.path.join(ROOT, "scripts", "suggest_slate.py"), encoding="utf-8") as f:
+        tiers_block = re.search(r"^TIERS = \((.*?)^\)", f.read(), re.S | re.M)
+    assert tiers_block, "suggest_slate.TIERS is not in the shape this guard expects"
+    written = set(re.findall(r'\("([a-z-]+)"', tiers_block.group(1)))
+    assert len(written) == 5, "expected 5 tiers, found %s" % sorted(written)
+
+    with open(os.path.join(ROOT, "src", "lib", "spreads.js"), encoding="utf-8") as f:
+        bands_block = re.search(r"export const BANDS = \[(.*?)\]", f.read(), re.S)
+    assert bands_block, "spreads.BANDS is not in the shape this guard expects"
+    offered = set(re.findall(r"id: '([a-z-]+)'", bands_block.group(1)))
+
+    assert written == offered, (
+        "the Setup filter offers %s but games are tagged %s"
+        % (sorted(offered), sorted(written))
+    )
+
+
+def test_the_filter_matches_on_the_stored_tier_not_its_own_arithmetic():
+    """Equal sets today is not enough: re-deriving the tier from the spread would pass the
+    test above and still disagree at the boundary the first time a threshold moved. The
+    filter has to read the value the database already stored."""
+    with open(os.path.join(ROOT, "src", "lib", "spreads.js"), encoding="utf-8") as f:
+        body = f.read()
+    fn = body[body.index("export function inBand"):]
+    fn = fn[:fn.index("\n}")]
+    assert "game.tier" in fn, "inBand no longer matches on the stored tier"
+    assert "margin(" not in fn, (
+        "inBand derives the tier from the spread again, which is what let the filter and "
+        "the chip disagree"
+    )

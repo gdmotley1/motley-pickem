@@ -218,8 +218,10 @@ export default function Admin({ weekId }) {
                 <span className="adm__confsep" aria-hidden="true" />
               </>
             )}
-            {/* Spread bands. Thresholds rather than buckets, so tapping one clears any
-                other: "one score or less" legitimately contains every toss-up. */}
+            {/* The five tiers, and they are the SAME five the chip on each row prints.
+                They used to be three bands on their own thresholds, which meant a game
+                chipped "toss-up" could be hidden by the Toss-up filter. They are now a
+                partition, so exactly one applies to any priced game. */}
             {bands.map((b) => (
               <button
                 key={b.id}
@@ -367,9 +369,9 @@ function noMatchReason(query, conf, ranked, band, bands) {
   if (ranked) parts.push('has a ranked team')
   if (band) {
     const b = bands.find((x) => x.id === band)
-    // Named by its threshold rather than its label: "is a Toss-up" reads like a proper
+    // Named by its point range rather than its label: "is a Toss-up" reads like a proper
     // noun, and the number is the thing that explains an empty list.
-    parts.push(`has a line of ${b ? b.hint : 'that size'}`)
+    parts.push(b ? `has a line of ${b.hint}` : 'is in that tier')
   }
   if (conf !== null) parts.push('is in that conference')
   if (!parts.length) return 'is in the pool'
