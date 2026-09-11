@@ -17,6 +17,7 @@
  */
 import assert from 'node:assert/strict'
 import path from 'node:path'
+import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
 
 const ROOT = process.cwd()
@@ -130,6 +131,38 @@ check('every band carries a label and a point range for the empty state', () => 
     assert.ok(b.name && b.name.length, b.id)
     assert.ok(b.hint && /\d/.test(b.hint), b.id + ' needs a number in its hint')
   }
+})
+
+// ---------------------------------------------------------------- the label on the row
+
+/* spreadLabel lives in api.js, which imports supabase-js and reads import.meta.env, so
+   it is extracted and evaluated rather than imported. It had no guard of any kind until
+   2026-09-11, when a favourite became possible without a line and the label had to learn
+   to say so. */
+const apiSrc = await readFile(path.join(ROOT, 'src/lib/api.js'), 'utf8')
+const labelMatch = apiSrc.match(/export function spreadLabel\(game\) \{[\s\S]*?\n\}/)
+assert.ok(labelMatch, 'spreadLabel not found in api.js in the shape this check expects')
+const spreadLabel = new Function(
+  `${labelMatch[0].replace('export ', '')}; return spreadLabel`)()
+
+check('a priced game reads as favourite and number', () => {
+  assert.equal(spreadLabel({ spread_line: 10, favorite_abbr: 'LSU' }), 'LSU -10')
+  assert.equal(spreadLabel({ spread_line: 3.5, favorite_abbr: 'UGA' }), 'UGA -3.5')
+  assert.equal(spreadLabel({ spread_line: 0, favorite_abbr: 'UGA' }), 'PK')
+})
+
+check('a favourite with no line says so rather than saying nothing', () => {
+  /* OU at MICH, live on 2026-09-11: DraftKings had the spread OFF and the moneyline at
+     OU -205, so the app knows the side and not the margin. A bare "no line" would hide
+     what apply_auto_picks would do with the game if somebody missed it. */
+  assert.equal(spreadLabel({ spread_line: null, favorite_abbr: 'OU' }), 'OU favored')
+  assert.equal(spreadLabel({ spread_line: undefined, favorite_abbr: 'OU' }), 'OU favored')
+})
+
+check('no line and no favourite is still just "no line"', () => {
+  assert.equal(spreadLabel({ spread_line: null, favorite_abbr: null }), 'no line')
+  assert.equal(spreadLabel({ spread_line: null }), 'no line')
+  assert.equal(spreadLabel({}), 'no line')
 })
 
 console.log(`\n${n} checks passed`)

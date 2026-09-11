@@ -181,9 +181,19 @@ export const setNotifyPrefs = (prefs) =>
 /** Logos are vendored per ESPN team id, light and dark variants. */
 export const logoUrl = (teamId) => `${import.meta.env.BASE_URL}logos/${teamId}.png`
 
-/** "LSU -10" from the stored favourite and line. */
+/**
+ * "LSU -10" from the stored favourite and line.
+ *
+ * A game can have a favourite and no line. When a book takes the spread off the board it
+ * usually leaves the moneyline up, and fetch_slate reads the favourite off that, so from
+ * 2026-09-11 the two are independent. Saying "OU favored" beats a bare "no line", which
+ * would hide what the app already knows and what apply_auto_picks would do with the game
+ * if somebody missed it.
+ */
 export function spreadLabel(game) {
-  if (game.spread_line === null || game.spread_line === undefined) return 'no line'
+  if (game.spread_line === null || game.spread_line === undefined) {
+    return game.favorite_abbr ? `${game.favorite_abbr} favored` : 'no line'
+  }
   const n = Number(game.spread_line)
   if (!game.favorite_abbr || n === 0) return "PK"
   return `${game.favorite_abbr} -${n % 1 === 0 ? n : n.toFixed(1)}`

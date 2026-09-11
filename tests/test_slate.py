@@ -294,3 +294,107 @@ def test_every_auto_selected_game_still_has_a_line(pool):
     for g in pool["slate"]:
         assert g["odds"].get("line") is not None, g["short_name"]
         assert suggest_slate.tier_of(g) is not None, g["short_name"]
+
+
+# ------------------------------------------------- the moneyline fallback for a favourite
+
+def _ml(home_odds, away_odds, extra=None):
+    """A competition whose only usable market is the moneyline, as ESPN shapes it."""
+    o = {
+        "details": None,
+        "overUnder": 43.5,
+        "homeTeamOdds": {"favorite": False},
+        "awayTeamOdds": {"favorite": False},
+        "pointSpread": {
+            "home": {"close": {"line": "OFF", "odds": "OFF"}},
+            "away": {"close": {"line": "OFF", "odds": "-105"}},
+        },
+        "moneyline": {
+            "home": {"close": {"odds": home_odds}},
+            "away": {"close": {"odds": away_odds}},
+        },
+    }
+    o.update(extra or {})
+    return {"odds": [o]}
+
+
+def test_american_odds_convert_to_a_probability():
+    assert fetch_slate._american_to_prob("-205") == pytest.approx(0.6721, abs=1e-3)
+    assert fetch_slate._american_to_prob("+170") == pytest.approx(0.3704, abs=1e-3)
+    assert fetch_slate._american_to_prob("-110") == pytest.approx(0.5238, abs=1e-3)
+    # "OFF" is what a book posts for a market it has taken down. It is not a number and
+    # must never be coerced into one.
+    for junk in ("OFF", "", None, "EVEN", 0):
+        assert fetch_slate._american_to_prob(junk) is None, junk
+
+
+def test_the_moneyline_names_the_favourite_when_the_spread_is_off():
+    """The live case on 2026-09-11: OU at MICH, DraftKings showing pointSpread OFF both
+    sides while the moneyline stayed at OU -205, MICH +170.
+
+    Without this the game had no favourite at all, so apply_auto_picks fell through to
+    coalesce(favorite_abbr, home_abbr) and would have handed every missed pick Michigan,
+    the side the market had at about 37%.
+    """
+    got = fetch_slate._spread(_ml("+170", "-205"), "MICH", "OU")
+    assert got["favorite"] == "OU"
+    assert got["underdog"] == "MICH"
+
+
+def test_a_favourite_without_a_line_never_invents_the_margin():
+    """The half that must NOT change. We know which way the market leans and not by how
+    much, so spread_line stays null: the row reads "OU favored" rather than a made-up
+    number, tier_of keeps
+    returning None so the game sits in no filter band, and auto-rank keeps scoring it 0.
+    """
+    got = fetch_slate._spread(_ml("+170", "-205"), "MICH", "OU")
+    assert got["line"] is None, "a margin was invented from the moneyline"
+    assert suggest_slate.tier_of({"odds": got}) is None, (
+        "a game with no line must carry no tier, or it appears under a spread filter"
+    )
+
+
+def test_a_coin_flip_moneyline_names_nobody():
+    """Inside the vig the pick would be arbitrary, and "no favourite" is truer than a
+    side chosen by a point of juice. Home then wins by the existing fallback in SQL."""
+    assert fetch_slate._spread(_ml("-110", "-110"), "MICH", "OU")["favorite"] is None
+    assert fetch_slate._spread(_ml("-115", "-105"), "MICH", "OU")["favorite"] is None
+    # Just past the edge, it commits.
+    assert fetch_slate._spread(_ml("-150", "+130"), "MICH", "OU")["favorite"] == "MICH"
+
+
+def test_a_real_spread_still_beats_the_moneyline():
+    """The fallback is a last resort, not a second opinion. ESPN's own favorite flag and
+    its "ABBR -10.5" details string both outrank it."""
+    flagged = _ml("+170", "-205")
+    flagged["odds"][0]["homeTeamOdds"]["favorite"] = True
+    got = fetch_slate._spread(flagged, "MICH", "OU")
+    assert got["favorite"] == "MICH", "the moneyline overrode ESPN's own favorite flag"
+
+    detailed = _ml("+170", "-205", {"details": "MICH -3.5"})
+    got = fetch_slate._spread(detailed, "MICH", "OU")
+    assert got["favorite"] == "MICH" and got["line"] == 3.5
+
+
+def test_a_missing_moneyline_is_not_an_error():
+    """Plenty of games carry no odds block at all, and every one of them must parse."""
+    for odds in ({"odds": []}, {"odds": [{"details": None}]},
+                 {"odds": [{"moneyline": {}}]},
+                 {"odds": [{"moneyline": {"home": {"close": {"odds": "OFF"}}}}]}):
+        got = fetch_slate._spread(odds, "MICH", "OU")
+        assert got["favorite"] is None and got["line"] is None
+
+
+def test_the_fixture_week_is_unchanged_by_the_fallback():
+    """Every priced game in the saved week must keep the favourite it already had. A
+    moneyline fallback that quietly re-decided settled games would be far worse than the
+    gap it was added to close."""
+    with open(FIXTURE, encoding="utf-8") as f:
+        saved = json.load(f)["games"]
+    assert saved, "the fixture holds no games"
+    for g in saved:
+        o = g["odds"]
+        if o.get("line") is None or o.get("favorite") is None:
+            continue
+        assert o["favorite"] in (g["home"]["abbr"], g["away"]["abbr"])
+        assert o["underdog"] != o["favorite"]

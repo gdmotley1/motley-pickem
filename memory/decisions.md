@@ -61,10 +61,20 @@ forgetting genuinely cost you something. Grant decided that is not the pool he w
 the favorite is fairer. The sting is mild either way, because a missed game still gets the
 lowest confidence value left, so it is worth almost nothing whichever side it lands on.
 
-**How to apply:** Favorite, not underdog. If there is no line and so no favorite, take the
-home team. This runs in Postgres, in `apply_auto_picks()`, on a pg_cron schedule every five
-minutes, so it lands within five minutes of kickoff without waiting on the GitHub sync job.
-Never in the browser. See `migrations/005_autopick_favorite_on_cron.sql`.
+**How to apply:** Favorite, not underdog. This runs in Postgres, in `apply_auto_picks()`,
+on a pg_cron schedule every five minutes, so it lands within five minutes of kickoff
+without waiting on the GitHub sync job. Never in the browser. See
+`migrations/005_autopick_favorite_on_cron.sql`.
+
+Where the favourite comes from, in order, all of it in `fetch_slate._spread`:
+ESPN's own favorite flag, then the "ABBR -10.5" details string, then **the moneyline**,
+then the home team. The moneyline step was added 2026-09-11 when OU at MICH had its
+spread taken off the board while the moneyline stayed at OU -205. Without it the game had
+no favourite and every missed pick would have gone to Michigan, the side the market had
+at about 37%. It names a favourite only, never a line: with no spread we do not know the
+margin, so `spread_line` stays null, the game shows "no line", carries no tier, appears
+under no spread filter and auto-ranks mid-table. Inside 4 points of implied probability
+it declines to choose, and the home-team fallback takes over.
 
 ## Picks are hidden until each game locks
 

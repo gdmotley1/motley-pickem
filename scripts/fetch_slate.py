@@ -58,8 +58,63 @@ def _side(competitors: list, which: str) -> dict:
     return {}
 
 
+def _american_to_prob(odds):
+    """American moneyline odds to an implied probability. -205 is 0.672, +170 is 0.370.
+
+    Returns None for anything unparseable, which includes the literal "OFF" a book posts
+    when it has taken a market down.
+    """
+    try:
+        n = float(str(odds).replace("+", "").strip())
+    except (TypeError, ValueError, AttributeError):
+        return None
+    if n == 0:
+        return None
+    return (-n) / (-n + 100) if n < 0 else 100 / (n + 100)
+
+
+# How far apart the two implied probabilities must be before the moneyline is allowed to
+# name a favourite. Around a coin flip the pick would be arbitrary, and "no favourite" is
+# a truer answer than a side chosen by a point of vig.
+MONEYLINE_EDGE = 0.04
+
+
+def _moneyline_favorite(o: dict, home_abbr: str, away_abbr: str):
+    """Who the moneyline says is favoured, when there is no spread to read.
+
+    A book that takes the spread off the board usually leaves the moneyline up, which is
+    exactly what DraftKings did for OU at MICH on 2026-09-11: pointSpread showed "OFF"
+    both sides while the moneyline stayed at OU -205, MICH +170. Without this the game
+    had no favourite at all, and the missed-pick rule would have handed everyone
+    Michigan, the side the market had at about 37%.
+    """
+    ml = o.get("moneyline") or {}
+    sides = {}
+    for key, abbr in (("home", home_abbr), ("away", away_abbr)):
+        side = ml.get(key) or {}
+        # Close is the current number; open is what it was. Prefer current.
+        for when in ("close", "open"):
+            p = _american_to_prob((side.get(when) or {}).get("odds"))
+            if p is not None:
+                sides[abbr] = p
+                break
+    if len(sides) != 2:
+        return None
+    (a, pa), (b, pb) = sides.items()
+    if abs(pa - pb) < MONEYLINE_EDGE:
+        return None
+    return a if pa > pb else b
+
+
 def _spread(comp: dict, home_abbr: str, away_abbr: str) -> dict:
-    """Return favorite / underdog / line. ESPN's `details` looks like 'LSU -10'."""
+    """Return favorite / underdog / line. ESPN's `details` looks like 'LSU -10'.
+
+    `line` and `favorite` are independent. A game can have a favourite and no line, when
+    the spread is off the board but the moneyline is not, and the app already handles
+    that: spreadLabel still says "no line", tier_of still returns None so the game sits
+    in no filter band, and auto-rank still scores it 0. What changes is that the missed
+    pick rule now has a real side to take.
+    """
     odds_list = comp.get("odds") or []
     empty = {"details": None, "favorite": None, "underdog": None,
              "line": None, "over_under": None}
@@ -97,6 +152,12 @@ def _spread(comp: dict, home_abbr: str, away_abbr: str) -> dict:
             line = abs(float(o["spread"]))
         except (TypeError, ValueError):
             line = None
+
+    # Last resort, and only for the favourite: never for the line. If the spread is off
+    # the board we do not know the margin and must not invent one, but the moneyline
+    # still tells us which way the market leans.
+    if fav is None:
+        fav = _moneyline_favorite(o, home_abbr, away_abbr)
 
     dog = None
     if fav == home_abbr:
