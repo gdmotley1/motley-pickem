@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
+import { friendly } from '../lib/errors.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
 import { formGeometry, seasonStats } from '../lib/seasonStats.js'
 
@@ -25,7 +26,7 @@ export default function Season() {
         setRows(s)
         setRoster(seats.filter((x) => x.claimed))
       })
-      .catch((e) => alive && setError(e.message))
+      .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
     }

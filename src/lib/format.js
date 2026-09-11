@@ -59,3 +59,23 @@ export const ordinal = (n) => {
   const v = n % 100
   return n + (s[(v - 20) % 10] || s[v] || s[0])
 }
+
+/**
+ * The broadcaster, short enough for the 58px slot on a pick row.
+ *
+ * Of the twelve networks in a week only "ACC Network" overflowed, ellipsising to
+ * "ACC Netw…", which looks like a bug rather than a truncation. These are the networks'
+ * own on-air shorthand rather than invented abbreviations.
+ */
+const TV_SHORT = {
+  'ACC Network': 'ACCN',
+  'ACC Network Extra': 'ACCNX',
+  'SEC Network': 'SECN',
+  'SEC Network+': 'SECN+',
+  'Big Ten Network': 'BTN',
+  'CBS Sports Network': 'CBSSN',
+  'ESPN Deportes': 'ESPNDep',
+  'Paramount+': 'PARA+',
+}
+
+export const tvLabel = (tv) => (tv ? TV_SHORT[tv] || tv : '')

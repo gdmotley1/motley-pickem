@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
+import { friendly } from '../lib/errors.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import { Empty, IconClock, Rank, Screen, Spinner, Toast } from '../components/ui.jsx'
 import { hasRankedTeam, rankOf, rankedCount, useRanks } from '../lib/useRanks.js'
@@ -68,7 +69,7 @@ export default function Admin({ weekId }) {
         setPool(rows)
         setChosen(new Set(rows.filter((g) => g.in_slate).map((g) => g.game_id)))
       })
-      .catch((e) => alive && setError(e.message))
+      .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
     }
@@ -129,7 +130,7 @@ export default function Admin({ weekId }) {
       await api.publishSlate(weekId, [...chosen])
       setToast('Published. Everyone can pick now.')
     } catch (e) {
-      setError(e.message)
+      setError(friendly(e))
     } finally {
       setBusy(false)
     }

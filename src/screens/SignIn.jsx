@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
+import { NO_SESSION, friendly } from '../lib/errors.js'
 import { Avatar, Sheet, Spinner } from '../components/ui.jsx'
 
 const PIN_LENGTH = 4
@@ -21,16 +22,16 @@ export default function SignIn({ onSignedIn }) {
   const refresh = () => api.listSeats().then(setSeats)
 
   useEffect(() => {
-    refresh().catch((e) => setError(e.message))
+    refresh().catch((e) => setError(friendly(e, { atSignIn: true })))
   }, [])
 
   async function finish() {
     try {
       const me = await api.whoami()
       if (me) onSignedIn(me)
-      else setError('Signed in, but the session did not start. Try your PIN again.')
+      else setError(NO_SESSION)
     } catch (e) {
-      setError(e.message)
+      setError(friendly(e, { atSignIn: true }))
     }
   }
 
@@ -143,7 +144,7 @@ function SeatForm({ seat, onClose, onDone, onClaimed }) {
       }
       await onDone()
     } catch (e) {
-      setError(e.message)
+      setError(friendly(e, { atSignIn: true }))
       setPin('')
       setConfirm('')
       setStage('pin')
@@ -152,10 +153,14 @@ function SeatForm({ seat, onClose, onDone, onClaimed }) {
     }
   }
 
+  // Functional updates, and the length cap inside them: two taps that land in one React
+  // batch both read the same `target` through the closure, so the first digit is lost.
+  // A thumb does not usually manage that, but a dropped PIN digit is the kind of thing
+  // nobody in this family would ever be able to report.
   const press = (d) => {
-    if (busy || target.length >= PIN_LENGTH) return
+    if (busy) return
     setError(null)
-    setTarget(target + d)
+    setTarget((t) => (t.length >= PIN_LENGTH ? t : t + d))
     navigator.vibrate?.(8)
   }
 
@@ -248,7 +253,7 @@ function SeatForm({ seat, onClose, onDone, onClaimed }) {
                 className="key key--ghost"
                 onClick={() => {
                   setError(null)
-                  setTarget(target.slice(0, -1))
+                  setTarget((t) => t.slice(0, -1))
                 }}
                 aria-label="Delete last digit"
               >

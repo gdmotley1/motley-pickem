@@ -355,7 +355,7 @@ check('no weeks at all does not throw',
 
 check('an unpublished week says so', weekStatus(WEEKS[2]) === 'not published')
 check('a published week with no slate says so', weekStatus(WEEKS[3]) === 'no slate yet')
-check('a published slate with nothing graded says so', weekStatus(WEEKS[4]) === 'not started')
+check('a published slate with nothing graded says so', weekStatus(WEEKS[4]) === 'no results yet')
 check('a part-graded week is in progress', weekStatus(WEEKS[1]) === 'in progress')
 check('a finished week has no status, so a result shows instead',
   weekStatus(WEEKS[0]) === null)

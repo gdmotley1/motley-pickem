@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
+import { friendly } from '../lib/errors.js'
 import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../components/ui.jsx'
 import { withLive } from '../lib/espn.js'
 import { useLiveScores } from '../lib/useLiveScores.js'
@@ -49,7 +50,7 @@ export default function Week({ me, weekId, week }) {
     api
       .listWeeks()
       .then((w) => alive && setWeeks(w))
-      .catch((e) => alive && setError(e.message))
+      .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
     }
@@ -66,7 +67,7 @@ export default function Week({ me, weekId, week }) {
         setRows(b)
         setRoster(seats.filter((x) => x.claimed))
       })
-      .catch((e) => alive && setError(e.message))
+      .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
     }
@@ -125,11 +126,14 @@ export default function Week({ me, weekId, week }) {
        missing. Drawing the real scorebug with no numbers in it says that, where the old
        empty state said the tab was broken. The other two statuses genuinely have nothing
        to frame, so they keep their message. */
-    if (status === 'not started' && score) {
+    if (status === 'no results yet' && score) {
+      /* Nothing is final either way, so the numbers stay blank. The heading is the part
+         that has to tell the truth: the bug is already showing a red "20 live" chip. */
+      const underway = score.playing > 0
       return (
         <>
           {pager}
-          <Screen eyebrow={label} title="Not started yet">
+          <Screen eyebrow={label} title={underway ? 'Underway' : 'Not started yet'}>
             <WeekScore
               score={score}
               me={me}
@@ -187,14 +191,14 @@ const emptyTitle = (status) =>
   ({
     'not published': 'Not published yet',
     'no slate yet': 'No slate yet',
-    'not started': 'No games finished',
+    'no results yet': 'No games finished',
   })[status] || 'Nothing to show yet'
 
 const emptyBody = (status) =>
   ({
     'not published': 'Your commissioner has not published this week’s twenty games.',
     'no slate yet': 'The twenty games for this week have not been chosen.',
-    'not started': 'The table fills in here as games go final.',
+    'no results yet': 'The table fills in here as games go final.',
   })[status] ||
   'Once games start going final, the table fills in here. The full write-up lands when the last game of the week ends.'
 

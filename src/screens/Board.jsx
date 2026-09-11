@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
+import { friendly } from '../lib/errors.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import PickNudge from '../components/PickNudge.jsx'
 import { Avatar, Empty, IconClock, IconLock, Rank, Screen, Spinner } from '../components/ui.jsx'
@@ -32,7 +33,7 @@ export default function Board({ me, weekId, week, onNavigate }) {
         setRows(b)
         setRoster(seats.filter((x) => x.claimed))
       })
-      .catch((e) => alive && setError(e.message))
+      .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
     }

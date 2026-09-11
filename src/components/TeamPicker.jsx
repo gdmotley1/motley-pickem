@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 
 import { markUrl, score, useTeams } from '../lib/teams.js'
 import { Sheet, Spinner } from './ui.jsx'
+import { friendly } from '../lib/errors.js'
 
 /**
  * Pick the school you wear as your profile picture.
@@ -39,7 +40,7 @@ export default function TeamPicker({ open, current, onClose, onPick }) {
       await onPick(team.id)
       onClose()
     } catch (e) {
-      setError(e.message)
+      setError(friendly(e))
     } finally {
       setSaving(null)
     }

@@ -51,7 +51,7 @@ def test_a_published_week_that_has_not_started_shows_the_frame():
     the week not having happened. The other two empty statuses genuinely have nothing to
     frame and keep their message."""
     body = read("src", "screens", "Week.jsx")
-    assert "status === 'not started' && score" in body, (
+    assert "status === 'no results yet' && score" in body, (
         "a published-but-unstarted week no longer draws the skeleton"
     )
     assert "skeleton" in body, "the skeleton prop is not passed"

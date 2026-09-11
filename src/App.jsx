@@ -309,8 +309,10 @@ function AccountSheet({ open, me, onClose, onSignOut, onPickTeam }) {
       <button className="btn btn--ghost" onClick={onPickTeam}>
         {me.team_id ? 'Change your team' : 'Pick your team'}
       </button>
+      {/* "Keep picking" read as nonsense from Week, Season or Setup, which is most of
+          where this sheet gets opened from. "Done" is true everywhere. */}
       <button className="btn" onClick={onClose}>
-        Keep picking
+        Done
       </button>
       <button className="btn btn--ghost" onClick={onSignOut}>
         Sign out and switch player

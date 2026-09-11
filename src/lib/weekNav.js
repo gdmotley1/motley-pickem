@@ -31,7 +31,11 @@ export function weekStatus(week) {
   const graded = Number(week.graded) || 0
   if (!week.published) return 'not published'
   if (!size) return 'no slate yet'
-  if (!graded) return 'not started'
+  // "no results yet", not "not started": this row carries slate_size and graded and
+  // nothing about kickoffs, so it cannot tell an untouched week from one where all
+  // twenty games are live and none has gone final. That is every Saturday between the
+  // noon kickoffs and the first final, and it used to read "Not started yet".
+  if (!graded) return 'no results yet'
   if (graded < size) return 'in progress'
   return null
 }

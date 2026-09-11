@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import * as api from '../lib/api.js'
+import { friendly } from '../lib/errors.js'
 import TeamLogo from '../components/TeamLogo.jsx'
 import {
   Back,
@@ -17,7 +18,7 @@ import {
 } from '../components/ui.jsx'
 import Matchup from '../components/Matchup.jsx'
 import { fetchRankings } from '../lib/matchup.js'
-import { kickoffLabel } from '../lib/format.js'
+import { kickoffLabel, tvLabel } from '../lib/format.js'
 
 const DRAFT_KEY = 'pickem.draft.v1'
 
@@ -84,7 +85,7 @@ export default function Picks({ me, weekId, week, onNavigate }) {
         if (submitted && !resuming) setPhase('locked')
         else if (editable.length && editable.every((g) => w[g.game_id])) setPhase('rank')
       })
-      .catch((e) => alive && setError(e.message))
+      .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
     }
@@ -192,7 +193,7 @@ export default function Picks({ me, weekId, week, onNavigate }) {
       setPhase('done')
       navigator.vibrate?.([12, 40, 18])
     } catch (e) {
-      setError(e.message)
+      setError(friendly(e))
     } finally {
       setSaving(false)
     }
@@ -256,6 +257,7 @@ export default function Picks({ me, weekId, week, onNavigate }) {
       chosenCount={chosenCount}
       allChosen={allChosen}
       onDone={() => setPhase('rank')}
+      onSeeBoard={() => onNavigate?.('board')}
     />
   )
 }
@@ -269,8 +271,15 @@ export default function Picks({ me, weekId, week, onNavigate }) {
  * wrong in the hand: most of the viewport sat empty, you could not see what was coming,
  * and twenty separate screens is slower than one scroll.
  */
-function ChoosePhase({ games, locked, winners, chosenCount, allChosen, onChoose, onDone }) {
+function ChoosePhase({
+  games, locked, winners, chosenCount, allChosen, onChoose, onDone, onSeeBoard,
+}) {
   const total = games.length
+  /* Every game has kicked off. Reachable in the ordinary way: open Picks on a Sunday.
+     The screen used to draw a progress bar at 0%, a counter reading "0/0" and a disabled
+     button saying "0 still to pick", which is three ways of saying nothing while
+     implying there is work to do. */
+  const closed = total === 0
   const [preview, setPreview] = useState(null)
 
   /**
@@ -295,24 +304,27 @@ function ChoosePhase({ games, locked, winners, chosenCount, allChosen, onChoose,
 
   return (
     <div>
-      <div className="choose__top">
-        <div className="progress" aria-label={`${chosenCount} of ${total} picked`}>
-          <div
-            className="progress__fill"
-            style={{ width: `${total ? (chosenCount / total) * 100 : 0}%` }}
-          />
+      {!closed && (
+        <div className="choose__top">
+          <div className="progress" aria-label={`${chosenCount} of ${total} picked`}>
+            <div
+              className="progress__fill"
+              style={{ width: `${total ? (chosenCount / total) * 100 : 0}%` }}
+            />
+          </div>
+          <span className="choose__count num">
+            {chosenCount}/{total}
+          </span>
         </div>
-        <span className="choose__count num">
-          {chosenCount}/{total}
-        </span>
-      </div>
+      )}
 
       {locked.length > 0 && (
         <p className="notice">
           <IconClock />
           <span>
-            {locked.length} game{locked.length > 1 ? 's have' : ' has'} kicked off and can no
-            longer be changed.
+            {closed
+              ? 'Every game has kicked off. This week is settled.'
+              : `${locked.length} game${locked.length > 1 ? 's have' : ' has'} kicked off and can no longer be changed.`}
           </span>
         </p>
       )}
@@ -344,9 +356,15 @@ function ChoosePhase({ games, locked, winners, chosenCount, allChosen, onChoose,
       </ul>
 
       <div className="stickycta">
-        <button className="btn" onClick={onDone} disabled={!allChosen}>
-          {allChosen ? `Rank my ${total} picks` : `${total - chosenCount} still to pick`}
-        </button>
+        {closed ? (
+          <button className="btn" onClick={onSeeBoard}>
+            See the Board
+          </button>
+        ) : (
+          <button className="btn" onClick={onDone} disabled={!allChosen}>
+            {allChosen ? `Rank my ${total} picks` : `${total - chosenCount} still to pick`}
+          </button>
+        )}
       </div>
 
       {/* Keyed on the game so switching previews refetches, rather than showing the last
@@ -373,7 +391,7 @@ function GameRow({ game, picked, onChoose, isLocked = false, ranks, onPreview })
         <span className="grow__dot">·</span>
         <span className="grow__spread num">{api.spreadLabel(game)}</span>
         {isLocked && <span className="chip chip--bad">locked</span>}
-        {game.tv && <span className="grow__tv">{game.tv}</span>}
+        {game.tv && <span className="grow__tv">{tvLabel(game.tv)}</span>}
         {/* Last in the row and visually quiet: the two team buttons are the point of this
             card and nothing here may compete with them for a thumb. The 18px pill gets a
             real tap target from a pseudo-element rather than by growing the row. */}
@@ -540,11 +558,21 @@ function RankPhase({
                 abbr={g.my_pick}
                 size={26}
               />
+              {/* "No pick" has nothing to be over. Until apply_auto_picks() runs, up
+                  to five minutes after kickoff, a locked game can genuinely have no
+                  pick, and this read "no pick over MIZ". */}
               <span className="rankrow__team">
-                {g.my_pick || 'no pick'}
-                <span className="rankrow__opp">
-                  over {g.my_pick === g.home_abbr ? g.away_abbr : g.home_abbr}
-                </span>
+                {g.my_pick || 'No pick'}
+                {g.my_pick && (
+                  <span className="rankrow__opp">
+                    over {g.my_pick === g.home_abbr ? g.away_abbr : g.home_abbr}
+                  </span>
+                )}
+                {!g.my_pick && (
+                  <span className="rankrow__opp">
+                    {g.away_abbr} at {g.home_abbr}
+                  </span>
+                )}
               </span>
               <span className="rankrow__spread num">{api.spreadLabel(g)}</span>
               <span className="rankrow__lock">locked</span>

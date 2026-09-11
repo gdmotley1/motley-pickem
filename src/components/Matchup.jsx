@@ -24,15 +24,17 @@ import { kickoffLabel } from '../lib/format.js'
  */
 export default function Matchup({ game, ranks, picked }) {
   const [data, setData] = useState(null)
-  const [error, setError] = useState(null)
+  // Only ever a yes/no: the render below says one fixed sentence, so keeping the
+  // exception's text here just looked like something that reaches the screen.
+  const [failed, setFailed] = useState(false)
 
   useEffect(() => {
     let alive = true
     setData(null)
-    setError(null)
+    setFailed(false)
     fetchMatchup(game.game_id, game.home_id, game.away_id)
       .then((d) => alive && setData(d))
-      .catch((e) => alive && setError(e.message))
+      .catch(() => alive && setFailed(true))
     return () => {
       alive = false
     }
@@ -56,13 +58,13 @@ export default function Matchup({ game, ranks, picked }) {
         {total ? <span className="num">{` · ${total}`}</span> : null}
       </p>
 
-      {error && (
+      {failed && (
         <p className="mu__msg">
           Could not reach ESPN for this one. The line above still stands.
         </p>
       )}
 
-      {!data && !error && (
+      {!data && !failed && (
         <div className="mu__loading">
           <Spinner />
         </div>
