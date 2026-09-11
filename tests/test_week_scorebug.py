@@ -14,6 +14,7 @@ there read as a slab from another app.
 from __future__ import annotations
 
 import os
+import re
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -122,3 +123,37 @@ def test_the_disc_ring_flips_too():
     i = css.index(".bug--light .bugrow__mark")
     rule = css[i: css.index("}", i)]
     assert "255, 255, 255" not in rule, "the light cut keeps a white ring on a white card"
+
+
+def test_the_skeleton_never_washes_out_what_is_already_known():
+    """Grant called this on 2026-09-11: "dont grey out the current week colors".
+
+    The skeleton draws for a published week with nothing final, which on the Week tab is
+    the whole first half of every week, and it was desaturating each player's colour
+    block and fading their name. Both are known long before kickoff. Dimming them says
+    "provisional" about the one part of the row that is already certain, and it is the
+    state the tab spends most of its life in.
+
+    Only the score may dim, and only because it is rendering a dash.
+    """
+    css = read("src", "app.css")
+    skeleton = [
+        block for block in re.split(r"\n(?=\S)", css)
+        if ".bugrow.is-skeleton" in block
+    ]
+    assert skeleton, "the skeleton no longer styles anything; has it been renamed?"
+    body = "\n".join(skeleton)
+
+    assert "filter:" not in body, (
+        "the skeleton applies a filter again. saturate() on .bugrow__block is what "
+        "washed out the team colours."
+    )
+    assert ".bugrow__name" not in body, (
+        "the skeleton dims the player's name again; a name is known before kickoff"
+    )
+    assert ".bugrow__block" not in body, (
+        "the skeleton styles the colour block again; its colour is known before kickoff"
+    )
+    assert ".bugrow__pts" in body, (
+        "nothing marks the score as absent. The dash should stay dimmed."
+    )

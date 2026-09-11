@@ -1828,13 +1828,15 @@
 
 /* A published week nobody has played yet. The frame is real and the numbers are not, so
    the rows sit back rather than reading as four players on nothing. */
-.bugrow.is-skeleton .bugrow__pts,
-.bugrow.is-skeleton .bugrow__name {
+/* Only the score is dimmed, and only because it is a dash.
+   The first version also desaturated the colour block and faded the name. Grant called
+   it on 2026-09-11 and he is right: a seat's colour and a school's mark are known long
+   before kickoff, so washing them out says "this data is provisional" about the one part
+   of the row that is already certain. It also lands on the Week tab for the whole first
+   half of a week, which is when the tab gets looked at most.
+   The "—" in the points column is what says nothing has happened yet. */
+.bugrow.is-skeleton .bugrow__pts {
   opacity: 0.62;
-}
-
-.bugrow.is-skeleton .bugrow__block {
-  filter: saturate(0.55);
 }
 
 .bugrow__gap {
