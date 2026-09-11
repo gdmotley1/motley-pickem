@@ -16,7 +16,7 @@ import { dirname, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
-const { normalise } = await import(
+const { normalise, seasonOf } = await import(
   pathToFileURL(join(root, 'src', 'lib', 'matchup.js')).href
 )
 
@@ -39,9 +39,20 @@ check('win probability is read off the predictor', pre.winProb !== null, JSON.st
 check('the home favourite gets the larger share', pre.winProb.home > pre.winProb.away)
 check('the two shares sum to 100', Math.abs(pre.winProb.home + pre.winProb.away - 100) < 0.5)
 check('records come back for both sides', !!pre.records.home && !!pre.records.away, JSON.stringify(pre.records))
-check('five games of form per side', pre.lastFive.home.length === 5 && pre.lastFive.away.length === 5)
-check('form entries carry a result, a score and an opponent',
-  pre.lastFive.home.every((g) => g.result && g.score && g.opponent))
+/*
+ * Form is THIS SEASON only, as of 2026-09-11.
+ *
+ * ESPN's last-five window spans seasons, so in September it is mostly last year. This
+ * fixture is a week 1 game of the 2026 season whose five "recent" games run from
+ * November 2025 to the Playoff final in January 2026. Showing those as current form made
+ * Indiana look like five straight wins by a team that has not played yet.
+ *
+ * So empty is the correct answer here, and it is the whole point: in week 1 nobody has
+ * played. The section hides itself rather than printing an empty row.
+ */
+check('last season is excluded entirely',
+  pre.lastFive.home.length === 0 && pre.lastFive.away.length === 0,
+  `home ${pre.lastFive.home.length}, away ${pre.lastFive.away.length}`)
 check('venue is present', !!pre.venue, pre.venue)
 check('weather is present', Number.isFinite(pre.weather?.temp), JSON.stringify(pre.weather))
 
@@ -59,7 +70,8 @@ check('flipping home/away flips the win probability',
   flipped.winProb.home === pre.winProb.away && flipped.winProb.away === pre.winProb.home,
   `${JSON.stringify(pre.winProb)} -> ${JSON.stringify(flipped.winProb)}`)
 check('flipping home/away flips the form',
-  flipped.lastFive.home[0].opponent === pre.lastFive.away[0].opponent)
+  JSON.stringify(flipped.lastFive.home) === JSON.stringify(pre.lastFive.away) &&
+  JSON.stringify(flipped.lastFive.away) === JSON.stringify(pre.lastFive.home))
 
 /*
  * Ids that match nobody must degrade to nulls. Falling back to positional order here
@@ -99,6 +111,46 @@ const empty = normalise({}, '1', '2')
 check('an empty payload normalises to all-empty',
   empty.winProb === null && empty.venue === null && empty.weather === null &&
     empty.lastFive.home.length === 0)
+
+/*
+ * The season filter, driven rather than described.
+ *
+ * A CFB season labelled Y runs August Y to January Y+1, so the January Playoff belongs to
+ * the previous year. Getting that boundary wrong in either direction is the whole bug:
+ * one way keeps last season, the other throws away the bowl games of the season you are
+ * actually in.
+ */
+check('August starts a season', seasonOf('2026-08-30T23:00Z') === 2026)
+check('September is mid season', seasonOf('2026-09-05T16:00Z') === 2026)
+check('December belongs to its own year', seasonOf('2026-12-06T01:00Z') === 2026)
+check('January belongs to the year before', seasonOf('2027-01-20T00:30Z') === 2026)
+check('July is the previous season, not the coming one', seasonOf('2026-07-04T00:00Z') === 2025)
+check('an undateable game does not crash', seasonOf(null) === null && seasonOf('nonsense') === null)
+
+/* And the other half: games inside the season must survive. Same payload, with the dates
+   moved into the 2026 season, so the only thing that changed is the year. */
+const thisSeason = JSON.parse(JSON.stringify(fx.pregame))
+for (const entry of thisSeason.lastFiveGames || []) {
+  for (const e of entry.events || []) {
+    e.gameDate = e.gameDate.replace(/^2025-11/, '2026-09').replace(/^2025-12/, '2026-09')
+                           .replace(/^2026-01/, '2026-09')
+  }
+}
+const kept = normalise(thisSeason, IU, UNT)
+check('games inside the season are kept',
+  kept.lastFive.home.length === 5 && kept.lastFive.away.length === 5,
+  `home ${kept.lastFive.home.length}, away ${kept.lastFive.away.length}`)
+check('kept entries still carry a result, a score and an opponent',
+  kept.lastFive.home.every((g) => g.result && g.score && g.opponent))
+
+/* A payload with no season stated must not filter everything away. Showing last year is
+   a smaller wrong than showing nothing. */
+const noSeason = JSON.parse(JSON.stringify(fx.pregame))
+delete noSeason.header.season
+delete noSeason.header.competitions
+const loose = normalise(noSeason, IU, UNT)
+check('an unknown season keeps every game rather than none',
+  loose.lastFive.home.length === 5)
 
 console.log(failed ? `\n${failed} failed` : '\nall passed')
 process.exit(failed ? 1 : 0)

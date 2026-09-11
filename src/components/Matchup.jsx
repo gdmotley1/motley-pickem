@@ -97,7 +97,10 @@ export default function Matchup({ game, ranks, picked }) {
 
           {(data.lastFive.away.length > 0 || data.lastFive.home.length > 0) && (
             <section className="mu__sec">
-              <h4 className="mu__h">Last 5</h4>
+              {/* Not "Last 5" any more. It only ever shows this season now, so in
+                  September it is legitimately one or two games and a heading promising
+                  five would be the thing that is wrong. */}
+              <h4 className="mu__h">This season</h4>
               <Form abbr={game.away_abbr} games={data.lastFive.away} />
               <Form abbr={game.home_abbr} games={data.lastFive.home} />
             </section>

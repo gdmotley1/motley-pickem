@@ -82,8 +82,32 @@ function sides(list, homeId, awayId, pick) {
   return out
 }
 
-/** "56-3 W vs PUR" reduced to what a pill needs. */
-const lastFive = (entry) =>
+/**
+ * Which season a game belongs to. A season labelled Y runs August Y to January Y+1, so
+ * the Playoff final in January is still the previous year's season.
+ *
+ * Null for anything undateable, and callers treat null as "do not filter", because
+ * showing last year's form is a smaller wrong than showing none at all.
+ */
+export const seasonOf = (iso) => {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return d.getUTCMonth() >= 7 ? d.getUTCFullYear() : d.getUTCFullYear() - 1
+}
+
+/**
+ * "56-3 W vs PUR" reduced to what a pill needs, THIS SEASON ONLY.
+ *
+ * ESPN's window spans seasons, so in September it is mostly last year. Week 1 of 2026
+ * showed Indiana as five straight wins ending with the Playoff, which is a different team
+ * from the one playing on Saturday and reads as current form. Grant asked for this season
+ * on 2026-09-11.
+ *
+ * The consequence is deliberate: early in a year a side shows one or two games, or none
+ * at all in week 1. Two or none is the truth. Five from last January was not.
+ */
+const lastFive = (entry, season) =>
   (entry.events || [])
     .map((e) => ({
       result: e.gameResult === 'W' ? 'W' : e.gameResult === 'L' ? 'L' : null,
@@ -93,6 +117,7 @@ const lastFive = (entry) =>
       date: e.gameDate || null,
     }))
     .filter((e) => e.result)
+    .filter((e) => season === null || seasonOf(e.date) === season)
     .slice(-5)
 
 /**
@@ -151,7 +176,13 @@ export function normalise(d, homeId, awayId) {
     return rec?.displayValue || rec?.summary || null
   })
 
-  const form = sides(d.lastFiveGames, homeId, awayId, lastFive)
+  /* ESPN states the season on the game being previewed, which is the authority here.
+     Falling back to the kickoff date covers a payload shaped differently; falling all the
+     way through to null keeps every game rather than silently showing none. */
+  const season =
+    d.header?.season?.year ?? seasonOf(d.header?.competitions?.[0]?.date) ?? null
+
+  const form = sides(d.lastFiveGames, homeId, awayId, (e) => lastFive(e, season))
   const w = d.gameInfo?.weather
 
   return {
