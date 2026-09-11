@@ -439,3 +439,29 @@ greps a whole file can be satisfied by an unrelated line, including the comment 
 the fix, so parse the thing you mean (`test_qa.py` reads the rendered button label out of
 the JSX rather than searching `App.jsx` for the word). Break every new guard on purpose
 and watch it fail before trusting it; that habit caught four of these in one sitting.
+
+## A guard pinned to 001_init.sql guards whatever that function used to be
+
+`test_auto_pick_takes_the_underdog` read `apply_auto_picks` out of `001_init.sql` and
+asserted `"favorite_abbr" not in auto`. The rule was reversed to the favourite on
+2026-09-04 and `005` replaced the function. The test stayed green for a week, because 001
+still holds the superseded body, so it was guarding dead code while documenting the exact
+opposite of the live rule. Worse, it was a tripwire: anyone who correctly updated 001
+would have been failed by it.
+
+Seven functions are redefined after their first migration, and every body-reading guard in
+`test_migration.py` was reading the 001 copy: `apply_auto_picks` (005), `get_board`,
+`get_standings`, `list_seats`, `whoami` (009), `get_slate` (006), `get_pool` (007).
+`get_board` is the one that matters most, because it carries the pick-visibility rule. It
+happened to keep the gate in 009, but the guard would not have noticed if it had not.
+`test_admin_only_rpcs_check_is_admin` had the same flaw from the other direction: it
+searched the concatenation of every migration and `re.search` returned the FIRST match,
+so it checked the 002 copy of `get_pool`.
+
+**How to apply:** never read a function body out of a single migration file. Use
+`body(fn)` in `tests/test_migration.py`, which walks `NUMBERED` in order and keeps the
+last definition, and `source_of(fn)` for which file won.
+`test_guards_read_the_last_definition_of_a_redefined_function` holds the resolver to that.
+The `init_sql` fixture is now only for things that cannot move: table DDL, indexes, seed
+rows. This is [[guards-must-walk-not-enumerate]] again in a second shape: the first was a
+guard that enumerated files, this one is a guard that pinned itself to one.

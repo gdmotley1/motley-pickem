@@ -21,9 +21,81 @@ MIGRATIONS = sorted(glob.glob(os.path.join(ROOT, "migrations", "*.sql")))
 
 @pytest.fixture(scope="module")
 def init_sql():
+    """Only for what lives in 001 and cannot move: table DDL, indexes, seed rows.
+
+    For a function body use `body()` below. A later migration can replace a function,
+    and reading 001 then guards whatever that function used to be.
+    """
     path = os.path.join(ROOT, "migrations", "001_init.sql")
     with open(path, encoding="utf-8") as f:
         return f.read()
+
+
+# --------------------------------------------- the definition the database actually runs
+
+# Every migration except the generated ALL.sql, in the order Grant pastes them. ALL.sql
+# holds a copy of all of them, so including it would resolve every function twice.
+NUMBERED = [p for p in MIGRATIONS if re.match(r"\d+_", os.path.basename(p))]
+
+FUNCTION_RE = (r"create\s+(?:or\s+replace\s+)?function\s+([a-z_]+)\s*\("
+               r".*?\$\$(.*?)\$\$")
+
+
+def _definitions():
+    """Map each function name to the LAST migration defining it, and to that body.
+
+    `apply_auto_picks` is the case that proved this is needed. 005 flipped the rule from
+    the underdog to the favourite; 001 still holds the old body. The guard was pinned to
+    001, so it stayed green while asserting the exact opposite of the live rule, and it
+    would have failed if anyone had correctly updated 001. Resolve the effective
+    definition here instead, so a guard always reads what the database runs.
+    """
+    found = {}
+    for path in NUMBERED:
+        with open(path, encoding="utf-8") as f:
+            sql = f.read()
+        for m in re.finditer(FUNCTION_RE, sql, re.S | re.I):
+            found[m.group(1)] = (os.path.basename(path), m.group(2))
+    return found
+
+
+DEFINITIONS = _definitions()
+
+
+def body(fn):
+    """The body of `fn` after every later migration has had its say."""
+    assert fn in DEFINITIONS, "%s is defined in no migration" % fn
+    return DEFINITIONS[fn][1]
+
+
+def source_of(fn):
+    """The migration whose version of `fn` wins."""
+    assert fn in DEFINITIONS, "%s is defined in no migration" % fn
+    return DEFINITIONS[fn][0]
+
+
+def test_guards_read_the_last_definition_of_a_redefined_function():
+    """The resolver must beat 001 for every function a later migration replaced.
+
+    This is the structural half of the fix. Without it `body()` could quietly start
+    returning a superseded copy again, and every rule guarded below would be checking
+    code the database no longer runs, with nothing going red.
+    """
+    seen = {}
+    for path in NUMBERED:
+        with open(path, encoding="utf-8") as f:
+            sql = f.read()
+        for name in re.findall(
+                r"create\s+(?:or\s+replace\s+)?function\s+([a-z_]+)\s*\(", sql, re.I):
+            seen.setdefault(name, []).append(os.path.basename(path))
+
+    redefined = {n: paths for n, paths in seen.items() if len(paths) > 1}
+    assert "apply_auto_picks" in redefined, \
+        "005 replaces apply_auto_picks; if that stopped being true, read 005 again"
+    for name, paths in sorted(redefined.items()):
+        assert source_of(name) == paths[-1], (
+            "%s resolves to %s but %s defines it last"
+            % (name, source_of(name), paths[-1]))
 
 
 def test_there_is_at_least_one_migration():
@@ -79,10 +151,9 @@ def test_no_temp_tables_inside_functions(init_sql):
 
 def test_pin_is_hashed_never_stored_raw(init_sql):
     assert "crypt(p_pin, gen_salt('bf'))" in init_sql
-    # list_seats is the only public read of players and must not leak the hash.
-    seats = re.search(r"create or replace function list_seats\(\).*?\$\$(.*?)\$\$",
-                      init_sql, re.S | re.I).group(1)
-    assert "pin_hash" not in seats
+    # list_seats is the only public read of players and must not leak the hash. 009
+    # redefines it, so this has to read the last copy rather than the one in 001.
+    assert "pin_hash" not in body("list_seats")
 
 
 def test_session_tokens_are_stored_hashed(init_sql):
@@ -99,27 +170,33 @@ def test_internal_helpers_are_not_callable_by_clients(init_sql):
 
 # ------------------------------------------------------------------ game rules
 
-def test_kickoff_lock_is_enforced_in_sql(init_sql):
+def test_kickoff_lock_is_enforced_in_sql():
     """The single rule that outranks everything: no writing a game that has started."""
-    save = re.search(r"create or replace function save_picks.*?\$\$(.*?)\$\$",
-                     init_sql, re.S | re.I).group(1)
+    save = body("save_picks")
     assert "g.kickoff <= now()" in save, "no lock check in save_picks"
     assert "is locked and cannot be changed" in save
     assert "g.kickoff > now()" in save, "unlocked writes are not filtered by kickoff"
 
 
-def test_board_hides_picks_until_kickoff(init_sql):
-    board = re.search(r"create or replace function get_board.*?\$\$(.*?)\$\$",
-                      init_sql, re.S | re.I).group(1)
-    assert "g.kickoff <= now()" in board, "get_board would leak unplayed picks"
+def test_board_hides_picks_until_kickoff():
+    """009 redefined get_board and kept the gate. A guard pinned to 001 would not have
+    noticed if it had dropped it, which is the whole reason this reads the last copy."""
+    assert "g.kickoff <= now()" in body("get_board"), \
+        "get_board would leak unplayed picks"
 
 
-def test_auto_pick_takes_the_underdog(init_sql):
-    """Grant explicitly overrode 'favorite'. Guard it."""
-    auto = re.search(r"create or replace function apply_auto_picks.*?\$\$(.*?)\$\$",
-                     init_sql, re.S | re.I).group(1)
-    assert "underdog_abbr" in auto, "auto-pick must use the underdog"
-    assert "favorite_abbr" not in auto, "auto-pick must never use the favorite"
+def test_auto_pick_takes_the_favourite():
+    """Reversed on 2026-09-04: the favourite, not the underdog.
+
+    This guard previously read 001 and asserted the underdog, which is what the rule was
+    BEFORE Grant reversed it. It passed only because 001 still holds the superseded body,
+    so it guarded dead code and taught the next reader the wrong rule. The decision is in
+    memory/decisions.md; the live rule is in 005.
+    """
+    auto = body("apply_auto_picks")
+    assert "favorite_abbr" in auto, "auto-pick must use the favourite"
+    assert "underdog_abbr" not in auto, "auto-pick must never use the underdog"
+    assert "home_abbr" in auto, "with no line there is no favourite: fall back to home"
     assert "min(c)" in auto, "auto-pick must use the lowest unused confidence"
 
 
@@ -128,16 +205,12 @@ def test_confidence_is_unique_per_player_per_week(init_sql):
                      r"on picks\(player_id, week_id, confidence\)", init_sql, re.I)
 
 
-def test_slate_must_be_twenty_games(init_sql):
-    pub = re.search(r"create or replace function publish_slate.*?\$\$(.*?)\$\$",
-                    init_sql, re.S | re.I).group(1)
-    assert "<> 20" in pub
+def test_slate_must_be_twenty_games():
+    assert "<> 20" in body("publish_slate")
 
 
-def test_only_admins_can_publish(init_sql):
-    pub = re.search(r"create or replace function publish_slate.*?\$\$(.*?)\$\$",
-                    init_sql, re.S | re.I).group(1)
-    assert "not me.is_admin" in pub
+def test_only_admins_can_publish():
+    assert "not me.is_admin" in body("publish_slate")
 
 
 def test_seats_one_and_two_are_admins(init_sql):
@@ -147,10 +220,8 @@ def test_seats_one_and_two_are_admins(init_sql):
     assert dict(rows) == {"1": "true", "2": "true", "3": "false", "4": "false"}
 
 
-def test_a_claimed_seat_cannot_be_stolen(init_sql):
-    claim = re.search(r"create or replace function claim_seat.*?\$\$(.*?)\$\$",
-                      init_sql, re.S | re.I).group(1)
-    assert "where id = p_seat and name is null" in claim
+def test_a_claimed_seat_cannot_be_stolen():
+    assert "where id = p_seat and name is null" in body("claim_seat")
 
 
 # ------------------------------------------------- client / server drift
@@ -190,13 +261,10 @@ def test_every_rpc_the_client_calls_exists_in_sql():
 
 def test_admin_only_rpcs_check_is_admin():
     """Hiding the Setup tab is cosmetic. These are the real gate."""
-    sql = _all_migration_sql()
     for fn in ("publish_slate", "get_pool", "cron_health"):
-        body = re.search(
-            r"create or replace function %s.*?\$\$(.*?)\$\$" % fn, sql, re.S | re.I
-        )
-        assert body, "%s is not defined" % fn
-        assert "is_admin" in body.group(1), "%s does not check is_admin" % fn
+        # get_pool is defined three times (002, 006, 007). Scanning the concatenation
+        # found the 002 copy, so this used to check a version nobody calls.
+        assert "is_admin" in body(fn), "%s does not check is_admin" % fn
 
 
 def test_combined_migration_is_up_to_date():
