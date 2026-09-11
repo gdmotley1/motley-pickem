@@ -75,24 +75,36 @@ copy of the games and pick counts, then diffed: 40 to 91 games, zero lines lost,
 That diff is the only reason "nothing was lost" is a fact rather than a hope. See
 [[never-wipe-family-data]].
 
-## ESPN has no pre-game player stats on a game summary
+## ESPN DOES have pre-game player stats on a game summary (corrected 2026-09-11)
 
-The `leaders` block on `summary?event=<id>` is present but EMPTY until the game has been
-played. Once it is played it holds that game's box score, not season form.
+The `leaders` block on `summary?event=<id>` carries season-to-date leaders for both
+teams before kickoff: passing, rushing, receiving and two more, each with the athlete and
+a line like "48/54, 635 YDS, 5 TD". It is in the request the matchup sheet already makes,
+so it costs nothing extra.
 
-**Why:** Grant asked for "top players" in the matchup preview on 2026-09-04 and this is
-why the sheet does not have them. Checked both ways: a Week 1 upcoming game returned five
-named categories with zero leaders in each, and a completed 2025 game returned
-"Ryan Browne 10/19, 76 YDS, 1 INT", which is that single game, not a season line. So the
-block is worthless as a preview and misleading as a season stat.
+**What the original note said, and why it was wrong.** Written 2026-09-04, during week 1,
+it recorded two observations: the block is empty before anything is played, and once
+played it holds "that game's box score, not season form". The first is true and remains
+true, because in week 1 nobody has played. The second was an inference from a week where
+every team had played exactly one game, which is precisely the case where a season total
+and a single box score are identical. It generalised from the one data point that cannot
+distinguish them.
 
-**How to apply:** season leaders do exist, at
-`sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/<yr>/types/2/teams/<id>/leaders`,
-CORS-open with headshots. It is a `$ref` chase: one call for the team plus one per
-athlete, so roughly eight requests to fill one matchup sheet. That belongs in
-`scripts/sync_supabase.py` writing a column, not on a phone opening a bottom sheet.
-Also note nobody has season stats in Week 1, so it would render blank for the first
-week or two whatever the source.
+**How it was settled.** USC were 2-0 on 2026-09-11. The upcoming-game summary showed
+Jayden Maiava at 48/54, 635 YDS, 5 TD, while the summary for their one completed game in
+our own week 1 window showed 23/25, 349 YDS, 3 TD. The difference is a second game. 48
+completions is not one game. Cumulative, confirmed.
+
+**How to apply:** `leaders` is usable in the matchup sheet, pre-game, for free. The
+`sports.core.api` season-leaders endpoint the old note recommended is NOT needed and
+would have cost roughly eight requests per sheet. Week 1 still renders blank whatever the
+source, because nobody has played, so the section has to hide itself the way the form
+section already does.
+
+**The lesson worth more than the finding:** the original was checked "both ways" and was
+still wrong, because both ways were inside the one week that could not tell the two
+answers apart. When a measurement cannot distinguish two hypotheses, record that it
+cannot rather than picking one.
 
 ## AP rankings are not in the database, and should not be
 
