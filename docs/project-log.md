@@ -102,3 +102,54 @@ is the only reason "the week 1 rebuild lost nothing" is a fact rather than a hop
   points, correct, games and weeks_played, so most of it is a view away.
 - Player leaders in the matchup preview, if wanted, belong in sync_supabase writing a
   column rather than on the phone. See memory/traps.md.
+
+
+## 2026-09-11 — A guard that asserted the reversed rule, and push notifications
+
+**The guard was pointed at dead code.** `test_auto_pick_takes_the_underdog` read
+`apply_auto_picks` out of `001_init.sql` and asserted `"favorite_abbr" not in auto`. The
+rule was reversed to the favourite on 2026-09-04 and `005` replaced the function. The test
+had been green for a week while asserting the exact opposite of what the database runs,
+and it was a tripwire besides: anyone who correctly updated 001 would have been failed by
+it.
+
+It was not one test. Seven functions are redefined after their first migration, and every
+body-reading guard in `test_migration.py` was reading the 001 copy: `apply_auto_picks`
+(005), `get_board`, `get_standings`, `list_seats`, `whoami` (009), `get_slate` (006),
+`get_pool` (007). `get_board` carries the pick-visibility rule and happened to keep its
+gate in 009, but the guard could not have told us either way.
+`test_admin_only_rpcs_check_is_admin` had the same flaw from the other direction, taking
+`re.search`'s first hit out of the concatenation and so checking the 002 `get_pool`.
+There is now a `body()` resolver that walks the numbered migrations, and a structural
+guard holding it to that.
+
+**Push notifications, because the nudge was not enough.** Week 1 went 80 for 80. Week 2
+then sat at 0 of 80 with eleven hours to the first kickoff, which is the state the
+PickNudge shipped for the day before. A nudge lives inside the app nobody opened.
+
+Grant confirmed all four run it from the Home Screen, which is the only thing that makes
+this possible on iOS, and chose all four notification kinds plus the cadence that follows
+the next kickoff rather than the week's first. Shipped: `012_push.sql` (subscriptions,
+per-player prefs, a dedupe ledger, a rank high-water mark, and `push_due()`), push and
+notificationclick handlers in the worker, `src/lib/push.js`, a Reminders sheet, and
+`send_push.py`.
+
+**Not done, and deliberately:** the scheduler. Production wants a Supabase Edge Function
+on pg_cron, for the reason 005 already documented about GitHub cron missing its own
+schedule by 103 minutes. `send_push.py` is the manual path and the way to prove the chain
+on a real phone first.
+
+**Method worth keeping:** every new guard was broken on purpose before being trusted. It
+paid immediately. The origin check in `sameOriginPath` could be deleted with every
+assertion still passing, because each hostile URL was also caught by the scope check; it
+took a foreign origin whose path is inside our scope to make that assertion real.
+
+**Open at the end of the session:**
+
+- `012_push.sql` is written and NOT pasted. Nothing works until it is.
+- The edge function and its pg_cron schedule.
+- Week 2 was published at 8:24am ET on the 11th. Nothing records who published, so
+  whether that was Dad or the 18 hour `maybe_publish` fallback cannot be told after the
+  fact. An `published_by` column would settle it.
+- The bundle is 187KB gzipped, over Vite's warning, and framer-motion earns nine
+  elements of it.
