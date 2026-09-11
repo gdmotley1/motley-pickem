@@ -23,7 +23,12 @@
  * ------------------------------------------------------------------------- */
 
 // Bump to invalidate the shell and the assets. Logos are excluded on purpose, below.
-const VERSION = 'v1'
+//
+// v2 on 2026-09-11, with the push handlers. It had never moved off v1 through every
+// deploy of the build, which is half of why an installed instance could sit on a stale
+// mix for a day in September (see memory/traps.md). A deploy that changes the WORKER is
+// exactly the one that has to drop the old caches, or the activate handler keeps them.
+const VERSION = 'v2'
 
 const SHELL = `pickem-shell-${VERSION}`
 const ASSETS = `pickem-assets-${VERSION}`
