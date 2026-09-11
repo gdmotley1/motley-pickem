@@ -152,5 +152,30 @@ const loose = normalise(noSeason, IU, UNT)
 check('an unknown season keeps every game rather than none',
   loose.lastFive.home.length === 5)
 
+/*
+ * ESPN's preview line, added 2026-09-11 because the sheet looked empty.
+ *
+ * Headline only, never `description`: that field came back from the live API with a
+ * mojibake character leading it, which would put a black diamond on a family's phone.
+ */
+check('no article means no story, rather than an empty box',
+  pre.story === null, JSON.stringify(pre.story))
+
+const withStory = JSON.parse(JSON.stringify(fx.pregame))
+withStory.article = {
+  headline: 'Ohio State and Texas clash again in title-contender matchup',
+  description: '� Across a history of college football that dates to the 1800s',
+}
+const told = normalise(withStory, IU, UNT)
+check('the headline is the story',
+  told.story === 'Ohio State and Texas clash again in title-contender matchup', told.story)
+check('the description is never used, mojibake and all',
+  !String(told.story).includes('�'))
+
+const blank = JSON.parse(JSON.stringify(fx.pregame))
+blank.article = { headline: '   ' }
+check('a whitespace headline is null, not a blank quote',
+  normalise(blank, IU, UNT).story === null)
+
 console.log(failed ? `\n${failed} failed` : '\nall passed')
 process.exit(failed ? 1 : 0)

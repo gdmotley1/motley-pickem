@@ -106,6 +106,16 @@ export default function Matchup({ game, ranks, picked }) {
             </section>
           )}
 
+          {/* Sits below the form and above the venue so the sheet runs numbers, then
+              form, then words, then where. Hidden entirely when ESPN wrote nothing,
+              which is most games that are not on a network. */}
+          {data.story && (
+            <section className="mu__sec">
+              <h4 className="mu__h">ESPN preview</h4>
+              <p className="mu__story">{data.story}</p>
+            </section>
+          )}
+
           {(data.venue || data.weather) && (
             <section className="mu__sec">
               <h4 className="mu__h">Where</h4>

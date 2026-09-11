@@ -188,6 +188,12 @@ export function normalise(d, homeId, awayId) {
   return {
     winProb,
     records,
+    /* ESPN's own preview line for THIS game. Often absent, and the smaller the game the
+       likelier that is, so the section hides itself rather than reserving space.
+       Headline only, never `description`: that field came back with a mojibake character
+       leading it (a byte-order mark ESPN did not decode), which would put a black diamond
+       on a family's phone. */
+    story: (d.article?.headline || '').trim() || null,
     lastFive: { home: form.home || [], away: form.away || [] },
     venue: d.gameInfo?.venue?.fullName || null,
     // Temperature and rain chance only. ESPN's conditionId is an unlabelled numeric code
