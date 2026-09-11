@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 
 import pytest
 
@@ -43,6 +44,20 @@ def sql():
 @pytest.fixture(scope="module")
 def sw():
     return read("static", "sw.js")
+
+
+@pytest.fixture(scope="module")
+def effective_push_due():
+    """push_due's body from the LAST migration that defines it.
+
+    012 wrote it and 013 replaced it. Reading 012 here would guard the version with the
+    bug still in it, which is exactly the trap test_migration.py was fixed for earlier
+    the same day.
+    """
+    sys.path.insert(0, os.path.join(ROOT, "tests"))
+    import test_migration
+
+    return test_migration.body("push_due")
 
 
 @needs_node
@@ -106,11 +121,49 @@ def test_unsubscribing_is_scoped_to_the_caller(sql):
         "delete_push_subscription would delete another player's subscription"
 
 
-def test_the_ledger_is_what_stops_a_repeat(sql):
-    """push_due is asked the same question every five minutes. The primary key is the
-    only thing standing between that and twelve notifications an hour."""
+def test_the_ledger_has_a_primary_key(sql):
     assert re.search(r"primary key \(player_id, kind, dedupe_key\)", sql), \
         "the dedupe ledger has no primary key on (player, kind, key)"
+
+
+def test_every_branch_of_push_due_reads_the_ledger(effective_push_due):
+    """The one that matters, and the one the first version of this test missed entirely.
+
+    That version asserted push_log had a primary key. True, and worth nothing: push_due
+    never read the table at all. Found live on 2026-09-11 by running the sender twice and
+    getting "Week 2 is up" twice. On a five minute schedule week_live, week_results and
+    passed had no limit whatsoever, so each would have repeated for the full length of
+    its recency window, roughly 144 notifications per phone for week_live.
+
+    So this checks the thing itself. Splitting on `union all` is what makes it
+    per-branch: a single `not exists` anywhere in the function would satisfy a naive
+    version of this test while three branches stayed broken.
+    """
+    branches = effective_push_due.split("union all")
+    assert len(branches) == 4, \
+        "expected 4 branches in push_due, found %d" % len(branches)
+
+    for branch in branches:
+        kind = re.search(r"'(pick_reminder|week_live|week_results|passed)'::text", branch)
+        assert kind, "a branch of push_due names no kind"
+        guard = re.search(
+            r"not exists\s*\(\s*select 1 from push_log l\s+"
+            r"where l\.player_id = .+?and l\.kind = '%s'\s+and l\.dedupe_key = "
+            % kind.group(1),
+            branch, re.S)
+        assert guard, (
+            "the %s branch does not check push_log, so it repeats on every run"
+            % kind.group(1))
+
+
+def test_the_daily_cap_is_not_the_thing_preventing_duplicates(effective_push_due):
+    """pick_reminder survived the missing guard by accident: the daily cap counts
+    push_log rows and so stopped at two a day. A cap on how often you may be nudged is
+    not a dedupe, and the two must not be confused again."""
+    reminders = effective_push_due.split("union all")[0]
+    assert "_push_daily_cap()" in reminders, "the daily cap is gone"
+    assert "l.dedupe_key" in reminders, \
+        "pick_reminder leans on the daily cap instead of the ledger"
 
 
 def test_every_kind_is_declared_and_emitted(sql):
