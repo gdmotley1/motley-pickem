@@ -35,6 +35,16 @@ from sync_supabase import Supabase, env, load_dotenv  # noqa: E402
 # what stops a future notification from failing silently on iOS alone.
 MAX_PAYLOAD = 3800
 
+# How long the push service holds a message for a phone it cannot reach right now.
+#
+# pywebpush defaults this to 0, which means "deliver this instant or discard it forever".
+# That is wrong for every notification this app sends: a phone that is locked, asleep,
+# or off wifi for a moment silently loses the message, and the sender still sees a 201
+# because Apple did accept it. Twenty minutes is longer than any realistic gap and still
+# short enough that nothing arrives stale enough to mislead: a pick reminder that showed
+# up an hour late would be pointing at a game that has already kicked off.
+TTL_SECONDS = 20 * 60
+
 
 def vapid():
     """The private key and subject, as pywebpush wants them."""
@@ -63,7 +73,10 @@ def send_one(sub: dict, payload: dict) -> tuple[bool, int, str]:
         "keys": {"p256dh": sub["p256dh"], "auth": sub["auth"]},
     }
     try:
-        webpush(subscription_info=info, data=body, **vapid())
+        # Urgency high: these are time-boxed by a kickoff, so a phone in low-power mode
+        # should wake for them rather than batch them up for later.
+        webpush(subscription_info=info, data=body, ttl=TTL_SECONDS,
+                headers={"Urgency": "high"}, **vapid())
         return True, 201, ""
     except WebPushException as e:
         code = getattr(e.response, "status_code", 0) or 0
@@ -131,8 +144,10 @@ def test_send(sb: Supabase, seat: int) -> int:
         print("seat %s has no subscribed device. Turn reminders on in the app first."
               % seat)
         return 1
-    payload = {"title": "Motley Pick'em", "kind": "test",
-               "body": "Reminders are working. This is the only test you will get.",
+    # The title is the MESSAGE, never the app's name: iOS draws the name as the header
+    # already, so "Motley Pick'em" here renders it twice on the lock screen.
+    payload = {"title": "Reminders are on", "kind": "test",
+               "body": "That is the only test. Real ones come when a kickoff is close.",
                "url": "/motley-pickem/"}
     ok_count = 0
     for sub in devices:

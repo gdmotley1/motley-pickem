@@ -123,4 +123,63 @@ const makeSameOriginPath = (base, origin) =>
                'the origin check is not doing anything')
 }
 
+// ---------------------------------------------------------------- the push handler
+
+/* Executing the handler, not grepping it. The first live test push was accepted by Apple
+   with a 201 and never appeared, and at that point "showNotification is somewhere in the
+   file" was worth nothing: the question was whether it runs, once, with real content, for
+   the exact payload send_push.py emits. The last two cases are the ones that get a
+   subscription revoked, because iOS punishes a worker that takes a push and shows
+   nothing. */
+{
+  const start = swSrc.indexOf('const FALLBACK')
+  const end = swSrc.indexOf("self.addEventListener('notificationclick'")
+  assert.ok(start > 0 && end > start, 'the push section is not in the shape expected')
+
+  const run = (event) => {
+    const shown = []
+    const listeners = {}
+    const self = {
+      location: { origin: 'https://gdmotley1.github.io' },
+      registration: {
+        showNotification: (title, opts) => {
+          shown.push({ title, opts })
+          return Promise.resolve()
+        },
+      },
+      addEventListener: (name, fn) => { listeners[name] = fn },
+    }
+    new Function('self', 'BASE', swSrc.slice(start, end))(self, '/motley-pickem/')
+    assert.ok(listeners.push, 'no push listener was registered')
+    const waits = []
+    listeners.push({ ...event, waitUntil: (p) => waits.push(p) })
+    return Promise.all(waits).then(() => shown)
+  }
+
+  const payload = {
+    title: "Motley Pick'em",
+    body: 'Reminders are working. This is the only test you will get.',
+    url: '/motley-pickem/',
+    kind: 'test',
+  }
+  const shown = await run({ data: { json: () => payload } })
+  assert.equal(shown.length, 1, 'a real payload did not produce exactly one notification')
+  assert.equal(shown[0].title, payload.title)
+  assert.equal(shown[0].opts.body, payload.body)
+  assert.equal(shown[0].opts.data.url, '/motley-pickem/')
+  assert.equal(shown[0].opts.tag, 'test', 'the tag must come from the kind, so repeats replace')
+
+  const unreadable = await run({ data: { json: () => { throw new Error('not json') } } })
+  assert.equal(unreadable.length, 1, 'an unreadable payload showed nothing: iOS would revoke')
+
+  const empty = await run({ data: null })
+  assert.equal(empty.length, 1, 'a payload-less push showed nothing: iOS would revoke')
+
+  const hostile = await run({
+    data: { json: () => ({ title: 'x', body: 'y', url: 'https://evil.example/motley-pickem/' }) },
+  })
+  assert.equal(hostile[0].opts.data.url, '/motley-pickem/',
+               'a foreign URL in the payload reached the notification')
+}
+
 console.log('push_check.mjs: all assertions passed')

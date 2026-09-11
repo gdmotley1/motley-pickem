@@ -308,3 +308,67 @@ def test_the_subscription_follows_a_seat_switch():
     wrong name."""
     app = read("src", "App.jsx")
     assert "syncSubscription" in app, "nothing re-points the subscription after sign-in"
+
+
+def test_a_message_is_held_rather_than_discarded():
+    """pywebpush defaults ttl to 0, which means "deliver this instant or discard it".
+
+    That is wrong for every notification here. A phone that is locked, asleep, or off
+    wifi for a moment loses the message, and the sender still sees a 201 because Apple
+    did accept it. The first live test push vanished exactly this way.
+    """
+    src = read("scripts", "send_push.py")
+    ttl = re.search(r"TTL_SECONDS = ([^\n]+)", src)
+    assert ttl, "there is no TTL"
+    assert "ttl=TTL_SECONDS" in src, "the TTL is defined but never passed to webpush"
+    seconds = eval(ttl.group(1).split("#")[0].strip())  # noqa: S307 - our own literal
+    assert seconds > 0, "ttl=0 discards a message the instant it cannot be delivered"
+    assert seconds <= 3600, (
+        "a pick reminder held longer than an hour arrives pointing at a game that has "
+        "already kicked off"
+    )
+
+
+def test_no_notification_title_repeats_the_app_name(sql, sw):
+    """iOS draws the app's name as the notification header, from the Home Screen install.
+
+    A title of "Motley Pick'em" therefore renders the name twice, which is what the very
+    first test push to reach a phone actually looked like. A title is the MESSAGE, never
+    the sender.
+
+    Walks all three places a title can come from rather than naming the two that were
+    wrong: push_due's branches, the worker's fallback, and the test payload.
+    """
+    name_bits = re.compile(r"motley|pick'?em", re.I)
+
+    # Every prose literal in push_due, not just the ones cast straight to ::text. The
+    # first version of this matched `'...'::text` and so missed both pick-reminder
+    # titles, which sit inside a CASE and are cast after it: the guard was checking two
+    # of the five branches and looked like it was checking all of them.
+    #
+    # "Prose" is any literal containing a space. That takes in titles and bodies, skips
+    # the kind names (no spaces) and the URLs (which legitimately contain "pickem" and
+    # are never shown to anyone).
+    due = re.search(r"create or replace function push_due\(\).*?\$\$(.*?)\$\$",
+                    sql, re.S | re.I).group(1)
+    titles = [t.replace("''", "'")
+              for t in re.findall(r"'((?:[^']|'')*)'", due)
+              if " " in t and not t.startswith("/")]
+    assert len(titles) >= 5, \
+        "found only %d prose literals in push_due; has its shape changed?" % len(titles)
+
+    # Either quote style, or the guard trips its own shape check on the very mutation it
+    # exists to catch and reports the wrong reason.
+    fallback = re.search(r"""const FALLBACK = \{\s*title:\s*(['"])(.+?)\1""", sw)
+    assert fallback, "the worker fallback title is not in the shape expected"
+    titles.append(fallback.group(2))
+
+    send = read("scripts", "send_push.py")
+    test_title = re.search(r"""["']title["']:\s*(['"])(.+?)\1,\s*["']kind["']""", send)
+    assert test_title, "the test payload title is not in the shape expected"
+    titles.append(test_title.group(2))
+
+    offenders = [t for t in titles if name_bits.search(t)]
+    assert not offenders, (
+        "these titles repeat the app name, which iOS already shows: %s" % offenders
+    )

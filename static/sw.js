@@ -172,8 +172,13 @@ self.addEventListener('fetch', (event) => {
 
 /* iOS requires a notification for every push it delivers. A push handled silently gets
    the subscription revoked after a few offences, so this must always show something,
-   even for a payload it cannot read. */
-const FALLBACK = { title: "Motley Pick'em", body: 'Open the app for the latest.' }
+   even for a payload it cannot read.
+
+   The title must NOT be the app's name. iOS already draws that as the notification's
+   header, from the Home Screen install, so a title of "Motley Pick'em" renders the name
+   twice. Grant caught that on the very first test push that reached a phone. Every title
+   here and in push_due() is the MESSAGE, never the sender. */
+const FALLBACK = { title: 'Something new in the pool', body: 'Open the app for the latest.' }
 
 const payloadOf = (event) => {
   try {
