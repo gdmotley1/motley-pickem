@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import * as api from './lib/api.js'
+import { syncSubscription } from './lib/push.js'
 import { newBuildAvailable } from './lib/version.js'
+import RemindersSheet from './components/Reminders.jsx'
 import TeamPicker from './components/TeamPicker.jsx'
 import { loadTeams } from './lib/teams.js'
 import SignIn from './screens/SignIn.jsx'
@@ -81,6 +83,7 @@ export default function App() {
   const [menu, setMenu] = useState(false)
   const [picker, setPicker] = useState(false)
   const [nudge, setNudge] = useState(false)
+  const [reminders, setReminders] = useState(false)
   const [week, setWeek] = useState(null)
   const [weekId, setWeekId] = useState(rememberedWeek)
   const [stale, setStale] = useState(false)
@@ -92,6 +95,24 @@ export default function App() {
       if (p && !p.team_id && !askedForTeam()) setNudge(true)
     })
   }, [])
+
+  /* Keep the stored subscription pointing at whoever is actually signed in here.
+     Two things make this necessary rather than tidy. Browsers rotate a subscription on
+     their own schedule and the worker posts `resubscribe` when they do. And this app is
+     built around handing the phone over: after a seat switch the endpoint still belongs
+     to the previous player, so without this the notifications keep arriving under the
+     wrong name. Failures are silent on purpose, because nothing here is worth an error
+     in front of someone who did not ask for it. */
+  useEffect(() => {
+    if (!me) return undefined
+    syncSubscription().catch(() => {})
+    if (!('serviceWorker' in navigator)) return undefined
+    const onMessage = (e) => {
+      if (e.data?.type === 'resubscribe') syncSubscription().catch(() => {})
+    }
+    navigator.serviceWorker.addEventListener('message', onMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', onMessage)
+  }, [me])
 
   /* Which week the app is on, resolved by the server from ESPN's own boundaries rather
      than hard-coded. This used to be a constant, which meant every Tuesday somebody had
@@ -267,7 +288,13 @@ export default function App() {
           setMenu(false)
           setPicker(true)
         }}
+        onReminders={() => {
+          setMenu(false)
+          setReminders(true)
+        }}
       />
+
+      <RemindersSheet open={reminders} onClose={() => setReminders(false)} />
 
       <TeamPicker
         open={picker}
@@ -296,7 +323,7 @@ export default function App() {
 
 /** Tapping your name used to sign you out instantly, which is far too easy to do by
     accident. It now opens this, so signing out is deliberate. */
-function AccountSheet({ open, me, onClose, onSignOut, onPickTeam }) {
+function AccountSheet({ open, me, onClose, onSignOut, onPickTeam, onReminders }) {
   return (
     <Sheet open={open} onClose={onClose} label="Account">
       <div style={{ display: 'grid', placeItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -308,6 +335,9 @@ function AccountSheet({ open, me, onClose, onSignOut, onPickTeam }) {
       </p>
       <button className="btn btn--ghost" onClick={onPickTeam}>
         {me.team_id ? 'Change your team' : 'Pick your team'}
+      </button>
+      <button className="btn btn--ghost" onClick={onReminders}>
+        Reminders
       </button>
       {/* "Keep picking" read as nonsense from Week, Season or Setup, which is most of
           where this sheet gets opened from. "Done" is true everywhere. */}

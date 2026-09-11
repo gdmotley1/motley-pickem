@@ -150,6 +150,32 @@ export const getPool = (weekId) => rpc('get_pool', withToken({ p_week: weekId })
 export const setMyTeam = (teamId) =>
   rpc('set_my_team', withToken({ p_team_id: teamId ?? null }))
 
+/* ------------------------------------------------------------------ reminders */
+
+/**
+ * Web Push subscriptions. See migrations/012_push.sql and src/lib/push.js.
+ *
+ * `subscribed` is per device, because that is what the browser actually grants: the
+ * four notify_* flags are per player and follow them to every phone they sign in on.
+ */
+export const savePushSubscription = (endpoint, p256dh, auth) =>
+  rpc('save_push_subscription',
+      withToken({ p_endpoint: endpoint, p_p256dh: p256dh, p_auth: auth }))
+
+export const deletePushSubscription = (endpoint) =>
+  rpc('delete_push_subscription', withToken({ p_endpoint: endpoint }))
+
+export const myPushState = (endpoint) =>
+  rpc('my_push_state', withToken({ p_endpoint: endpoint ?? '' }))
+
+export const setNotifyPrefs = (prefs) =>
+  rpc('set_notify_prefs', withToken({
+    p_picks: prefs.picks ?? null,
+    p_live: prefs.live ?? null,
+    p_results: prefs.results ?? null,
+    p_passed: prefs.passed ?? null,
+  }))
+
 /* ------------------------------------------------------------------ helpers */
 
 /** Logos are vendored per ESPN team id, light and dark variants. */

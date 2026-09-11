@@ -5,7 +5,8 @@
 
 Live: https://gdmotley1.github.io/motley-pickem/ · repo `gdmotley1/motley-pickem`
 Backend is REAL as of 2026-09-03: Supabase project `lugxthfaksdjmvxepryt`, migrations
-001-007 applied, Week 1 published. The app is no longer in mock mode.
+001-011 applied, Week 1 graded and Week 2 published. The app is no longer in mock mode.
+**012_push.sql is written but NOT pasted yet.** No reminder works until it is.
 Deploy with `bash deploy.sh`, which publishes `dist/` to the `gh-pages` branch.
 
 A college football confidence pool for Grant's family. Four people, 20 games a week,
@@ -65,6 +66,13 @@ python scripts/fetch_extra_teams.py
 # turn Dad's handwritten shorthand into real ESPN games
 python scripts/resolve_slate.py --slate inputs/week01_dad_slate.txt \
   --games inputs/slate_2026-09-03_2026-09-06.json --out inputs/week01_resolved.json
+
+# push notifications. The VAPID keys are already in .env. Regenerating them silently
+# invalidates every phone's subscription, so do not, unless you mean exactly that.
+python scripts/vapid_keys.py                   # prints a new pair. Run once, ever.
+python scripts/send_push.py --dry-run          # who is due, and what it would say
+python scripts/send_push.py                    # send them
+python scripts/send_push.py --test 1           # one test notification to seat 1
 ```
 
 ## Things that will bite you

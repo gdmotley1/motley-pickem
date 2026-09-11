@@ -151,3 +151,99 @@ self.addEventListener('fetch', (event) => {
       }),
   )
 })
+
+/* ---------------------------------------------------------------------------
+ * PUSH
+ *
+ * This is the half of the worker that has nothing to do with caching. The family
+ * installs the app to a home screen, which on iOS is the only way Safari will deliver
+ * a push at all, and this is what turns a delivered message into a notification.
+ *
+ * The payload is already decrypted by the time it arrives: the browser does that with
+ * the keys it generated when the device subscribed. It is small JSON, written by
+ * push_due() in migrations/012_push.sql, and it is never trusted for anything beyond
+ * text and a same-origin path.
+ * ------------------------------------------------------------------------- */
+
+/* iOS requires a notification for every push it delivers. A push handled silently gets
+   the subscription revoked after a few offences, so this must always show something,
+   even for a payload it cannot read. */
+const FALLBACK = { title: "Motley Pick'em", body: 'Open the app for the latest.' }
+
+const payloadOf = (event) => {
+  try {
+    const data = event.data ? event.data.json() : null
+    if (!data || typeof data.title !== 'string') return FALLBACK
+    return data
+  } catch {
+    return FALLBACK // malformed or plain text: still has to become a notification
+  }
+}
+
+self.addEventListener('push', (event) => {
+  const data = payloadOf(event)
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: typeof data.body === 'string' ? data.body : '',
+      icon: BASE + 'icons/icon-192.png',
+      badge: BASE + 'icons/icon-192.png',
+      /* Same tag replaces rather than stacks, so four reminders across a Saturday are
+         one line in the shade instead of four. */
+      tag: typeof data.kind === 'string' ? data.kind : 'pickem',
+      renotify: true,
+      data: { url: sameOriginPath(data.url) },
+    }),
+  )
+})
+
+/* The payload names where to land. It comes from our own database, but a notification
+   click opens a window, so this refuses to take an absolute URL from it under any
+   circumstances and keeps only a path within the app's own scope. */
+function sameOriginPath(url) {
+  if (typeof url !== 'string') return BASE
+  try {
+    const resolved = new URL(url, self.location.origin)
+    if (resolved.origin !== self.location.origin) return BASE
+    if (!resolved.pathname.startsWith(BASE)) return BASE
+    return resolved.pathname + resolved.search
+  } catch {
+    return BASE
+  }
+}
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = event.notification.data?.url || BASE
+  event.waitUntil(
+    (async () => {
+      /* Focus the app if it is already open rather than stacking a second copy, which
+         on a home-screen install is the difference between "it came back" and "it
+         reloaded and lost what I was doing". */
+      const open = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      for (const client of open) {
+        if (new URL(client.url).pathname.startsWith(BASE)) {
+          await client.focus()
+          if ('navigate' in client) await client.navigate(target)
+          return
+        }
+      }
+      await self.clients.openWindow(target)
+    })(),
+  )
+})
+
+/* Safari and Chrome both rotate a subscription occasionally, and the old one stops
+   working the moment they do. The page cannot know it happened, so the worker tells it:
+   any open client re-reads its subscription and saves the new one. If nothing is open,
+   the next launch does it anyway. */
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      for (const client of open) client.postMessage({ type: 'resubscribe' })
+    })(),
+  )
+})

@@ -175,3 +175,27 @@ pattern already used by motley-tech and comvoy-fire.
 The workflow already reads `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from repo
 variables. The repo is public and holds no secrets: with no VITE_ vars set, the build
 ships in local mock mode, and the anon key is public by design once added.
+
+## Reminders are Web Push, and the cadence follows the next kickoff
+
+Four kinds, all chosen by Grant on 2026-09-11: pick reminders, "week is live", Sunday
+results, and "someone passed you". Pick reminders are measured against the soonest game
+you can still pick, so they re-arm through the week rather than firing once: a heads-up
+three hours out and a last call at 45 minutes, capped at two a day, silent once your card
+is full.
+
+**Why:** Week 1 went 80 for 80. Week 2 then sat at 0 of 80 with eleven hours to the first
+kickoff. The PickNudge was built for exactly this the day before and it did not help,
+because a nudge lives inside the app nobody opened. The cadence follows the next kickoff
+rather than the week's first, because picks lock per game: someone who picks Friday's
+games and leaves Saturday's open still needs telling on Saturday.
+
+**How to apply:** There is no App Store and there never will be. Web Push is a browser
+standard; VAPID keys in `.env` are the entire identity story. iOS delivers only to a
+Home Screen install, which is how all four of them run it, confirmed 2026-09-11. Who is
+due lives in `push_due()` in `migrations/012_push.sql` and nowhere else, so the sender
+never decides anything. Every branch needs both a dedupe-ledger guard and a recency
+guard: without the second, the first run announces every week ever published.
+
+"Someone passed you" compares against a high-water mark, not your previous rank, which
+caps it at three a week in a four-person pool without any counting.
