@@ -392,15 +392,17 @@ function GameRow({ game, picked, onChoose, isLocked = false, ranks, onPreview })
         <span className="grow__spread num">{api.spreadLabel(game)}</span>
         {isLocked && <span className="chip chip--bad">locked</span>}
         {game.tv && <span className="grow__tv">{tvLabel(game.tv)}</span>}
-        {/* Last in the row and visually quiet: the two team buttons are the point of this
-            card and nothing here may compete with them for a thumb. The 18px pill gets a
-            real tap target from a pseudo-element rather than by growing the row. */}
+        {/* The way in to the matchup sheet. It used to be a quiet outlined pill reading
+            "PREVIEW", deliberately the least prominent thing on the card, and it was
+            quiet enough that nobody tapped it. The 22px pill still gets its real 44px
+            tap target from a pseudo-element rather than by growing the row. */}
         <button
           className="grow__preview"
           onClick={() => onPreview(game)}
           aria-label={`Matchup preview: ${game.away_abbr} at ${game.home_abbr}`}
         >
-          Preview
+          <span className="grow__shine" aria-hidden="true" />
+          Matchup &rsaquo;
         </button>
       </div>
 

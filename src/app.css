@@ -815,9 +815,13 @@
   align-items: center;
   gap: 6px;
   padding: 0 4px;
-  margin-bottom: 9px;
-  height: 18px;
-  line-height: 18px;
+  /* 22px, not the 18px it was, because the Matchup pill is 22 and this line is what
+     holds it. The margin drops by the same 2px it does not need any more, so the card
+     grows by 2px rather than 4 and the twenty rows stay identical to each other, which
+     is the property that actually matters here. */
+  margin-bottom: 7px;
+  height: 22px;
+  line-height: 22px;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -835,37 +839,89 @@
   letter-spacing: 0;
 }
 
+/* The way in to the matchup sheet.
+ *
+ * It was an outlined 9.5px pill reading "PREVIEW", built to be the quietest thing on the
+ * card so it could not compete with the two team buttons. That was the wrong trade: it
+ * was quiet enough that nobody tapped it. Grant went through two boards of options and
+ * picked this one, on 2026-09-11. Near-black on a white card, with a slow sweep of light
+ * across it, is loud without adding another colour to an app where blue already means
+ * "you picked this", green right, red wrong and gold first place.
+ *
+ * min-height, not height: the global `button { min-height: var(--tap) }` constrains the
+ * used height and no `height` at any specificity beats it.
+ */
 .grow__preview {
-  /* Pinned to the meta line's own 18px so a repeated row stays pixel-identical, which
-     needs min-height and not height: the global `button { min-height: var(--tap) }`
-     constrains the used height and no `height` at any specificity beats it. */
-  min-height: 18px;
-  height: 18px;
+  min-height: 0;
+  height: 22px;
+  /* Never the thing that gives way if the meta line gets tight. The TV chip yields. */
+  flex: 0 0 auto;
   position: relative;
   display: inline-flex;
   align-items: center;
-  padding: 0 8px;
+  gap: 3px;
+  padding: 0 10px;
+  border: 0;
   border-radius: var(--r-pill);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--ink-2);
-  font-size: 9.5px;
+  background: var(--field-deep);
+  color: var(--on-field);
+  box-shadow: 0 2px 10px rgba(16, 21, 28, 0.4);
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-/* The pill is 18px because the row demands it; the thing a thumb hits is 44px. Absolutely
-   positioned so the hit area cannot push the row's height back out. */
+/* The pill is 22px because the row demands it; the thing a thumb hits is 44px. Absolutely
+   positioned so the hit area cannot push the row's height back out.
+   This is why the sweep below is clipped by its own wrapper rather than by `overflow`
+   on the button: overflow here would clip this hit area down to the pill. */
 .grow__preview::after {
   content: '';
   position: absolute;
-  inset: -13px -10px;
+  inset: -11px -10px;
 }
 
 .grow__preview:active {
-  background: var(--well);
+  background: var(--field);
+}
+
+/* The shimmer. A wrapper that clips, and a bar that travels across it. */
+.grow__shine {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.grow__shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.45) 50%,
+                              transparent 80%);
+  /* transform, never background-position: this is the only property here that the
+     compositor can animate without repainting, and twenty of these run at once. */
+  transform: translateX(-100%);
+  animation: growshine 3.2s ease-in-out infinite;
+}
+
+/* Both ends are a visible resting state on purpose. A backgrounded tab pauses CSS
+   animations wherever they happen to be, and this app has already shipped an overlay
+   that froze half transparent because it animated from zero. Worst case here is a
+   stationary highlight on a dark pill, which reads as a gloss rather than as a bug. */
+@keyframes growshine {
+  0%, 55% { transform: translateX(-100%); }
+  100%    { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grow__shine::before {
+    animation: none;
+    transform: translateX(-100%);
+  }
 }
 
 .grow__tv {
@@ -880,6 +936,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 9ch;
+  /* If this line ever does run out of room, the channel is the thing that should give
+     way rather than the way in to the matchup. min-width is needed as well as max-width,
+     because a flex item will not shrink below its content without it. There is about
+     80px of slack at 375px today, so this is a guard and not a fix. */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .grow__teams {
