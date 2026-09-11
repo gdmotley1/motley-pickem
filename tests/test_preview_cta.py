@@ -38,13 +38,49 @@ def rule(css, selector):
     return re.sub(r"/\*.*?\*/", "", m.group(1), flags=re.S)
 
 
+def token(name):
+    """Resolve a theme token to a hex, through one level of var() indirection."""
+    theme = read("src", "theme.css")
+    m = re.search(r"^\s*%s:\s*([^;]+);" % re.escape(name), theme, re.M)
+    assert m, "%s is not defined in theme.css" % name
+    value = m.group(1).strip()
+    inner = re.match(r"var\((--[\w-]+)\)$", value)
+    return token(inner.group(1)) if inner else value
+
+
+def luminance(hex_colour):
+    h = hex_colour.lstrip("#")
+    parts = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    lin = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in parts]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
 def test_the_cta_is_filled_not_outlined():
     """An outlined pill on a white card is what nobody tapped. It has to read as a solid
-    control, which means a real background and light text on it."""
+    control: a real fill, light text on it, no border.
+
+    The fill is deliberately NOT pinned to one token here. It shipped as --field-deep,
+    stood out too much, and became --field the same afternoon. A guard naming the exact
+    shade fails the next colour change for the wrong reason and teaches nobody anything.
+    What must not regress is that it is filled, dark, and legible.
+    """
     body = rule(read("src", "app.css"), ".grow__preview")
-    assert "background: var(--field-deep)" in body, "the CTA is no longer filled"
+    fill = re.search(r"background: var\((--[\w-]+)\)", body)
+    assert fill, "the CTA has no token background, so it is not filled"
     assert "color: var(--on-field)" in body, "the CTA has lost its light text"
     assert "border: 0" in body, "the CTA is outlined again"
+
+    bg, fg = token(fill.group(1)), token("--on-field")
+    lo, hi = sorted((luminance(bg), luminance(fg)))
+    ratio = (hi + 0.05) / (lo + 0.05)
+    assert ratio >= 4.5, (
+        "the CTA measures %.1f:1 (%s on %s), under AA. This app is read by every age in "
+        "the family and --ink-3 already had to be darkened once for the same reason."
+        % (ratio, fg, bg)
+    )
+    # And it has to stay a DARK pill, not become a pale one that stops reading as a
+    # control against a white card.
+    assert luminance(bg) < 0.2, "the CTA fill is no longer dark: %s" % bg
 
 
 def test_the_cta_says_where_it_goes():

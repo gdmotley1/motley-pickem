@@ -844,9 +844,16 @@
  * It was an outlined 9.5px pill reading "PREVIEW", built to be the quietest thing on the
  * card so it could not compete with the two team buttons. That was the wrong trade: it
  * was quiet enough that nobody tapped it. Grant went through two boards of options and
- * picked this one, on 2026-09-11. Near-black on a white card, with a slow sweep of light
- * across it, is loud without adding another colour to an app where blue already means
- * "you picked this", green right, red wrong and gold first place.
+ * picked this one, on 2026-09-11. A dark pill with a slow sweep of light across it is
+ * loud without adding another colour to an app where blue already means "you picked
+ * this", green right, red wrong and gold first place.
+ *
+ * --field, not --field-deep. It shipped near-black for an afternoon and stood out too
+ * much; Grant picked Slate off a board of eight fills. This is the exact colour of the
+ * app header at the top of every screen, so the pill reads as part of the same app
+ * rather than as something dropped on the card, and it still measures 12:1 against
+ * --on-field. Pressing it goes DOWN to --field-deep, which is the only thing that
+ * colour is still doing here.
  *
  * min-height, not height: the global `button { min-height: var(--tap) }` constrains the
  * used height and no `height` at any specificity beats it.
@@ -863,7 +870,7 @@
   padding: 0 10px;
   border: 0;
   border-radius: var(--r-pill);
-  background: var(--field-deep);
+  background: var(--field);
   color: var(--on-field);
   box-shadow: 0 2px 10px rgba(16, 21, 28, 0.4);
   font-size: 10px;
@@ -884,7 +891,7 @@
 }
 
 .grow__preview:active {
-  background: var(--field);
+  background: var(--field-deep);
 }
 
 /* The shimmer. A wrapper that clips, and a bar that travels across it. */
