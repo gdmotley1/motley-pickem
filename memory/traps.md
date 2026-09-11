@@ -407,3 +407,35 @@ shows `gist, read:org, repo` and no `workflow`, so a commit touching
 `.github/workflows/` is rejected. Either `gh auth refresh -s workflow` once, or paste the
 file at
 `https://github.com/gdmotley1/motley-pickem/new/main?filename=.github/workflows/sync.yml`.
+
+## "Nothing graded" is not "nothing has started"
+
+`list_weeks` returns `slate_size` and `graded` and nothing about kickoffs, so `weekStatus`
+could only ever ask "has anything gone final". It answered `'not started'`, and the Week
+tab printed "Not started yet" directly above its own red "20 live" chip. That is not an
+edge case: it is every Saturday from the noon kickoffs until the first final, on the one
+day of the week the family actually opens this app.
+
+**How to apply:** the status string is shown to players verbatim in the header and in the
+week-picker list, so it has to be true without knowing about kickoffs: it is
+`'no results yet'`. Where a screen *does* know, it says more. `Week.jsx` has the viewed
+week's `score`, so `const underway = score.playing > 0` chooses between "Underway" and
+"Not started yet". Do not reach for `graded === 0` as a proxy for "untouched" anywhere
+else; if a screen needs the real thing, it needs a count of kicked-off games, which means
+a new column on `list_weeks` and a paste into Supabase.
+`tests/test_qa.py::test_a_week_that_is_live_does_not_claim_it_has_not_started` pins both
+halves, and both were verified to fail on the old code.
+
+## A guard that lists files will miss the file nobody added to the list
+
+`test_no_screen_renders_a_raw_exception` looped over five screen names. The app had eight
+places that could fail, and the three it missed included `SignIn.jsx` — the screen every
+family member sees first and the likeliest one in the app to ever show an error, where a
+dropped signal rendered "TypeError: Failed to fetch". The test passed the whole time.
+
+**How to apply:** guards over "every X in the codebase" walk the tree with `glob`, they do
+not enumerate. The same failure has a decorative cousin worth watching for: a guard that
+greps a whole file can be satisfied by an unrelated line, including the comment explaining
+the fix, so parse the thing you mean (`test_qa.py` reads the rendered button label out of
+the JSX rather than searching `App.jsx` for the word). Break every new guard on purpose
+and watch it fail before trusting it; that habit caught four of these in one sitting.
