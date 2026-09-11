@@ -425,3 +425,56 @@ def test_no_notification_title_repeats_the_app_name(sql, sw):
     assert not offenders, (
         "these titles repeat the app name, which iOS already shows: %s" % offenders
     )
+
+
+def test_the_manual_nudge_does_not_write_the_ledger():
+    """A manual nudge is not the scheduled reminder and must not cancel it.
+
+    Writing the ledger here would mark the heads-up as sent, and the real one three hours
+    later would be silently suppressed by its own dedupe guard. Grant asked for a nudge
+    at 1:56pm on 2026-09-11 with the window not opening until 5:00, so both firing is the
+    correct outcome and exactly what the ledger must not prevent.
+    """
+    src = read("scripts", "send_push.py")
+    body = src[src.index("def nudge("):src.index("def main(")]
+    assert '"push_sent"' not in body, (
+        "the manual nudge writes the ledger, which would suppress the scheduled reminder"
+    )
+    assert '"push_failed"' in body, "a dead endpoint still has to be reported"
+
+
+def test_the_nudge_says_the_same_thing_the_scheduled_one_does():
+    """Two implementations of the wording, one in SQL and one in Python, so the guard is
+    that they agree. The nudge computes in Python because migrations here are pasted by
+    hand and an override whose whole point is "right now" cannot wait on a paste.
+    """
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import send_push
+    import test_migration
+
+    title, body = send_push.reminder_text(20, "8:00 pm")
+    assert title == "20 games still open"
+    assert body == "First one locks at 8:00 pm"
+
+    due = test_migration.body("push_due")
+    assert "' still open'" in due and "'First one locks at '" in due, (
+        "push_due's heads-up wording changed; send_push.reminder_text still says the old "
+        "thing"
+    )
+
+
+def test_the_nudge_handles_singular():
+    """The last unpicked game of a week is the commonest reminder there is, so "1 games
+    still open" would be the version everybody sees.
+
+    Calls the function rather than grepping the file for a line of source. The first
+    version of this test asserted an exact source string and failed the moment the same
+    logic was written on one line instead of two, which tests the typing and not the
+    behaviour.
+    """
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    import send_push
+
+    assert send_push.reminder_text(1, "8:00 pm")[0] == "1 game still open"
+    assert send_push.reminder_text(2, "8:00 pm")[0] == "2 games still open"
+    assert send_push.reminder_text(20, "8:00 pm")[0] == "20 games still open"

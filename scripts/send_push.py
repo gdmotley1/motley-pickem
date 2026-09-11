@@ -22,6 +22,7 @@ Both halves call the same SQL, so there is one definition of who is due and what
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import json
 import os
 import sys
@@ -164,12 +165,116 @@ def test_send(sb: Supabase, seat: int) -> int:
     return 0 if ok_count else 1
 
 
+def reminder_text(open_count: int, locks_at: str) -> tuple[str, str]:
+    """The heads-up wording: title, body.
+
+    A function rather than two format strings inline, so the gate can call it with 1 and
+    with 20 instead of grepping this file for a line of source. The singular matters:
+    the last unpicked game of a week is the commonest reminder there is, so "1 games
+    still open" would be the version everybody sees.
+
+    Must stay identical to the heads-up branch of push_due() in migrations/014.
+    """
+    return ("%d game%s still open" % (open_count, "" if open_count == 1 else "s"),
+            "First one locks at %s" % locks_at)
+
+
+def open_picks(sb: Supabase) -> list[dict]:
+    """Per subscribed player: how many games they can still pick, and when the first
+    of those locks. Mirrors the heads-up branch of push_due() minus its time window."""
+    weeks = {w["id"] for w in sb.select("weeks", "select=id&published=is.true")}
+    if not weeks:
+        return []
+    now = dt.datetime.now(dt.timezone.utc)
+    games = [g for g in sb.select(
+        "games", "select=id,week_id,kickoff&in_slate=eq.true&order=kickoff")
+        if g["week_id"] in weeks
+        and dt.datetime.fromisoformat(g["kickoff"].replace("Z", "+00:00")) > now]
+    if not games:
+        return []
+
+    subscribed = {s["player_id"] for s in sb.select("push_subscriptions",
+                                                    "select=player_id")}
+    players = [p for p in sb.select("players", "select=id,name,notify_picks")
+               if p["name"] and p.get("notify_picks") and p["id"] in subscribed]
+    picked = {(p["player_id"], p["game_id"])
+              for p in sb.select("picks", "select=player_id,game_id&limit=5000")}
+
+    # Eastern is what the family reads kickoffs in, and it is what push_due formats to.
+    et = dt.timezone(dt.timedelta(hours=-4))
+    out = []
+    for p in players:
+        mine = [g for g in games if (p["id"], g["id"]) not in picked]
+        if not mine:
+            continue
+        first = dt.datetime.fromisoformat(mine[0]["kickoff"].replace("Z", "+00:00"))
+        out.append({
+            "player_id": p["id"],
+            "open_count": len(mine),
+            "locks_at": first.astimezone(et).strftime("%I:%M %p").lstrip("0").lower(),
+        })
+    return out
+
+
+def nudge(sb: Supabase, dry: bool) -> int:
+    """Send the pick reminder NOW, to everyone who still owes picks.
+
+    The scheduled one only fires inside the heads-up window, three hours before the next
+    kickoff. This is the manual override for when somebody wants the family poked earlier
+    than that, and it is the whole reason it exists: on 2026-09-11 Week 2 sat at 0 of 80
+    picks at two in the afternoon with the window still three hours away.
+
+    Deliberately does NOT write the dedupe ledger. A manual nudge is not the scheduled
+    reminder and must not cancel it, so the real one still lands at its own time.
+
+    Computed here rather than in a push_open_picks() RPC on purpose. Migrations are
+    pasted into the SQL Editor by hand, and a manual override whose whole point is
+    "right now" cannot be gated on a paste. The service key already bypasses RLS and this
+    module already reads tables directly, so nothing new is being reached for. The
+    wording is duplicated from push_due's heads-up branch and test_push.py holds the two
+    together.
+    """
+    rows = open_picks(sb)
+    if not rows:
+        print("nobody has an unpicked game, or nobody is subscribed")
+        return 0
+
+    devices = subscriptions(sb)
+    sent = 0
+    for r in rows:
+        targets = devices.get(r["player_id"], [])
+        title, body = reminder_text(r["open_count"], r["locks_at"])
+        payload = {"title": title, "body": body,
+                   "url": "/motley-pickem/?tab=picks", "kind": "pick_reminder"}
+        if dry:
+            print("[dry run] seat %s: %s / %s  (%d device%s)"
+                  % (r["player_id"], payload["title"], payload["body"],
+                     len(targets), "" if len(targets) == 1 else "s"))
+            continue
+        for sub in targets:
+            ok, code, detail = send_one(sub, payload)
+            if ok:
+                sent += 1
+                print("  sent to seat %s: %s / %s"
+                      % (r["player_id"], payload["title"], payload["body"]))
+            else:
+                print("  FAILED seat %s (%s): %s" % (r["player_id"], code, detail))
+                sb.rpc("push_failed", {"p_endpoint": sub["endpoint"],
+                                       "p_code": code, "p_error": detail})
+    if not dry:
+        print("%d notification%s sent" % (sent, "" if sent == 1 else "s"))
+    return 0
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true",
                    help="print who is due without sending or writing anything")
     p.add_argument("--test", type=int, metavar="SEAT",
                    help="send one test notification to this seat (1-4)")
+    p.add_argument("--nudge", action="store_true",
+                   help="send the pick reminder now, ignoring the heads-up window. "
+                        "Does not write the ledger, so the scheduled one still fires.")
     a = p.parse_args()
 
     load_dotenv()
@@ -190,6 +295,8 @@ def main() -> int:
 
     if a.test:
         return test_send(sb, a.test)
+    if a.nudge:
+        return nudge(sb, a.dry_run)
     return run(sb, a.dry_run)
 
 
