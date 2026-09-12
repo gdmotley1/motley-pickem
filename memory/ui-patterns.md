@@ -135,27 +135,72 @@ applied on arrival rather than behind a button, with "Reset to spread" to get ba
 manual/auto distinction is the `touched` flag in the draft: once a player moves anything,
 the spread sort stops re-applying.
 
-## The matchup preview is a bottom sheet, opened from a quiet pill
+## The matchup preview is a bottom sheet, opened from a loud pill
 
-Every game row on the choose step carries a small "Preview" pill at the right of its meta
-line. Tapping it opens a `Sheet` with the AP ranks, ESPN's win probability, both records,
-each team's last five games and the venue and weather.
+Every game row on the choose step carries a dark Slate pill reading "MATCHUP >" at the
+right of its meta line, with a slow sweep of light travelling across it. Tapping it opens
+a `Sheet` with the AP ranks, ESPN's win probability, both records, each team's form THIS
+SEASON, ESPN's own preview line and the venue and weather.
 
-**Why:** Grant asked for it on 2026-09-04. The win probability leads because the only
-question the sheet exists to answer is how confident to be, and "ESPN says 65%" settles
-whether a game is your 20 or your 14 better than any single team statistic.
+**Why:** Grant asked for the sheet on 2026-09-04. The win probability leads because the
+only question the sheet exists to answer is how confident to be, and "ESPN says 65%"
+settles whether a game is your 20 or your 14 better than any single team statistic.
 
-**How to apply:** the pill is deliberately the quietest thing on the card. The two team
-buttons are the point of that row and nothing may compete with them for a thumb, so the
-pill is 18px, uses the meta line's existing height, and gets a real 44px tap target from
-an absolutely positioned `::after` rather than by growing the row. Data comes from
-`src/lib/matchup.js`; the sheet must render with any of win probability, form, weather or
-venue missing, because ESPN legitimately returns none of them for a finished game.
+**The pill used to be quiet and that was wrong.** It shipped as an 18px outlined
+"PREVIEW" on the principle that the two team buttons are the point of the row and nothing
+may compete with them for a thumb. It was quiet enough that nobody tapped it. On
+2026-09-11 Grant rejected a whole board of gentler options ("none have any cta or pop"),
+then picked a dark pill with a shimmer off a louder set, and finally turned it from
+near-black down to `--field`, the app header's own colour, so it reads as part of the app
+rather than something dropped on the card.
+
+**How to apply.** Three things about its shape are load-bearing:
+
+- The sweep is clipped by its own wrapper span, NOT by `overflow` on the button. Overflow
+  there clips `::after`, and `::after` IS the 44px tap target, so the pill would silently
+  become a 22px one.
+- It animates `transform`, never `background-position`. Twenty of these run at once on a
+  phone and transform is the only property the compositor can move without repainting.
+- Both ends of the keyframes are a visible resting state, for the reason recorded below
+  under "Never animate an overlay's opacity from 0".
+
+`.grow__meta` is 22px to hold the pill, up from 18. The pill never shrinks; the TV chip
+yields if the line gets tight.
+
+**Form is this season only.** ESPN's `lastFiveGames` window spans seasons, so in September
+it is mostly last year: a week 1 payload showed Indiana as five straight wins ending with
+the Playoff, which is a different team from the one playing Saturday. `seasonOf()` in
+`src/lib/matchup.js` encodes the boundary, a season labelled Y running August Y to
+January Y+1. Early in a year a side legitimately shows one or two games and in week 1
+none, so the heading says "This season", not "Last 5", and the section hides itself when
+both sides are empty.
+
+**ESPN's preview line is free and often absent.** `article.headline` on the summary call
+the sheet already makes. Headline only, never `description`: that field arrived with a
+mojibake character leading it. Clamped to four lines, and hidden entirely when ESPN wrote
+nothing, which is most games not on a network.
 
 **Not available after you submit.** The preview lives in `ChoosePhase`, so once picks are
 in, the `Done` screen has no previews and no ranks. That was the scope Grant asked for
 ("when you're picking games"). Adding it to `Done` and `Board` is a small change if it
 ever comes up.
+
+## Reminders live in a sheet off your own name
+
+Tap your avatar in the header, then Reminders. A single switch turns Web Push on for
+THIS device, and four per-player toggles follow you to every phone you sign in on: pick
+reminders, week is live, week results, someone passed you.
+
+**Why:** the switch is per device because that is what the browser actually grants. The
+preferences are per player because turning results off on your phone should turn it off
+everywhere.
+
+**How to apply:** the whole component is built around what goes wrong rather than the
+happy path. iOS delivers push only to a Home Screen install, and a denied permission can
+never be re-requested by script, so an unsupported device gets a sentence naming which of
+those it is rather than a button that does nothing. `RemindersView` is split from the
+container so `outputs/harness/reminders.html` can mount all eight states, including the
+two that need a real iPhone with notifications denied to reach.
 
 ## Repeated rows must be pixel-identical, chip or no chip
 

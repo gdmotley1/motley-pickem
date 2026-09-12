@@ -477,3 +477,82 @@ last definition, and `source_of(fn)` for which file won.
 The `init_sql` fixture is now only for things that cannot move: table DDL, indexes, seed
 rows. This is [[guards-must-walk-not-enumerate]] again in a second shape: the first was a
 guard that enumerated files, this one is a guard that pinned itself to one.
+
+## The heading reset in theme.css stopped at h3, and the app's only h4 fell through
+
+`theme.css` resets `h1, h2, h3 { margin: 0 }` and `p { margin: 0 }`. `h4` was not in that
+list, and `.mu__h`, the matchup sheet's section heading, is the only `<h4>` in the app. It
+therefore kept the browser's default `1.33em` top margin: 15.3px of dead space above every
+section, on top of the section's own 12px padding. At 375px each section was 68px tall to
+show 17px of content and the sheet was 460px. Resetting it took sections to 53px and the
+sheet to 414px while ADDING a section. Grant reported the sheet as "empty and white space"
+and that was most of it.
+
+The UA default is em-based and keyed to the TAG, not the class, so it also varies by where
+a class lands: `.h2` gets 15.8px on an `<h2>` and 19px on an `<h3>`, which is why the same
+heading style already spaced differently in Picks and in Season.
+
+**How to apply:** `h4`, `h5` and `h6` are in the reset now.
+`test_theme.test_every_heading_level_the_app_uses_is_reset` walks the JSX for the levels
+actually rendered and requires each to be in it, so the first `<h5>` anybody writes is
+covered rather than repeating this.
+
+**Two wrong diagnoses on the way, both worth more than the fix.** First I blamed unreset
+`<p>` margins on `.mu__msg` and `.mu__where`, changed them, and the section stayed exactly
+68px, because `p { margin: 0 }` had zeroed them years earlier. Then I audited the other
+heading classes by reading only their rules in `app.css`, reported `.h1`, `.h2` and
+`.sheet__title` as unreset, and told Grant so. He asked me to fix all three. They were
+already correct via the element reset sitting a few lines away in `theme.css`, which the
+audit never looked at. Measured before and after: the admin screen is identical.
+
+**The lesson:** a CSS audit that reads class rules and not the element reset next to them
+produces confident false positives, and Grant acts on them. Read the whole cascade, or
+better, measure the computed value in the browser, which settled all three of these in one
+call each.
+
+## A notification title must never repeat the app's name
+
+iOS draws the app name as the notification header, from the Home Screen install, on every
+Web Push. A payload `title` of "Motley Pick'em" therefore renders the name twice. Grant
+caught it on the first test push that reached a phone.
+
+**How to apply:** the title is the MESSAGE, never the sender. The four real titles were
+already right; the offenders were the `--test` payload and the worker's fallback for an
+unreadable push. `test_push.test_no_notification_title_repeats_the_app_name` walks every
+prose literal in `push_due` plus both of those, so it cannot come back in any of the three
+places a title is written. Its first version matched `'...'::text` and silently missed
+BOTH pick-reminder titles, which sit inside a CASE and are cast after it: it was checking
+two branches of five while looking thorough.
+
+## pywebpush discards the message by default, and still returns 201
+
+`webpush()` defaults `ttl=0`, which tells the push service to deliver this instant or
+throw it away. A phone that is locked, asleep or briefly off wifi silently loses the
+message, and the sender still sees a 201 because Apple did accept it. Two test pushes
+vanished this way on 2026-09-11 before anything arrived.
+
+**How to apply:** `TTL_SECONDS` in `scripts/send_push.py` is 20 minutes with
+`Urgency: high`. Longer than any realistic gap, short enough that a pick reminder cannot
+surface pointing at a game that has already kicked off. Guarded, including the upper
+bound.
+
+## push_due documented a dedupe guard it did not have
+
+012's own comment read "the dedupe ledger stops a repeat, and a recency clause stops a
+backlog". Only the second half was ever written. `push_sent` populated `push_log`
+correctly and nothing read it. Caught live, minutes after the first real notification, by
+running the sender twice and getting "Week 2 is up" twice.
+
+On the intended five minute schedule `week_live`, `week_results` and `passed` had NO limit
+of any kind, so each would repeat for the whole length of its recency window: about 144
+notifications per phone for `week_live`. `pick_reminder` survived by accident, because the
+daily cap counts `push_log` rows and stopped it at two a day. Right for the wrong reason.
+
+**How to apply:** fixed in 013 and carried forward by 014, one `not exists` per branch.
+The test that was supposed to cover this asserted `push_log` had a primary key, which was
+true and completely disconnected from whether anything used it. It now splits `push_due`
+on `union all` and requires the guard per branch, because a single `not exists` anywhere
+would satisfy a naive check while three branches stayed broken.
+
+**The shape to watch for:** a comment describing a guard is not a guard, and a test naming
+the right table is not a test of the right thing. Both read as covered.
