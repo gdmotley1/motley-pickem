@@ -87,9 +87,13 @@ def test_a_missing_migration_cannot_take_down_the_season_tab():
         "the picks fetch is no longer failing soft; a Season tab deployed before "
         "migration 015 is pasted will show an error instead of the standings"
     )
-    # And the screen has to cope with the null that catch produces.
-    assert "picks && roster" in body, (
-        "seasonRecords is being called without checking that the picks arrived"
+    # Stronger than it was. The book no longer merely COPES with missing picks: eight of
+    # the twelve records are computed from the aggregate rows the tab already has, so a
+    # Season tab deployed before the paste shows two thirds of a record book rather than
+    # an empty section.
+    assert "seasonRecords(rows, picks, roster)" in body, (
+        "the record book is no longer built from the season rows as well as the picks, "
+        "so it will be completely empty until migration 015 is pasted"
     )
 
 
@@ -107,11 +111,39 @@ def test_the_picks_come_only_from_the_guarded_rpc():
 
 
 def test_records_never_invent_a_value_for_someone_it_does_not_apply_to():
-    """Nicole has no school, so Homer has nothing to say about her. Returning zero would
-    sort her last and read as her being worst at it. The library returns null and sorts
-    nulls last; this pins the behaviour in the source so it cannot be 'simplified' away."""
+    """A player who has never lost a pick has no worst pick. Returning zero would sort
+    them last and read as them being worst at it, when it means the opposite."""
     lib = read("src", "lib", "seasonRecords.js")
     assert "value == null" in lib, "the null handling in standing() is gone"
-    assert "nulls sort last" in lib.lower() or "Nulls sort last" in lib, (
-        "the reason nulls sort last is no longer written down"
-    )
+
+
+def test_a_record_nobody_has_set_is_unclaimed_not_a_tie_on_zero():
+    """Nobody has thrown a perfect week, so "Perfect week, 0, all four" is an absence
+    dressed as a statistic. That is precisely the kind of thing that made Grant say
+    "literally none of these stats makes sense at all" about the first record book."""
+    lib = read("src", "lib", "seasonRecords.js")
+    assert "unclaimed" in lib, "the unclaimed state is gone from the library"
+    screen = read("src", "screens", "Season.jsx")
+    assert "r.unclaimed" in screen, "the screen no longer renders an unclaimed record"
+    assert "not yet" in screen, "an unclaimed record no longer says so"
+
+
+def test_no_record_needs_a_glossary():
+    """The first book had seventeen invented terms: The Fade, Chalk rate, Perfect order,
+    The Anchor, Money team, Coin flips. Every one needed a sentence of explanation and the
+    sentence had been deleted when the cards became squares.
+
+    Every label now has to be readable cold. Enforced by banning the names that failed,
+    which is crude but is the thing that actually went wrong.
+    """
+    lib = read("src", "lib", "seasonRecords.js")
+    labels = re.findall(r"record\('\w+', '\w+', '([^']+)'", lib)
+    assert len(labels) == 12, "expected 12 records, found %d" % len(labels)
+    banned = ("anchor", "fade", "chalk", "homer", "nemesis", "money team", "coin flip",
+              "slept", "perfect order", "sharpest", "hot streak", "lone wolf",
+              "most picked", "biggest miss", "upset special")
+    for label in labels:
+        for b in banned:
+            assert b not in label.lower(), (
+                "%r is one of the invented terms Grant threw out" % label
+            )

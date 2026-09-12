@@ -5,7 +5,6 @@ import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx
 import { formGeometry, seasonStats } from '../lib/seasonStats.js'
 import { onDark } from '../lib/onDark.js'
 import { GROUPS, seasonRecords } from '../lib/seasonRecords.js'
-import TeamLogo from '../components/TeamLogo.jsx'
 
 /**
  * The whole year: totals, who took each week, form, and the records so far.
@@ -55,9 +54,12 @@ export default function Season() {
 
   /* The record book is the whole reason 015 exists. It is derived from the picks, not
      from the aggregates above, so it is computed separately and joined only on screen. */
+  /* Eight of the twelve records come from the same rows the standings do, so the book
+     needs `picks` only for the last four and renders without them. That is what keeps it
+     from being empty before migration 015 is pasted. */
   const book = useMemo(
-    () => (picks && roster ? seasonRecords(picks, roster) : null),
-    [picks, roster],
+    () => (rows && roster ? seasonRecords(rows, picks, roster) : null),
+    [rows, picks, roster],
   )
 
   if (error) return <p className="err">{error}</p>
@@ -244,13 +246,13 @@ function Ranking({ players }) {
 /**
  * The record book.
  *
- * Every record draws the same way: a brass plate carrying the holder, the number and the
- * moment, then the other three underneath. Grant asked for the chasing pack on 2026-09-11
- * so that everyone sees where THEY are on every record; a plate that only named a winner
- * would tell three of the four people nothing.
+ * Twelve squares in three groups. A square is the label, the number, and who holds it.
+ * Nothing else, because the version before this had seventeen invented statistics and
+ * Grant's verdict was "literally none of these stats makes sense at all".
  *
- * The groups are mapped from GROUPS rather than written out, so adding a record in
- * seasonRecords.js is the only edit a new record needs.
+ * Groups are mapped from GROUPS rather than written out, and a group with nothing in it
+ * draws nothing: before migration 015 the last four records do not exist and "Single
+ * games" must not appear as an empty heading.
  */
 function Book({ book }) {
   if (!book || !book.records.length) return null
@@ -272,34 +274,14 @@ function Book({ book }) {
           </div>
         )
       })}
-      <Family family={book.family} />
     </>
   )
 }
 
-/**
- * One record, as a square.
- *
- * Label, number, who. That is the whole tile.
- *
- * It carried the other three players underneath for about an hour on 2026-09-11, which
- * Grant had asked for and then reversed on sight: "make the record simple, easy to
- * understand. We don't need to see everyone's scores. They should just be basic and
- * little squares, not long old cards." He is right. Seventeen records times four names
- * is sixty-eight numbers, and a record book you have to read is not a record book.
- *
- * seasonRecords still ranks all four, because `holders` and the tie logic need the full
- * standing to know who actually holds a record. Only the rendering dropped.
- */
-/**
- * Who holds it, in the width a square has.
- *
- * Measured at 390px: the name line gets 136px next to a team mark, and
- * "Grant, James, Parker and Nicole" wants 168. A tie nobody has broken is also the one
- * case where the names carry no information, since it is everybody, so it collapses.
- */
+/** Who holds it, in the width a square has. */
 function holderLine(r) {
-  if (!r.holders.length) return '—'
+  /* Nobody has set it. "0, all four" reads as a statistic and is really an absence. */
+  if (r.unclaimed) return 'not yet'
   // Spelled out: "all four" is how anyone says it, and this is a family app.
   if (r.holders.length >= r.rows.length) {
     return `all ${{ 2: 'two', 3: 'three', 4: 'four' }[r.rows.length] || r.rows.length}`
@@ -307,71 +289,16 @@ function holderLine(r) {
   return list(r.holders)
 }
 
+/** One record: label, number, who. */
 function Plate({ r }) {
   const [held] = r.rows
   return (
-    <div className="rec">
+    <div className={`rec${r.unclaimed ? ' is-open' : ''}`}>
       <p className="rec__k">{r.label}</p>
-      <p className="rec__v num">{held.display}</p>
+      <p className="rec__v num">{r.unclaimed ? '—' : held.display}</p>
       <p className="rec__who">
-        {held.teamId && <TeamLogo teamId={held.teamId} size={16} />}
         <span className="rec__wn">{holderLine(r)}</span>
       </p>
     </div>
-  )
-}
-
-/**
- * The four of you, rather than any one of you.
- *
- * Head to head is the only thing on the tab that is a grid, and it is the one people will
- * actually argue about. Ties count for neither side, because ties stand.
- */
-function Family({ family }) {
-  if (!family) return null
-  return (
-    <>
-      <div className="screen">
-        <h3 className="h2">All four of you</h3>
-      </div>
-      <div className="fam">
-        {family.trap && (
-          <div className="fam__trap">
-            <p className="fam__k">Trap game</p>
-            <p className="fam__v">{family.trap.label}</p>
-            <p className="fam__s">
-              {family.trap.week} &middot; got {family.trap.missed} of you for{' '}
-              {family.trap.cost} points &middot; {family.trap.winner} won
-            </p>
-          </div>
-        )}
-        <div className="fam__pair">
-          <div className="fam__stat">
-            <p className="fam__n num">{family.unanimousRight}</p>
-            <p className="fam__l">called by all of you</p>
-          </div>
-          <div className="fam__stat">
-            <p className="fam__n num">{family.unanimousWrong}</p>
-            <p className="fam__l">missed by all of you</p>
-          </div>
-        </div>
-        <div className="h2h">
-          <p className="fam__k">Head to head, by week</p>
-          {family.grid.map((a) => (
-            <div className="h2h__row" key={a.id}>
-              <span className="h2h__me">{a.name}</span>
-              {a.vs.map((v) => (
-                <span className="h2h__v" key={v.id}>
-                  <span className="h2h__vn">{v.name}</span>
-                  <b className="num">
-                    {v.w}-{v.l}
-                  </b>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
   )
 }
