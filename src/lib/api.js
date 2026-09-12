@@ -111,6 +111,21 @@ export const getStandings = () => rpc('get_standings', withToken({}))
 export const getSeason = () => rpc('get_season', withToken({}))
 
 /**
+ * Every graded pick of the season, one row per player per finished game.
+ *
+ * The record book's source. get_season aggregates to points-and-correct, which throws
+ * away the pick, and "twenty on a loser" or "the only one who called it" are properties
+ * of a single pick on a single game.
+ *
+ * This returns pick_abbr and confidence, which is exactly what the rule that outranks
+ * everything protects, and it is safe because of the RPC's join rather than anything the
+ * client does: `g.winner_abbr is not null` means the game has finished, and a game cannot
+ * finish before it kicks off. That makes it strictly narrower than get_board, which
+ * reveals at kickoff. See migrations/015_get_season_picks.sql.
+ */
+export const getSeasonPicks = () => rpc('get_season_picks', withToken({}))
+
+/**
  * Every week of the current season, with its label, whether it is published, and how many
  * of its games are graded.
  *

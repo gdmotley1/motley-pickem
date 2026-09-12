@@ -4,6 +4,8 @@ import { friendly } from '../lib/errors.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
 import { formGeometry, seasonStats } from '../lib/seasonStats.js'
 import { onDark } from '../lib/onDark.js'
+import { GROUPS, seasonRecords } from '../lib/seasonRecords.js'
+import TeamLogo from '../components/TeamLogo.jsx'
 
 /**
  * The whole year: totals, who took each week, form, and the records so far.
@@ -17,15 +19,17 @@ import { onDark } from '../lib/onDark.js'
 export default function Season() {
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
+  const [picks, setPicks] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     let alive = true
-    Promise.all([api.getSeason(), api.listSeats()])
-      .then(([s, seats]) => {
+    Promise.all([api.getSeason(), api.listSeats(), api.getSeasonPicks()])
+      .then(([s, seats, pk]) => {
         if (!alive) return
         setRows(s)
         setRoster(seats.filter((x) => x.claimed))
+        setPicks(pk)
       })
       .catch((e) => alive && setError(friendly(e)))
     return () => {
@@ -36,6 +40,13 @@ export default function Season() {
   const stats = useMemo(
     () => (rows && roster ? seasonStats(rows, roster) : null),
     [rows, roster],
+  )
+
+  /* The record book is the whole reason 015 exists. It is derived from the picks, not
+     from the aggregates above, so it is computed separately and joined only on screen. */
+  const book = useMemo(
+    () => (picks && roster ? seasonRecords(picks, roster) : null),
+    [picks, roster],
   )
 
   if (error) return <p className="err">{error}</p>
@@ -81,7 +92,7 @@ export default function Season() {
       <Form form={stats.form} played={stats.played} />
       <Weeks weeks={stats.weeks} />
       <Ranking players={stats.players} />
-      <Records records={stats.records} />
+      <Book book={book} />
     </Screen>
   )
 }
@@ -219,24 +230,127 @@ function Ranking({ players }) {
   )
 }
 
-function Records({ records }) {
-  if (!records.length) return null
+/**
+ * The record book.
+ *
+ * Every record draws the same way: a brass plate carrying the holder, the number and the
+ * moment, then the other three underneath. Grant asked for the chasing pack on 2026-09-11
+ * so that everyone sees where THEY are on every record; a plate that only named a winner
+ * would tell three of the four people nothing.
+ *
+ * The groups are mapped from GROUPS rather than written out, so adding a record in
+ * seasonRecords.js is the only edit a new record needs.
+ */
+function Book({ book }) {
+  if (!book || !book.records.length) return null
+  return (
+    <>
+      {GROUPS.map(([group, heading]) => {
+        const inGroup = book.records.filter((r) => r.group === group)
+        if (!inGroup.length) return null
+        return (
+          <div key={group}>
+            <div className="screen">
+              <h3 className="h2">{heading}</h3>
+            </div>
+            <div className="recs">
+              {inGroup.map((r) => (
+                <Plate key={r.key} r={r} />
+              ))}
+            </div>
+          </div>
+        )
+      })}
+      <Family family={book.family} />
+    </>
+  )
+}
+
+/** One record: the holder engraved large, the other three beneath. */
+function Plate({ r }) {
+  const [held, ...chasing] = r.rows
+  return (
+    <div className="rec">
+      <div className="rec__top">
+        <div className="rec__id">
+          <p className="rec__k">{r.label}</p>
+          <p className="rec__who">
+            {/* list(), not join(' and '): four holders read "A and B and C and D"
+                otherwise, which happens on any record everybody is level on. */}
+            {r.holders.length ? list(r.holders) : '—'}
+            {r.shared && <span className="rec__tie">tied</span>}
+          </p>
+          {held.detail && <p className="rec__when">{held.detail}</p>}
+        </div>
+        {/* The team ledger records carry a mark; everything else leaves the slot empty
+            rather than drawing a placeholder disc. */}
+        {held.teamId && <TeamLogo teamId={held.teamId} size={30} />}
+        <p className="rec__v num">{held.display}</p>
+      </div>
+      <div className="rec__pack">
+        {chasing.map((c) => (
+          <span className="rec__c" key={c.id}>
+            <i style={{ background: c.color }} />
+            <span className="rec__cn">{c.name}</span>
+            <b className="num">{c.display}</b>
+          </span>
+        ))}
+      </div>
+      <p className="rec__blurb">{r.blurb}</p>
+    </div>
+  )
+}
+
+/**
+ * The four of you, rather than any one of you.
+ *
+ * Head to head is the only thing on the tab that is a grid, and it is the one people will
+ * actually argue about. Ties count for neither side, because ties stand.
+ */
+function Family({ family }) {
+  if (!family) return null
   return (
     <>
       <div className="screen">
-        <h3 className="h2">Records</h3>
+        <h3 className="h2">All four of you</h3>
       </div>
-      <div className="tiles">
-        {records.map((r) => (
-          <div className="tile" key={r.key}>
-            <p className="tile__k">{r.label}</p>
-            <p className="tile__v num">
-              {r.value}
-              <span>{r.unit}</span>
+      <div className="fam">
+        {family.trap && (
+          <div className="fam__trap">
+            <p className="fam__k">Trap game</p>
+            <p className="fam__v">{family.trap.label}</p>
+            <p className="fam__s">
+              {family.trap.week} &middot; got {family.trap.missed} of you for{' '}
+              {family.trap.cost} points &middot; {family.trap.winner} won
             </p>
-            <p className="tile__s">{r.who}</p>
           </div>
-        ))}
+        )}
+        <div className="fam__pair">
+          <div className="fam__stat">
+            <p className="fam__n num">{family.unanimousRight}</p>
+            <p className="fam__l">called by all of you</p>
+          </div>
+          <div className="fam__stat">
+            <p className="fam__n num">{family.unanimousWrong}</p>
+            <p className="fam__l">missed by all of you</p>
+          </div>
+        </div>
+        <div className="h2h">
+          <p className="fam__k">Head to head, by week</p>
+          {family.grid.map((a) => (
+            <div className="h2h__row" key={a.id}>
+              <span className="h2h__me">{a.name}</span>
+              {a.vs.map((v) => (
+                <span className="h2h__v" key={v.id}>
+                  <span className="h2h__vn">{v.name}</span>
+                  <b className="num">
+                    {v.w}-{v.l}
+                  </b>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </>
   )

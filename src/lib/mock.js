@@ -373,6 +373,45 @@ export async function rpc(fn, args = {}) {
         .sort((a, b) => b.points - a.points)
     }
 
+    /* One row per player per FINISHED game, the shape migrations/015 returns. The demo
+       week is a single week, so the record book renders thin here in exactly the way the
+       family saw it after week one: real records, all set in Week 1. */
+    case 'get_season_picks': {
+      requireMe(args.p_token)
+      const w = await week()
+      const byId = Object.fromEntries(w.slate.map((g) => [g.game_id, g]))
+      const out = []
+      for (const [k, v] of Object.entries(s.picks)) {
+        const [pid, gid] = k.split(':')
+        const g = byId[Number(gid)]
+        // The safety property, mirrored: no winner means the game has not finished.
+        if (!g?.winner_abbr) continue
+        out.push({
+          week_no: w.week?.week_no ?? 1,
+          week_label: w.week?.label ?? 'Week 1',
+          game_id: g.game_id,
+          kickoff: g.kickoff,
+          home_abbr: g.home_abbr,
+          away_abbr: g.away_abbr,
+          home_id: g.home_id,
+          away_id: g.away_id,
+          home_score: g.home_score ?? null,
+          away_score: g.away_score ?? null,
+          winner_abbr: g.winner_abbr,
+          favorite_abbr: g.favorite_abbr ?? null,
+          underdog_abbr: g.underdog_abbr ?? null,
+          spread_line: g.spread_line ?? null,
+          player_id: Number(pid),
+          pick_abbr: v.pick,
+          confidence: v.confidence,
+          auto: !!v.auto,
+        })
+      }
+      return out.sort(
+        (a, b) => new Date(a.kickoff) - new Date(b.kickoff) || a.player_id - b.player_id,
+      )
+    }
+
     case 'save_picks': {
       const me = requireMe(args.p_token)
       const w = await week()
