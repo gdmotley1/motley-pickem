@@ -72,6 +72,25 @@ def test_the_screen_renders_the_book():
     assert "getSeasonPicks" in body or "picks" in body, "nothing fetches the picks"
 
 
+def test_a_missing_migration_cannot_take_down_the_season_tab():
+    """The state the family is actually in between a deploy and Grant pasting 015.
+
+    get_season_picks does not exist until the paste, so the call errors. Inside the
+    Promise.all it rejected the whole thing and replaced standings, form, weeks and
+    ranking with an error message: the leaderboard lost to a record book nobody had yet.
+    The book is additive and may never be the reason the rest of the screen is missing.
+    """
+    body = read("src", "screens", "Season.jsx")
+    assert "api.getSeasonPicks().catch(" in body, (
+        "the picks fetch is no longer failing soft; a Season tab deployed before "
+        "migration 015 is pasted will show an error instead of the standings"
+    )
+    # And the screen has to cope with the null that catch produces.
+    assert "picks && roster" in body, (
+        "seasonRecords is being called without checking that the picks arrived"
+    )
+
+
 def test_the_picks_come_only_from_the_guarded_rpc():
     """get_season_picks is the only function that can hand the client a whole season of
     pick_abbr and confidence, and it is safe because its join can only see finished games.

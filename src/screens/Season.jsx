@@ -24,7 +24,18 @@ export default function Season() {
 
   useEffect(() => {
     let alive = true
-    Promise.all([api.getSeason(), api.listSeats(), api.getSeasonPicks()])
+    /* The picks fetch fails SOFT, and this is not defensive habit, it is a real state
+       the family will be in. get_season_picks arrives in migration 015, which is a paste
+       into a web console, so between a deploy and that paste the function does not exist.
+       Inside the Promise.all it took the whole tab down with it: standings, form, weeks
+       and ranking all replaced by an error, because a record book nobody has yet is
+       apparently worth losing the leaderboard over.
+       The book is additive. It may never be a reason the rest of the screen is missing. */
+    Promise.all([
+      api.getSeason(),
+      api.listSeats(),
+      api.getSeasonPicks().catch(() => null),
+    ])
       .then(([s, seats, pk]) => {
         if (!alive) return
         setRows(s)
