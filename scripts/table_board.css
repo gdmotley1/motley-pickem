@@ -1,0 +1,89 @@
+/* Table styles for "Everyone's numbers". Loaded after theme.css, app.css and
+   recordbook_board.css (which supplies the board chrome, medals and titles). Prefix rt-,
+   which app.css does not use. Nothing inside a phone is under 13px. */
+
+/* Each phone scrolls on its own, so a frozen row actually freezes on the board.
+   .app__body is overflow-y: auto in app.css and never scrolls, which makes it the sticky
+   scrollport and pins nothing; here it is released so the phone is the scrollport. In the
+   app itself a frozen header needs the pinned-strip approach the Board's scoreboard uses. */
+.rt-phone {
+  --hdr: 58px;
+  position: relative; width: 390px; max-width: 100%; height: 720px; overflow-y: auto;
+  overscroll-behavior: contain; border-radius: 24px;
+  box-shadow: 0 14px 34px rgba(19, 26, 34, .26), 0 0 0 1px rgba(19, 26, 34, .08);
+}
+.rt-phone.is-short { height: auto; }
+.rt-phone .app { min-height: 0; }
+.rt-phone .app__body { flex: 0 0 auto; overflow: visible; }
+.rt-phone .app__page { min-height: 0; padding-bottom: 30px; }
+
+.rt-stub { margin: 14px 12px 0; padding: 12px 14px; border-radius: 12px; border: 1px dashed var(--line-strong); }
+.rt-stub p { margin: 0; font-family: var(--ui); font-size: 14px; color: var(--ink-3); text-align: center; }
+
+/* ------------------------------------------------------------- the across table --- */
+/* No overflow on any ancestor of the header between it and the phone, or sticky dies. */
+.rt-across { margin: 0 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.rt-head {
+  position: sticky; top: var(--hdr); z-index: 6;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px;
+  padding: 10px 6px; background: var(--sunk); border-bottom: 1px solid var(--line);
+  border-radius: 13px 13px 0 0; box-shadow: 0 8px 14px -10px rgba(0, 0, 0, .7);
+}
+.rt-hcell { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; padding: 6px 2px; border-radius: 10px; }
+.rt-hcell b { font-family: var(--display); font-size: 15px; font-weight: 800; color: var(--ink); }
+
+.rt-rec { padding: 12px 6px 12px; }
+.rt-rec + .rt-rec { border-top: 1px solid var(--line); }
+.rt-rec:nth-child(even) { background: rgba(255, 255, 255, .025); }
+.rt-rec__label { display: flex; align-items: center; gap: 10px; padding: 0 6px 10px; }
+.rt-rec__label span { font-family: var(--ui); font-size: 16px; font-weight: 700; color: var(--ink); }
+.rt-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+
+.rt-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-width: 0; min-height: 56px; padding: 6px 2px; border-radius: 10px; }
+.rt-cell b { font-family: var(--display); font-size: 23px; font-weight: 800; line-height: 1.05; color: var(--ink); }
+.rt-cell em { margin-top: 3px; font-style: normal; font-family: var(--ui); font-size: 13px; line-height: 1.25; color: var(--ink-2); text-wrap: balance; }
+.rt-cell.is-open b, .rt-cell.is-open em { color: var(--ink-3); }
+.rt-cell.is-lead { background: rgba(224, 172, 75, .13); box-shadow: inset 0 0 0 2px rgba(224, 172, 75, .6); }
+.rt-cell.is-lead b { color: var(--lead); }
+.rt-cell.is-worst { background: rgba(255, 106, 94, .13); box-shadow: inset 0 0 0 2px rgba(255, 106, 94, .6); }
+.rt-cell.is-worst b { color: var(--bad); }
+
+/* ---------------------------------------------------------------- colour columns --- */
+.rt-across.is-colour .rt-head { gap: 4px; padding: 8px 6px; }
+.rt-across.is-colour .rt-hcell {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--col) 100%, #fff 8%), var(--col));
+  box-shadow: inset 0 4px 0 var(--trim), 0 2px 6px rgba(0, 0, 0, .4);
+}
+.rt-across.is-colour .rt-hcell b { color: var(--ink); }
+.rt-across.is-colour .rt-hcell[style*="--ink:#15181c"] b { color: #15181c; }
+.rt-across.is-colour .rt-hcell[style*="--ink:#ffffff"] b { color: #ffffff; }
+.rt-across.is-colour .rt-cell:not(.is-lead):not(.is-worst) { background: color-mix(in srgb, var(--col) 26%, transparent); }
+.rt-across.is-colour .rt-cell.is-lead, .rt-across.is-colour .rt-cell.is-worst { background-color: color-mix(in srgb, var(--col) 26%, transparent); }
+
+/* ------------------------------------------------------ T2, frozen names column --- */
+.rt2 { position: relative; margin: 0 12px; }
+.rt2-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--card); -webkit-overflow-scrolling: touch; }
+.rt2 table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+.rt2 th, .rt2 td { padding: 10px 8px; vertical-align: middle; border-bottom: 1px solid var(--line); }
+.rt2 tbody tr:last-child th, .rt2 tbody tr:last-child td { border-bottom: 0; }
+.rt2 thead th { min-width: 104px; background: var(--sunk); text-align: center; }
+.rt2 thead th > span { display: block; margin-top: 6px; font-family: var(--ui); font-size: 13px; font-weight: 700; line-height: 1.25; color: var(--ink); white-space: normal; }
+.rt2 thead th .rk-medal { margin: 0 auto; }
+.rt2 th[scope="row"], .rt2 .rt2-corner {
+  position: sticky; left: 0; z-index: 3; min-width: 112px; text-align: left;
+  background: var(--surface); box-shadow: 8px 0 12px -10px rgba(0, 0, 0, .8);
+}
+.rt2 .rt2-corner { z-index: 4; background: var(--sunk); }
+.rt2 .rt2-corner span { font-family: var(--display); font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.rt2 th[scope="row"] { white-space: nowrap; }
+.rt2 th[scope="row"] .avatar { display: inline-grid; vertical-align: middle; }
+.rt2 th[scope="row"] span { margin-left: 8px; vertical-align: middle; font-family: var(--display); font-size: 17px; font-weight: 800; color: var(--ink); }
+.rt2 td { text-align: center; }
+.rt2 td b { display: block; font-family: var(--display); font-size: 23px; font-weight: 800; line-height: 1.05; color: var(--ink); }
+.rt2 td em { display: block; margin-top: 3px; font-style: normal; font-family: var(--ui); font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.rt2 td.is-open b, .rt2 td.is-open em { color: var(--ink-3); }
+.rt2 td.is-lead { background: rgba(224, 172, 75, .13); box-shadow: inset 0 0 0 2px rgba(224, 172, 75, .6); }
+.rt2 td.is-lead b { color: var(--lead); }
+.rt2 td.is-worst { background: rgba(255, 106, 94, .13); box-shadow: inset 0 0 0 2px rgba(255, 106, 94, .6); }
+.rt2 td.is-worst b { color: var(--bad); }
+.rt2-hint { margin: 10px 0 0; text-align: right; font-family: var(--ui); font-size: 14px; font-weight: 600; color: var(--ink-3); }

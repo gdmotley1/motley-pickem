@@ -1,0 +1,63 @@
+<header class="bd-top">
+  <div class="bd-wrap">
+    <p class="bd-kick">Motley Pick'em &middot; Season tab &middot; everyone's numbers</p>
+    <h1>Everyone's numbers, as a table</h1>
+    <p><b>Locked in:</b> the trophy room for the Hall of fame, up for grabs row and all, and
+      <b>worst pick is now worst miss</b>. That rename is in the badge prompts too, so it saves
+      as <code style="background:rgba(255,255,255,.1);padding:1px 5px;border-radius:4px">worst_miss.png</code>.</p>
+    <p>Below are four ways to lay out the eight records for all four of you. Every phone
+      scrolls on its own, so <b>scroll inside it</b> to see the frozen header hold, and
+      <b>swipe T2 sideways</b>. In all four, the best in each row is ringed in gold, and on
+      worst miss the holder is in red.</p>
+  </div>
+</header>
+
+<div class="bd-wrap">
+
+  {{OPTIONS}}
+
+  <section class="bd-opt">
+    <div class="bd-opt__hd"><h2>What I would do</h2></div>
+    <div class="bd-rec">
+      <h3>T4, team colors with the names frozen on top</h3>
+      <p>It is both of your ideas at once. The colors make each column yours without reading
+        a name, and freezing the header means the colors never scroll away. It also has the
+        most pop of the four, next to a trophy room that is already loud.</p>
+      <p>One build cost, stated now: the app's page cannot pin a header in the usual way, so
+        freezing the names uses the same pinned strip the Board's scoreboard already slides in
+        under the app bar. It has been done once in this app, so it is work, not a risk.</p>
+      <p>If you would rather keep the page short, <b>T2</b> is four rows tall, at the price
+        of swiping to see most of the records, and its frozen column needs nothing special.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+  /* Size each phone's frozen header to its real app bar, then report the height of each
+     table and its smallest text. */
+  function measure() {
+    document.querySelectorAll('.rt-phone').forEach(function (ph) {
+      var hdr = ph.querySelector('.apphdr');
+      if (hdr && hdr.offsetHeight) ph.style.setProperty('--hdr', hdr.offsetHeight + 'px');
+    });
+    var phones = document.querySelectorAll('.rt-phone');
+    if (!phones.length || phones[0].getBoundingClientRect().width < 300) return;
+    document.querySelectorAll('.bd-opt').forEach(function (sec) {
+      var ph = sec.querySelector('.rt-phone');
+      var chip = sec.querySelector('[data-measure]');
+      if (!ph || !chip) return;
+      var table = ph.querySelector('.rt-across, .rt2');
+      var min = 99;
+      /* The record book only: the app bar above it is existing chrome, not this change. */
+      ph.querySelectorAll('.app__page *').forEach(function (el) {
+        var own = [].some.call(el.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+        if (own) min = Math.min(min, parseFloat(getComputedStyle(el).fontSize));
+      });
+      chip.textContent = 'table ' + Math.round(table.getBoundingClientRect().height) + 'px · smallest text ' + min + 'px';
+    });
+  }
+  measure();
+  [250, 800, 2000].forEach(function (ms) { setTimeout(measure, ms); });
+  addEventListener('resize', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+</script>

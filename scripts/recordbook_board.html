@@ -1,0 +1,100 @@
+<header class="bd-top">
+  <div class="bd-wrap">
+    <p class="bd-kick">Motley Pick'em &middot; Season tab &middot; the record book</p>
+    <h1>The record book, reworked</h1>
+    <p>Everything you tapped Yes, nothing you left blank, plus this message's two changes:
+      <b>worst miss</b> (renamed from worst pick) just says what you put on whom, like
+      "8 on GT", and
+      <b>biggest margin of victory in a week</b> joins the Hall of fame. Nothing on the phones
+      below is under 13px.</p>
+    <div class="bd-lists">
+      <div><h2>Everyone's shelf &middot; 8</h2><ul>
+        <li>Most points in a week</li><li>Best record in a week</li><li>Fewest points in a week</li>
+        <li>Longest winning streak</li><li>Worst miss</li><li>Biggest upset you called</li>
+        <li>Weeks won</li><li>Season record</li></ul></div>
+      <div><h2>Hall of fame &middot; 8</h2><ul>
+        <li>Perfect week</li><li>Only one who called it</li><li>Most points in a season</li>
+        <li>Biggest upset called</li><li>Won a week by 20 or more</li><li>Two-touchdown upset</li>
+        <li>Three upsets in one week</li><li>Biggest margin of victory in a week</li></ul></div>
+      <div><h2>Hall of shame &middot; 1</h2><ul><li>Lost your 20</li></ul>
+        <p style="margin-top:10px;font-size:14px">The badges are stand-ins in the colors your
+          prompts ask for. The real art is yours, prompts at the bottom.</p></div>
+    </div>
+  </div>
+</header>
+
+<div class="bd-wrap">
+
+  {{OPTIONS}}
+
+  <section class="bd-opt">
+    <div class="bd-opt__hd"><h2>What I would do</h2></div>
+    <div class="bd-rec">
+      <h3>A, with B's Hall of fame if the page gets long</h3>
+      <p>A is the one you have been steering toward: your own shelf with every record written
+        out, big, then a Hall of fame you can see from across the room. The badges are the
+        star, and two across at 84px is the size where a shiny chrome badge actually looks
+        like one.</p>
+      <p>One small call of mine in all three: <b>fewest points in a week</b> reads "After two
+        weeks" until there are two finished weeks. With one week done, everybody's fewest is
+        the same number as their most, which looks like a bug.</p>
+    </div>
+  </section>
+
+  <section class="rk-prompts" id="prompts">
+    <h2>Badge prompts, {{COUNT}} of them</h2>
+    <p>One per badge. Every prompt carries the same style description word for word, so the
+      set matches, and each changes only the rim, the enamel color and the emblem. The rim
+      tells the sections apart: chrome for everyone's shelf, gold with a laurel wreath for the
+      Hall of fame, cracked gunmetal for the Hall of shame.</p>
+    <ol>
+      <li>Run all of them in one ChatGPT conversation, starting with #1, so it holds the style.</li>
+      <li>If one drifts, reply: "Match the first badge exactly: same rim, lighting, gloss and
+        angle. Only the enamel color and emblem change."</li>
+      <li>Download each as a PNG with a transparent background and save it into
+        <code>cfb-pickem/inputs/badges/</code> with the file name shown. I will take it from there.</li>
+    </ol>
+    {{PROMPTS}}
+  </section>
+</div>
+
+<script>
+  /* Copy a prompt. The Artifact frame may refuse clipboard access, so on failure the text
+     is selected instead and the button says so. */
+  document.querySelectorAll('.rk-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var ta = btn.parentElement.querySelector('textarea');
+      function selected() {
+        ta.focus(); ta.select(); ta.setSelectionRange(0, ta.value.length);
+        btn.textContent = 'Selected. Use your copy button';
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ta.value).then(function () {
+          btn.textContent = 'Copied'; btn.classList.add('is-done');
+          setTimeout(function () { btn.textContent = 'Copy prompt'; btn.classList.remove('is-done'); }, 1800);
+        }, selected);
+      } else { selected(); }
+    });
+  });
+
+  /* Each layout's height at 390px, and the smallest text inside it. */
+  function measure() {
+    var phones = document.querySelectorAll('.rk-phone');
+    if (!phones.length || phones[0].getBoundingClientRect().width < 300) return;
+    document.querySelectorAll('.bd-opt').forEach(function (sec) {
+      var ph = sec.querySelector('.rk-phone');
+      var chip = sec.querySelector('[data-measure]');
+      if (!ph || !chip) return;
+      var min = 99;
+      ph.querySelectorAll('*').forEach(function (el) {
+        var own = [].some.call(el.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+        if (own) min = Math.min(min, parseFloat(getComputedStyle(el).fontSize));
+      });
+      chip.textContent = Math.round(ph.getBoundingClientRect().height) + 'px tall · smallest text ' + min + 'px';
+    });
+  }
+  measure();
+  [250, 800, 2000].forEach(function (ms) { setTimeout(measure, ms); });
+  addEventListener('resize', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+</script>

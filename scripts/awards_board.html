@@ -1,0 +1,132 @@
+<header class="bb-top">
+  <div class="bb-wrap">
+    <p class="bb-kick">Motley Pick'em &middot; Season tab &middot; the record book</p>
+    <h1>Record book ballot</h1>
+    <p>What I took from your message:</p>
+    <ol>
+      <li><b>Shelves for everybody (D).</b> Each of you gets your own numbers, with what
+        actually happened written out.</li>
+      <li><b>A Hall of fame (C), made of awards.</b> Things like a perfect week or being the
+        only one who called it.</li>
+      <li><b>Worst pick has to say the pick:</b> the team, what you put on it, who beat it,
+        and the score.</li>
+      <li><b>Brainstorm new ones, and be honest about the old ones.</b></li>
+    </ol>
+    <p>Tap Yes or No on each one. Your answers are marked already where you gave them. Every
+      "right now" line is the real season: Week 1 final, Week 2 one game in.</p>
+  </div>
+</header>
+
+<div class="bb-wrap">
+
+  <section class="bb-look">
+    <h2>The shape</h2>
+    <p>Shelves are rows now, not a grid of pins, because the details need a line of their
+      own. Below the shelves, the Hall of fame is pins, because an award is a picture and a
+      name.</p>
+    {{PREVIEW}}
+  </section>
+
+  {{SECTIONS}}
+
+  <section class="bb-notes">
+    <label for="bb-note">Anything else? Ideas, names, something to change</label>
+    <textarea id="bb-note" placeholder="Voice typing works here too."></textarea>
+  </section>
+
+  <p class="bb-credit">{{CREDIT}}</p>
+</div>
+
+<div class="bb-bar" aria-live="polite">
+  <span><b id="bb-left">&hellip;</b> left to answer</span>
+  <span class="bb-bar__save" id="bb-save">Loading</span>
+</div>
+
+<script>
+(function () {
+  var DOC = 'ballot/grant';
+  var items = [].slice.call(document.querySelectorAll('.bb-item'));
+  var note = document.getElementById('bb-note');
+  var left = document.getElementById('bb-left');
+  var save = document.getElementById('bb-save');
+
+  // Start from what Grant already said; saved taps override it.
+  var state = { choices: {}, note: '' };
+  items.forEach(function (it) { if (it.dataset.default) state.choices[it.dataset.id] = it.dataset.default; });
+
+  function render() {
+    var open = 0;
+    items.forEach(function (it) {
+      var v = state.choices[it.dataset.id] || '';
+      it.setAttribute('data-v', v);
+      if (!v) open += 1;
+      [].forEach.call(it.querySelectorAll('.bb-btn'), function (b) {
+        b.setAttribute('aria-pressed', String(b.dataset.v === v));
+      });
+    });
+    left.textContent = String(open);
+    if (document.activeElement !== note) note.value = state.note || '';
+  }
+
+  function status(text, cls) {
+    save.textContent = text;
+    save.className = 'bb-bar__save' + (cls ? ' ' + cls : '');
+  }
+
+  var db = null;
+  var timer = null;
+  function persist() {
+    if (!db) return;
+    clearTimeout(timer);
+    status('Saving');
+    timer = setTimeout(function () {
+      var body = { choices: state.choices, note: state.note, updated: new Date().toISOString() };
+      db.doc(DOC).set(body).then(function () {
+        status('Saved. Tell me in chat when you are done.', 'is-ok');
+      }, function (e) {
+        status(e && e.code === 'unavailable' ? 'Could not save just now. Tap again in a moment.'
+                                             : 'Not saving here. Reply in chat instead.', 'is-off');
+      });
+    }, 350);
+  }
+
+  items.forEach(function (it) {
+    [].forEach.call(it.querySelectorAll('.bb-btn'), function (b) {
+      b.addEventListener('click', function () {
+        var id = it.dataset.id;
+        state.choices[id] = state.choices[id] === b.dataset.v ? '' : b.dataset.v;
+        render();
+        persist();
+      });
+    });
+  });
+  note.addEventListener('input', function () { state.note = note.value; persist(); });
+
+  render();
+  status('Loading');
+
+  // db lights the ballot up when this view can run it; without it the page still works.
+  var ready = window.claude && window.claude.use ? window.claude.use('db') : Promise.resolve(null);
+  ready.then(function (d) {
+    if (!d) { status('Not saving here. Reply in chat instead.', 'is-off'); return; }
+    db = d;
+    db.doc(DOC).onSnapshot(function (snap) {
+      if (snap.exists) {
+        var data = snap.data() || {};
+        var merged = {};
+        Object.keys(state.choices).forEach(function (k) { merged[k] = state.choices[k]; });
+        var saved = data.choices || {};
+        Object.keys(saved).forEach(function (k) { merged[k] = saved[k]; });
+        state.choices = merged;
+        state.note = typeof data.note === 'string' ? data.note : state.note;
+        render();
+        if (!snap.metadata.hasPendingWrites) status('Saved. Tell me in chat when you are done.', 'is-ok');
+      } else {
+        status('Ready. Your taps save as you go.', 'is-ok');
+      }
+    }, function () {
+      status('Not saving here. Reply in chat instead.', 'is-off');
+    });
+  }, function () { status('Not saving here. Reply in chat instead.', 'is-off'); });
+})();
+</script>

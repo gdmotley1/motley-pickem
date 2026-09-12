@@ -1,0 +1,170 @@
+/* The reworked record book in three layouts, plus the badge prompts.
+
+   theme.css and app.css are embedded ahead of this verbatim. Board chrome is bd-, the
+   record book is rk- (with rkA-, rkB-, rkC- per layout); app.css uses none of those.
+
+   NO TINY TEXT. Grant asked for it outright. Nothing inside a phone is below 13px, and
+   the board measures that rather than trusting this comment. */
+
+body { background: var(--page); color: var(--ink); }
+
+/* ================================================================ board chrome == */
+.bd-wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 90px; }
+.bd-top { background: #10151c; color: #f2f6fa; padding: 32px 0 28px; }
+.bd-top .bd-wrap { padding-bottom: 0; }
+.bd-kick { margin: 0 0 10px; font-family: var(--display); font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; font-stretch: condensed; color: #97a5b3; }
+.bd-top h1 { margin: 0 0 14px; font-family: var(--display); font-size: 30px; font-weight: 800; letter-spacing: -.015em; line-height: 1.1; text-wrap: balance; }
+.bd-top p { margin: 0 0 10px; color: #c3cede; font-size: 15px; line-height: 1.6; max-width: 70ch; }
+.bd-top b { color: #fff; }
+.bd-lists { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 18px; }
+.bd-lists h2 { margin: 0 0 6px; font-family: var(--display); font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #e0ac4b; }
+.bd-lists ul { margin: 0; padding-left: 18px; color: #c3cede; font-size: 14px; line-height: 1.55; }
+@media (max-width: 760px) { .bd-lists { grid-template-columns: minmax(0, 1fr); } }
+
+.bd-opt { padding: 34px 0 8px; border-top: 1px solid var(--line); }
+.bd-opt__hd { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.bd-opt__hd h2 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -.01em; }
+.bd-opt__k { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; flex: none; background: var(--ink); color: #fff; font-family: var(--display); font-weight: 800; font-size: 17px; }
+.bd-opt__px { margin-left: auto; flex: none; font-family: ui-monospace, monospace; font-size: 13px; font-weight: 700; color: var(--ink); background: var(--well); padding: 5px 10px; border-radius: 6px; white-space: nowrap; }
+.bd-opt__grid { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 30px; align-items: start; }
+.bd-opt__copy p { margin: 0 0 10px; font-size: 15px; line-height: 1.62; color: var(--ink-2); max-width: 60ch; }
+.bd-opt__copy .bd-opt__cost { color: var(--ink-3); font-size: 14px; }
+.bd-opt__cost b { color: var(--ink); }
+@media (max-width: 860px) { .bd-opt__grid { grid-template-columns: minmax(0, 1fr); } }
+
+.bd-rec { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 8px 0 10px; max-width: 780px; box-shadow: 0 2px 4px rgba(19, 26, 34, .05), 0 6px 16px rgba(19, 26, 34, .07); }
+.bd-rec h3 { margin: 0 0 8px; font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--good); }
+.bd-rec p { margin: 0 0 8px; font-size: 15px; line-height: 1.62; color: var(--ink-2); }
+.bd-rec p:last-child { margin-bottom: 0; }
+
+.rk-phone { width: 390px; max-width: 100%; border-radius: 24px; overflow: hidden; box-shadow: 0 14px 34px rgba(19, 26, 34, .26), 0 0 0 1px rgba(19, 26, 34, .08); }
+.rk-phone .app { min-height: 0; }
+.rk-phone .app__body { flex: 0 0 auto; padding-bottom: 26px; }
+.rk-mk { display: block; background-size: contain; background-repeat: no-repeat; background-position: center; }
+
+/* ======================================================= the placeholder badge == */
+/* Rim finish and enamel colour exactly as each prompt asks for them. The glyph is the
+   current icon set's, standing in until Grant's art lands. */
+.rk-medal {
+  --size: 48px; --enamel: #333; --glyph: #fff;
+  position: relative; flex: none; width: var(--size); height: var(--size); border-radius: 50%;
+  padding: calc(var(--size) * .1); display: grid; place-items: center;
+  background: conic-gradient(from 210deg, #6f7a86, #f4f7fb, #9aa5b1, #ffffff, #5f6a76, #dfe6ee, #6f7a86);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, .55), inset 0 1px 1px rgba(255, 255, 255, .85), inset 0 -2px 3px rgba(0, 0, 0, .35);
+}
+.rk-medal--fame {
+  background: conic-gradient(from 210deg, #8a5e06, #fff1b8, #c99a24, #fffbe6, #7a5204, #ffe08a, #8a5e06);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, .55), inset 0 1px 1px rgba(255, 255, 255, .9), inset 0 -2px 3px rgba(0, 0, 0, .35), 0 0 18px rgba(255, 214, 120, .28);
+}
+.rk-medal--shame { background: conic-gradient(from 210deg, #22272e, #8b95a1, #2c323a, #a5aeb8, #1d2127, #6b7480, #22272e); }
+.rk-medal__enamel {
+  position: relative; overflow: hidden; width: 100%; height: 100%; border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 34% 28%, color-mix(in srgb, var(--enamel) 45%, #fff) 0%, var(--enamel) 46%, color-mix(in srgb, var(--enamel) 68%, #000) 100%);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, .4);
+}
+.rk-medal__enamel::after {
+  content: ''; position: absolute; left: 10%; top: 5%; width: 64%; height: 42%; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0)); pointer-events: none;
+}
+.rk-medal svg { position: relative; z-index: 1; width: 60%; height: 60%; color: var(--glyph); filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .45)); }
+.rk-medal.is-open { background: none; border: 2px dashed rgba(224, 172, 75, .55); box-shadow: inset 0 3px 8px rgba(0, 0, 0, .6); }
+.rk-medal.is-open .rk-medal__enamel { background: rgba(0, 0, 0, .28); box-shadow: none; }
+.rk-medal.is-open .rk-medal__enamel::after { display: none; }
+.rk-medal.is-open svg { opacity: .35; color: var(--ink-2); filter: none; }
+
+/* ==================================================================== shared == */
+.rk-title { padding: 24px 16px 12px; }
+.rk-title.is-fame { text-align: center; padding-top: 34px; }
+.rk-kick { margin: 0; font-family: var(--display); font-size: 13px; font-weight: 700; font-stretch: condensed; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
+.rk-title h3 { margin: 4px 0 0; font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1.05; color: var(--ink); }
+.rk-title.is-fame h3 { font-size: 34px; color: var(--lead); text-shadow: 0 0 26px rgba(224, 172, 75, .4); }
+.rk-title.is-fame h3::after { content: ''; display: block; width: 84px; height: 2px; margin: 12px auto 0; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+
+.rk-hold { display: inline-flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--ui); font-size: 15px; font-weight: 700; color: var(--ink); }
+.rk-hold__faces { display: inline-flex; flex: none; }
+.rk-face { box-shadow: 0 0 0 2px var(--card), inset 0 0 0 1px rgba(19, 26, 34, .12); }
+.rk-hold__faces .rk-face + .rk-face { margin-left: -7px; }
+.rkA-grab { margin: 0; font-family: var(--display); font-size: 13px; font-weight: 800; font-stretch: condensed; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+
+/* ============================================================== A: the case == */
+.rkA-shelves { display: grid; gap: 14px; padding: 0 12px; }
+.rkA-shelf { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 14px 14px 6px; box-shadow: var(--sh-2); overflow: hidden; }
+.rkA-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.rkA-hd h3 { margin: 0; flex: 1; min-width: 0; font-family: var(--display); font-size: 24px; font-weight: 800; line-height: 1; color: var(--ink); }
+.rkA-pts { font-family: var(--display); font-size: 22px; font-weight: 800; color: var(--lead); }
+.rkA-pts small { margin-left: 3px; font-size: 13px; font-weight: 700; color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
+.rkA-row { display: grid; grid-template-columns: 46px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 0; }
+.rkA-row + .rkA-row { border-top: 1px solid var(--line); }
+.rkA-k { margin: 0; font-family: var(--ui); font-size: 16px; font-weight: 700; line-height: 1.25; color: var(--ink); }
+.rkA-d { margin: 2px 0 0; font-family: var(--ui); font-size: 14px; line-height: 1.3; color: var(--ink-2); }
+.rkA-v { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 1; color: var(--lead); }
+.rkA-row.is-open .rkA-v, .rkA-row.is-open .rkA-d { color: var(--ink-3); }
+
+.rkA-fame { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 10px; padding: 6px 12px 0; }
+.rkA-award { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.rkA-award__k { margin: 14px 0 8px; font-family: var(--display); font-size: 15px; font-weight: 800; font-stretch: condensed; letter-spacing: .05em; text-transform: uppercase; line-height: 1.2; color: var(--ink); text-wrap: balance; }
+.rkA-award__d { margin: 6px 0 0; font-family: var(--ui); font-size: 14px; line-height: 1.35; color: var(--ink-2); text-wrap: balance; }
+.rkA-award.is-open .rkA-award__d { color: var(--ink-3); }
+
+/* a shelf headed in its owner's school colour, used by C */
+.rkA-shelf.has-band { padding-top: 0; }
+.rkA-shelf.has-band .rkA-hd { margin: 0 -14px 4px; padding: 14px; background: linear-gradient(120deg, color-mix(in srgb, var(--band) 88%, #000), color-mix(in srgb, var(--band) 55%, #0a1120)); }
+.rkA-shelf.has-band .rkA-hd h3, .rkA-shelf.has-band .rkA-pts { color: #fff; }
+.rkA-shelf.has-band .rkA-pts small { color: rgba(255, 255, 255, .78); }
+
+/* ============================================================= shame, shared == */
+.rk-shame { margin: 34px 12px 0; padding: 16px 16px 18px; border-radius: 16px; border: 1px solid rgba(255, 106, 94, .55); background: radial-gradient(120% 100% at 50% 0%, rgba(255, 106, 94, .24), rgba(255, 106, 94, .05) 60%, transparent), var(--sunk); box-shadow: 0 0 30px rgba(255, 106, 94, .18); }
+.rk-shame__hd h3 { margin: 0 0 12px; text-align: center; font-family: var(--display); font-size: 26px; font-weight: 800; color: var(--bad); }
+.rk-shame__row { display: flex; align-items: center; gap: 16px; }
+.rk-shame__k { margin: 0; font-family: var(--display); font-size: 19px; font-weight: 800; color: var(--ink); }
+.rk-shame__d { margin: 4px 0 0; font-family: var(--ui); font-size: 15px; line-height: 1.4; color: var(--ink-2); }
+
+/* ========================================================== B: head to head == */
+.rkB-sticky { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; margin: 0 12px; padding: 10px 6px; background: var(--sunk); border: 1px solid var(--line); border-radius: 12px 12px 0 0; }
+.rkB-col { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 0; }
+.rkB-col b { font-family: var(--display); font-size: 14px; font-weight: 800; color: var(--ink); }
+.rkB-recs { margin: 0 12px; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 12px 12px; background: var(--card); overflow: hidden; }
+.rkB-rec { padding: 12px 6px 14px; }
+.rkB-rec + .rkB-rec { border-top: 1px solid var(--line); }
+.rkB-rec__hd { display: flex; align-items: center; gap: 10px; padding: 0 6px 10px; }
+.rkB-rec__hd p { margin: 0; font-family: var(--ui); font-size: 16px; font-weight: 700; color: var(--ink); }
+.rkB-cells { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.rkB-cell { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.rkB-cell b { font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1.05; color: var(--lead); }
+.rkB-cell em { margin-top: 3px; font-style: normal; font-family: var(--ui); font-size: 13px; line-height: 1.25; color: var(--ink-2); text-wrap: balance; }
+.rkB-cell.is-open b, .rkB-cell.is-open em { color: var(--ink-3); }
+.rkB-plaques { display: grid; gap: 10px; padding: 4px 12px 0; }
+.rkB-plaque { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--sh-2); }
+.rkB-plaque.is-open { background: transparent; border-style: dashed; box-shadow: none; }
+.rkB-plaque__txt { min-width: 0; }
+.rkB-plaque__k { margin: 0 0 5px; font-family: var(--display); font-size: 17px; font-weight: 800; line-height: 1.2; color: var(--ink); }
+.rkB-plaque__d { margin: 5px 0 0; font-family: var(--ui); font-size: 14px; color: var(--ink-2); }
+.rkB-plaque.is-open .rkB-plaque__d { color: var(--ink-3); }
+
+/* =========================================================== C: trophy room == */
+.rkC-stage { position: relative; margin: 0; padding: 30px 12px 26px; text-align: center; background: radial-gradient(70% 55% at 50% 0%, rgba(255, 214, 120, .30), transparent 70%), radial-gradient(90% 60% at 50% 100%, rgba(224, 172, 75, .12), transparent 70%), linear-gradient(180deg, #050a13, #0a1120 60%, #0f1a2c); border-bottom: 1px solid rgba(224, 172, 75, .35); }
+.rkC-stage h3 { margin: 6px 0 22px; font-family: var(--display); font-size: 40px; font-weight: 800; line-height: 1; color: var(--lead); text-shadow: 0 0 30px rgba(255, 214, 120, .55); }
+.rkC-won { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 10px; }
+.rkC-won .rkA-award:first-child:nth-last-child(odd) { grid-column: 1 / -1; }
+.rkC-sub { margin: 30px 0 14px; font-family: var(--display); font-size: 14px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+.rkC-grabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 6px; }
+.rkC-grab { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.rkC-grab p { margin: 10px 0 0; font-family: var(--display); font-size: 14px; font-weight: 800; font-stretch: condensed; letter-spacing: .04em; text-transform: uppercase; line-height: 1.2; color: var(--ink-2); text-wrap: balance; }
+.rkC-grab em { display: none; }
+
+/* ================================================================= prompts == */
+.rk-prompts { padding: 34px 0 0; border-top: 1px solid var(--line); }
+.rk-prompts > h2 { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; }
+.rk-prompts > p { margin: 8px 0 0; font-size: 15px; line-height: 1.62; color: var(--ink-2); max-width: 70ch; }
+.rk-prompts ol { margin: 10px 0 0; padding-left: 22px; font-size: 15px; line-height: 1.6; color: var(--ink-2); max-width: 70ch; }
+.rk-prompts code { font-family: ui-monospace, monospace; font-size: 14px; background: var(--well); padding: 1px 5px; border-radius: 4px; }
+.rk-prompts__g { margin: 30px 0 12px; font-family: var(--display); font-size: 15px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.rk-prompt { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin: 0 0 12px; }
+.rk-prompt__hd { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.rk-prompt__n { margin: 0; font-family: var(--display); font-size: 18px; font-weight: 800; }
+.rk-prompt__f { margin: 3px 0 0; font-size: 14px; color: var(--ink-3); }
+.rk-prompt textarea { width: 100%; resize: vertical; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; font: 15px/1.5 var(--ui); color: var(--ink); background: var(--sunk); }
+.rk-copy { margin-top: 10px; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 0; background: var(--ink); color: #fff; font-family: var(--display); font-size: 15px; font-weight: 800; cursor: pointer; }
+.rk-copy:focus-visible, .rk-prompt textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rk-copy.is-done { background: var(--good); }

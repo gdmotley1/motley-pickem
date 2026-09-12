@@ -1,0 +1,96 @@
+<header class="bd-top">
+  <div class="bd-wrap">
+    <p class="bd-kick">Motley Pick'em &middot; Season tab &middot; the record book</p>
+    <h1>Fixing the record book</h1>
+    <p><b>The text.</b> Under each pin the record's name is 8.5px grey capitals and the
+      holder is 10px grey, so what actually reads is a number and a name. You hold seven of
+      the twelve records, which is why it looks like the section just says Grant.</p>
+    <p><b>The organization.</b> Every group has four records in rows of three, so every
+      group ends on one pin alone. And the two records nobody wants, fewest points in a
+      week and worst pick, sit in among the achievements.</p>
+    <p class="bd-src">Every phone below is the app's real stylesheet and real pin markup,
+      on the real season as the database holds it this afternoon.</p>
+  </div>
+</header>
+
+<div class="bd-wrap">
+
+  <aside class="bd-callout">
+    <h3>Also broken, and fixed in every option</h3>
+    <p>An unfinished week counts as a finished one. Week 2 is one game in, and that one
+      game is being treated as the whole week:</p>
+    <ul>
+      <li>The form chart dives from about 180 to nearly zero for all four of you.</li>
+      <li>The book says you hold <b>Fewest points in a week: 0</b>. It should be Nicole,
+        147, from Week 1.</li>
+      <li>It says Nicole has already won Week 2, so <b>Most weeks won</b> is shared. It
+        should be yours alone.</li>
+    </ul>
+    <p>The fix: a week counts once all twenty games are graded, or once the next week has
+      started. Standings keep counting points as games finish, like now. The form chart
+      only appears once there are two finished weeks to draw, instead of a heading over
+      "nothing to plot yet."</p>
+  </aside>
+
+  <section class="bd-opt" id="opt-today">
+    <div class="bd-opt__hd"><h2>What ships today</h2>
+      <span class="bd-opt__px" data-base="1">&hellip;</span></div>
+    <div class="bd-opt__grid">
+      <div class="bd-opt__copy">
+        <p>The record book as it renders now, on today's numbers, including the two that
+          are wrong. Three groups of four, three to a row.</p>
+        <p class="bd-opt__cost">The chip is the height of the record book at 390px. Every
+          option's chip is the same measurement, against this one.</p>
+      </div>
+      {{TODAY}}
+    </div>
+  </section>
+
+  {{OPTIONS}}
+
+  <section class="bd-opt">
+    <div class="bd-opt__hd"><h2>What I would do</h2></div>
+    <div class="bd-rec">
+      <h3>C, hall of fame and hall of shame</h3>
+      <p>It fixes the organization with a split every pool already uses, so there is
+        nothing to explain: the ten you want to hold, then the two you do not. The
+        thumbs-down pin finally makes sense sitting in a red panel. It keeps the pins two
+        across at nearly full size, the part you said is fine, and every name and number
+        underneath is readable at arm's length. And it costs almost nothing in length: the
+        book comes out 11px taller than it is today.</p>
+      <p>If you would rather it read like a list, <b>B</b> has the biggest text. If you want
+        it about the people, <b>D</b>.</p>
+    </div>
+    <h3 class="bd-sub">The one to avoid</h3>
+    <p class="bd-opt__copy" style="max-width:62ch;font-size:14.5px;line-height:1.62;color:var(--ink-2)">
+      <b>A</b> on its own. It fixes the text and the gaps, and it is what you would get by
+      asking for bigger text, but fewest points in a week is still filed next to most
+      points in a week.</p>
+  </section>
+
+  <p class="bd-credit">{{CREDIT}}</p>
+</div>
+
+<script>
+  /* The height of each phone's record book at 390px, against today's. Retried and re-run on
+     resize, because a hidden or headless first paint can lay the page out at zero width. */
+  function measure() {
+    var phones = document.querySelectorAll('.bd-phone');
+    if (!phones.length || phones[0].getBoundingClientRect().width < 300) return;
+    var base = null;
+    document.querySelectorAll('.bd-opt').forEach(function (sec) {
+      var ph = sec.querySelector('.bd-phone');
+      var chip = sec.querySelector('.bd-opt__px');
+      if (!ph || !chip) return;
+      var h = Math.round(ph.getBoundingClientRect().height);
+      if (chip.dataset.base) { base = h; chip.textContent = h + 'px tall'; return; }
+      if (base == null) return;
+      var d = h - base;
+      chip.textContent = h + 'px · ' + (d >= 0 ? '+' : '−') + Math.abs(d);
+    });
+  }
+  measure();
+  [250, 800, 2000].forEach(function (ms) { setTimeout(measure, ms); });
+  addEventListener('resize', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+</script>

@@ -1,0 +1,180 @@
+/* The board around the phones, then the four options.
+
+   theme.css and app.css are embedded ahead of this file verbatim, so every pin, avatar
+   and heading inside a .bd-phone is the app's own rule. Board chrome is prefixed bd- so
+   it cannot collide with an app class, and each option's additions use names app.css does not (it already has a .tile card, which the first draft collided with)
+   (.hold, .rb-tile, .bkB, .bkC, .bkD, .mini): those are the only rules that would move into
+   app.css. */
+
+/* ============================================================ board chrome == */
+
+/* app.css paints body --field-deep above 500px, the surround for its centred phone column.
+   The board is not that column, so it paints its own ground; later in the cascade wins. */
+body { background: var(--page); color: var(--ink); }
+
+.bd-wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 90px; }
+
+.bd-top { background: #10151c; color: #f2f6fa; padding: 32px 0 28px; margin-bottom: 8px; }
+.bd-top .bd-wrap { padding-bottom: 0; }
+.bd-kick {
+  margin: 0 0 10px; font-family: var(--display); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; font-stretch: condensed; color: #97a5b3;
+}
+.bd-top h1 {
+  margin: 0 0 14px; font-family: var(--display); font-size: 30px; font-weight: 800;
+  letter-spacing: -.015em; line-height: 1.1; text-wrap: balance;
+}
+.bd-top p { margin: 0 0 10px; color: #c3cede; font-size: 14.5px; line-height: 1.62; max-width: 70ch; }
+.bd-top b { color: #fff; }
+.bd-top .bd-src { font-size: 12.5px; color: #97a5b3; margin-top: 14px; }
+
+.bd-h2 { margin: 0; font-family: var(--display); font-size: 21px; font-weight: 800; letter-spacing: -.01em; text-wrap: balance; }
+
+.bd-opt { padding: 32px 0 8px; border-top: 1px solid var(--line); }
+.bd-opt__hd { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.bd-opt__hd h2 { margin: 0; font-family: var(--display); font-size: 21px; font-weight: 800; letter-spacing: -.01em; }
+.bd-opt__k {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; flex: none;
+  background: var(--ink); color: #fff; font-family: var(--display); font-weight: 800; font-size: 16px;
+}
+.bd-opt__px {
+  margin-left: auto; flex: none; font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12.5px; font-weight: 700; color: var(--ink); background: var(--well);
+  padding: 4px 9px; border-radius: 5px; white-space: nowrap;
+}
+.bd-opt__grid { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 28px; align-items: start; }
+.bd-opt__copy p { margin: 0 0 10px; font-size: 14.5px; line-height: 1.62; color: var(--ink-2); max-width: 62ch; }
+.bd-opt__copy .bd-opt__cost { font-size: 13.5px; color: var(--ink-3); }
+.bd-opt__cost b { color: var(--ink); }
+@media (max-width: 820px) {
+  .bd-opt__grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+.bd-callout {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px 18px; margin: 22px 0 6px; box-shadow: var(--sh-1); max-width: 780px;
+}
+.bd-callout h3, .bd-rec h3, .bd-sub {
+  margin: 0 0 7px; font-family: var(--display); font-size: 12.5px; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase; font-stretch: condensed; color: var(--ink);
+}
+.bd-callout h3 { color: var(--bad); }
+.bd-callout p, .bd-rec p { margin: 0 0 7px; font-size: 14px; line-height: 1.62; color: var(--ink-2); }
+.bd-callout p:last-child, .bd-rec p:last-child { margin-bottom: 0; }
+.bd-callout ul { margin: 4px 0 0; padding-left: 18px; font-size: 14px; line-height: 1.62; color: var(--ink-2); }
+
+.bd-rec {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px 18px; margin: 6px 0 24px; max-width: 780px;
+  box-shadow: 0 2px 4px rgba(19, 26, 34, .05), 0 6px 16px rgba(19, 26, 34, .07);
+}
+.bd-rec h3 { color: var(--good); font-size: 15px; }
+
+/* The phone. The app's shell is sized to a viewport; here it sizes to the record book. */
+.bd-phone {
+  width: 390px; max-width: 100%; border-radius: 22px; overflow: hidden;
+  box-shadow: 0 14px 34px rgba(19, 26, 34, .26), 0 0 0 1px rgba(19, 26, 34, .08);
+}
+.bd-phone .app { min-height: 0; }
+.bd-phone .app__body { flex: 0 0 auto; padding-bottom: 22px; }
+.bd-phone .app__page { padding-top: 4px; }
+
+.bd-credit { font-size: 11.5px; color: var(--ink-3); margin: 26px 0 0; }
+
+/* The mark inside an avatar, off a --lg-<team> property so each logo is embedded once. */
+.mk { display: block; background-size: contain; background-repeat: no-repeat; background-position: center; }
+
+/* ====================================================== shared: the holder == */
+/* Who holds a record: their school mark, then their name, at a size that reads. Ties
+   overlap the marks, the way a group photo does. */
+.hold { display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; }
+.hold__faces { display: inline-flex; flex: none; }
+.hold__faces .avatar { box-shadow: 0 0 0 2px var(--card), inset 0 0 0 1px rgba(19, 26, 34, .12); }
+.hold__faces .avatar + .avatar { margin-left: -6px; }
+.hold__who {
+  min-width: 0; font-family: var(--ui); font-size: 13px; font-weight: 600; line-height: 1.2;
+  color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hold--open {
+  font-family: var(--display); font-size: 11.5px; font-weight: 700; font-stretch: condensed;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+}
+
+/* ============================================================= A: two across == */
+.bkA { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 10px; padding: 6px 14px 4px; }
+.rb-tile { display: flex; flex-direction: column; align-items: center; min-width: 0; text-align: center; }
+.rb-tile .pin__disc { width: 68px; height: 68px; }
+.rb-tile__k {
+  margin: 13px 0 0; font-family: var(--display); font-size: 12px; font-weight: 800;
+  font-stretch: condensed; letter-spacing: .07em; text-transform: uppercase; line-height: 1.2;
+  color: var(--ink); text-wrap: balance;
+}
+.rb-tile__v { margin: 5px 0 0; font-family: var(--display); font-size: 28px; font-weight: 800; line-height: 1; color: var(--lead); }
+.rb-tile:has(.is-open) .rb-tile__v { color: var(--ink-3); }
+.rb-tile .hold { margin-top: 8px; }
+
+/* ============================================================ B: trophy rows == */
+.bkB { margin: 4px 12px 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.bkB__row { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 14px 11px 10px; }
+.bkB__row + .bkB__row { border-top: 1px solid var(--line); }
+.bkB__row .pin__disc { width: 54px; height: 54px; padding: 3px; }
+.bkB__row .pin__disc::after { width: 9px; height: 4px; bottom: -3px; }
+.bkB__k { margin: 0 0 6px; font-family: var(--ui); font-size: 14.5px; font-weight: 600; line-height: 1.25; color: var(--ink); }
+.bkB__v { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 1; color: var(--lead); }
+.bkB__row.is-shame .bkB__v { color: var(--bad); }
+.bkB__row:has(.is-open) .bkB__v { color: var(--ink-3); }
+.app[data-mode='book'] .h2.bkB__hd.is-shame { color: var(--bad); }
+
+/* ================================================ C: hall of fame and shame == */
+.bkC__fame { padding: 20px 16px 12px; text-align: center; }
+.bkC__kick {
+  margin: 0; font-family: var(--display); font-size: 11px; font-weight: 700; font-stretch: condensed;
+  letter-spacing: .22em; text-transform: uppercase; color: var(--ink-3);
+}
+.bkC__title {
+  margin: 6px 0 0; font-family: var(--display); font-size: 32px; font-weight: 800; letter-spacing: -.01em;
+  line-height: 1; color: var(--lead); text-shadow: 0 0 24px rgba(224, 172, 75, .38);
+}
+.bkC__title::after {
+  content: ''; display: block; width: 72px; height: 2px; margin: 12px auto 0;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.bkC__shame {
+  margin: 34px 12px 0; padding: 16px 8px 22px; border-radius: 16px;
+  border: 1px solid rgba(255, 106, 94, .5);
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255, 106, 94, .24), rgba(255, 106, 94, .05) 60%, transparent), var(--sunk);
+  box-shadow: 0 0 30px rgba(255, 106, 94, .18), inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+.bkC__shamehd { display: flex; align-items: center; justify-content: center; gap: 9px; margin-bottom: 16px; color: var(--bad); }
+.bkC__shamehd svg { width: 24px; height: 24px; }
+.bkC__shamehd h3 { margin: 0; font-family: var(--display); font-size: 26px; font-weight: 800; line-height: 1; color: var(--bad); }
+.bkC__two { padding: 0 4px; }
+.rb-tile.is-shame .pin {
+  --pin-metal: conic-gradient(from 215deg, #3b0f0f, #c0645b, #521818, #e48a80, #3b0f0f);
+  --pin-enamel: #3f0d0d;
+  --pin-glyph: #ffd9d4;
+}
+.rb-tile.is-shame .rb-tile__v { color: var(--bad); }
+.bkC__shame .hold__faces .avatar { box-shadow: 0 0 0 2px var(--sunk), inset 0 0 0 1px rgba(19, 26, 34, .12); }
+
+/* ======================================================== D: everyone's shelf == */
+.bkD { display: grid; gap: 12px; padding: 8px 12px 0; }
+.bkD__shelf { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 12px 16px; box-shadow: var(--sh-2); }
+.bkD__hd { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.bkD__hd h3 { margin: 0; flex: 1; min-width: 0; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1; color: var(--ink); }
+.bkD__count {
+  flex: none; font-family: var(--display); font-size: 11.5px; font-weight: 700; font-stretch: condensed;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--lead); background: var(--accent-wash);
+  padding: 6px 10px; border-radius: 999px;
+}
+.bkD__pins { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 6px; }
+.mini { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.mini .pin__disc { width: 56px; height: 56px; padding: 3px; }
+.mini .pin__disc::after { width: 9px; height: 4px; bottom: -3px; }
+.mini__v { margin: 10px 0 0; font-family: var(--display); font-size: 21px; font-weight: 800; line-height: 1; color: var(--lead); }
+.mini__k { margin: 5px 0 0; font-family: var(--ui); font-size: 11.5px; font-weight: 600; line-height: 1.25; color: var(--ink); text-wrap: balance; }
+.mini__with { margin: 3px 0 0; font-family: var(--ui); font-size: 11px; font-weight: 500; line-height: 1.2; color: var(--ink-3); }
+.bkD__none { margin: 0; font-family: var(--ui); font-size: 13.5px; color: var(--ink-3); }
+.bkD__shelf.is-open { background: transparent; border-style: dashed; box-shadow: none; }
+.bkD__shelf.is-open .bkD__hd h3 { font-size: 18px; color: var(--ink-2); }
+.bkD__shelf.is-open .mini__v { color: var(--ink-3); }

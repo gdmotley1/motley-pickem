@@ -1,0 +1,135 @@
+/* The awards ballot. theme.css and app.css are embedded ahead of this verbatim, so the
+   preview phone is the app's own pins, avatars and book-mode wool. Everything here is
+   prefixed bb- (the ballot) or sh- (the preview's new shelf and award pieces), neither of
+   which app.css uses: the last board collided with app.css's .tile and measured wrong. */
+
+/* app.css paints body --field-deep above 500px for its centred phone column. */
+body { background: var(--page); color: var(--ink); }
+
+.bb-wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 120px; }
+
+/* ------------------------------------------------------------------- header --- */
+.bb-top { background: #10151c; color: #f2f6fa; padding: 30px 0 26px; }
+.bb-kick {
+  margin: 0 0 10px; font-family: var(--display); font-size: 11px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase; font-stretch: condensed; color: #97a5b3;
+}
+.bb-top h1 { margin: 0 0 12px; font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1.1; letter-spacing: -.015em; text-wrap: balance; }
+.bb-top p { margin: 0 0 9px; font-size: 15px; line-height: 1.6; color: #c3cede; max-width: 62ch; }
+.bb-top b { color: #fff; }
+.bb-top ol { margin: 6px 0 0; padding-left: 20px; font-size: 15px; line-height: 1.6; color: #c3cede; }
+.bb-top li { margin-bottom: 4px; }
+
+/* ------------------------------------------------------------------ preview --- */
+.bb-look { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 26px 0 8px; }
+.bb-look h2, .bb-sec__hd h2 { margin: 0; font-family: var(--display); font-size: 22px; font-weight: 800; letter-spacing: -.01em; text-wrap: balance; }
+.bb-look p { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); max-width: 62ch; }
+.bb-phone {
+  width: 390px; max-width: 100%; margin: 4px auto 0; border-radius: 22px; overflow: hidden;
+  box-shadow: 0 14px 34px rgba(19, 26, 34, .26), 0 0 0 1px rgba(19, 26, 34, .08);
+}
+.bb-phone .app { min-height: 0; }
+.bb-phone .app__body { flex: 0 0 auto; padding-bottom: 22px; }
+
+/* A shelf of rows: the details need a line, which a three-across pin grid never had. */
+.sh-shelf { margin: 2px 12px 10px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 12px 6px; box-shadow: var(--sh-2); }
+.sh-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.sh-hd h3 { margin: 0; flex: 1; font-family: var(--display); font-size: 22px; font-weight: 800; line-height: 1; color: var(--ink); }
+.sh-count {
+  font-family: var(--display); font-size: 11.5px; font-weight: 700; font-stretch: condensed;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--lead); background: var(--accent-wash);
+  padding: 6px 10px; border-radius: 999px;
+}
+.sh-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 11px; align-items: center; padding: 9px 0; }
+.sh-row + .sh-row { border-top: 1px solid var(--line); }
+.sh-row .pin__disc { width: 44px; height: 44px; padding: 3px; }
+.sh-row .pin__disc::after { width: 8px; height: 3px; bottom: -3px; }
+.sh-k { margin: 0; font-family: var(--ui); font-size: 14px; font-weight: 600; line-height: 1.25; color: var(--ink); }
+.sh-d { margin: 2px 0 0; font-family: var(--ui); font-size: 12.5px; line-height: 1.3; color: var(--ink-2); }
+.sh-v { margin: 0; font-family: var(--display); font-size: 24px; font-weight: 800; line-height: 1; color: var(--lead); }
+.sh-closed {
+  display: flex; align-items: center; gap: 10px; margin: 0 12px 8px; padding: 10px 12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  font-family: var(--display); font-size: 17px; font-weight: 800; color: var(--ink);
+}
+/* The name only: the avatar is a span too, and flex: 1 on it stretched the disc to an oval. */
+.sh-closed__name { flex: 1; min-width: 0; }
+.sh-closed em { font-style: normal; font-family: var(--ui); font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.sh-fame { padding: 22px 16px 10px; text-align: center; }
+.sh-fame__kick { margin: 0; font-family: var(--display); font-size: 11px; font-weight: 700; font-stretch: condensed; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-3); }
+.sh-fame__title { margin: 6px 0 0; font-family: var(--display); font-size: 30px; font-weight: 800; line-height: 1; color: var(--lead); text-shadow: 0 0 24px rgba(224, 172, 75, .38); }
+.sh-awards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 6px; padding: 8px 12px 0; }
+.sh-award { display: flex; flex-direction: column; align-items: center; text-align: center; min-width: 0; }
+.sh-award .pin__disc { width: 60px; height: 60px; }
+.sh-award__k { margin: 10px 0 0; font-family: var(--display); font-size: 12px; font-weight: 800; font-stretch: condensed; letter-spacing: .06em; text-transform: uppercase; line-height: 1.2; color: var(--ink); text-wrap: balance; }
+.sh-award__who { margin: 6px 0 0; display: inline-flex; align-items: center; gap: 5px; font-family: var(--ui); font-size: 12px; font-weight: 600; color: var(--ink-2); flex-wrap: wrap; justify-content: center; }
+.sh-award__who .avatar + .avatar { margin-left: -6px; }
+
+/* ------------------------------------------------------------------- ballot --- */
+.bb-sec { padding: 30px 0 4px; }
+.bb-sec__hd { padding-bottom: 10px; border-bottom: 2px solid var(--ink); margin-bottom: 4px; }
+.bb-sec__hd p { margin: 6px 0 0; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+
+.bb-item {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: start;
+  padding: 16px 0; border-bottom: 1px solid var(--line);
+}
+.bb-item h3 { margin: 0; font-family: var(--display); font-size: 17px; font-weight: 800; line-height: 1.2; }
+.bb-means { margin: 3px 0 0; font-size: 14.5px; line-height: 1.45; color: var(--ink-2); }
+.bb-take { margin: 9px 0 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); max-width: 60ch; }
+.bb-take b { color: var(--ink); }
+
+.bb-people { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 5px; }
+.bb-people li { display: grid; grid-template-columns: 20px 54px minmax(0, 1fr); gap: 8px; align-items: center; font-size: 13.5px; }
+.bb-people b { font-weight: 700; color: var(--ink); }
+.bb-people span { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+.bb-earned { margin: 10px 0 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.bb-earned__k { width: 100%; font-family: var(--display); font-size: 11px; font-weight: 700; font-stretch: condensed; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+.bb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border-radius: 999px; background: var(--well); font-size: 13px; color: var(--ink-2); }
+.bb-chip b { color: var(--ink); font-weight: 700; }
+.bb-none { font-size: 13.5px; color: var(--ink-3); }
+.bb-mk { display: block; background-size: contain; background-repeat: no-repeat; background-position: center; }
+
+/* The vote. Two real buttons, 44px tall, and the state lives in the fill: a chosen Yes is
+   green, a chosen No is red, and an unanswered pair is outlined so it reads as open. */
+.bb-vote { display: grid; grid-template-columns: 64px 64px; gap: 6px; padding-top: 1px; }
+.bb-btn {
+  min-height: 44px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface);
+  font-family: var(--display); font-size: 15px; font-weight: 800; color: var(--ink-2); cursor: pointer;
+  transition: background-color .15s, border-color .15s, color .15s;
+}
+.bb-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bb-item[data-v="yes"] .bb-btn--yes { background: var(--good); border-color: var(--good); color: #fff; }
+.bb-item[data-v="no"] .bb-btn--no { background: var(--bad); border-color: var(--bad); color: #fff; }
+.bb-item[data-v="yes"] .bb-btn--no, .bb-item[data-v="no"] .bb-btn--yes { opacity: .55; }
+.bb-item:not([data-v]) h3::after, .bb-item[data-v=""] h3::after {
+  content: 'Open'; margin-left: 8px; vertical-align: 2px; padding: 2px 7px; border-radius: 999px;
+  background: var(--accent-wash); color: var(--accent-deep); font-family: var(--display);
+  font-size: 10.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+}
+@media (max-width: 520px) {
+  .bb-item { grid-template-columns: minmax(0, 1fr); }
+  .bb-vote { grid-template-columns: 1fr 1fr; }
+}
+
+/* ----------------------------------------------------------- notes and status --- */
+.bb-notes { padding: 28px 0 0; }
+.bb-notes label { display: block; font-family: var(--display); font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+.bb-notes textarea {
+  width: 100%; min-height: 110px; padding: 12px; border-radius: 10px; border: 1.5px solid var(--line-strong);
+  background: var(--surface); color: var(--ink); font: 16px/1.5 var(--ui); resize: vertical;
+}
+.bb-notes textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.bb-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(16, 21, 28, .96); color: #f2f6fa; font-size: 14px; line-height: 1.35;
+  display: flex; gap: 12px; align-items: center; justify-content: center;
+}
+.bb-bar b { font-family: var(--display); font-size: 16px; font-variant-numeric: tabular-nums; }
+.bb-bar__save { color: #97a5b3; }
+.bb-bar__save.is-ok { color: #3fcb83; }
+.bb-bar__save.is-off { color: #ffb4ab; }
+
+.bb-credit { margin: 28px 0 0; font-size: 12px; color: var(--ink-3); }
