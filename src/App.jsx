@@ -213,8 +213,15 @@ export default function App() {
     ? [...BASE_TABS, { id: 'admin', label: 'Setup', Icon: IconAdmin }]
     : BASE_TABS
 
+  /* Book mode. The Season tab is a trophy case and the rest of the app is not, so the
+     attribute goes on `.app` rather than on the screen: the header and the tab bar are
+     the case's frame, and a themed panel inside Slate chrome would read as a widget
+     rather than as a room you walked into. Everything under it re-skins from the tokens
+     in theme.css, so this line is the entire wiring. */
+  const mode = tab === 'season' ? 'book' : undefined
+
   return (
-    <div className="app">
+    <div className="app" data-mode={mode}>
       <header className="apphdr">
         <div>
           <span className="apphdr__title">Motley Pick&apos;em</span>

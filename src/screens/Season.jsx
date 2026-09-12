@@ -3,6 +3,7 @@ import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
 import { formGeometry, seasonStats } from '../lib/seasonStats.js'
+import { onDark } from '../lib/onDark.js'
 
 /**
  * The whole year: totals, who took each week, form, and the records so far.
@@ -133,24 +134,29 @@ function Form({ form, played }) {
               {c.week_no}
             </text>
           ))}
-          {g.series.map((s) =>
-            s.points.length ? (
+          {g.series.map((s) => {
+            /* The chart sits in a felt well now. Every seat colour was picked against
+               Slate's white card and three of the four fail the 3:1 graphics floor down
+               here; James, dark green on dark green, all but vanishes. onDark raises
+               lightness only, so the line is still recognisably his. */
+            const c = onDark(s.color)
+            return s.points.length ? (
               <g key={s.id}>
                 <polyline points={s.points.map((p) => `${p.x},${p.y}`).join(' ')}
-                          fill="none" stroke={s.color} strokeWidth="2"
+                          fill="none" stroke={c} strokeWidth="2"
                           strokeLinejoin="round" strokeLinecap="round" />
                 {s.points.map((p) => (
-                  <circle key={p.x} cx={p.x} cy={p.y} r="2.6" fill={s.color} />
+                  <circle key={p.x} cx={p.x} cy={p.y} r="2.6" fill={c} />
                 ))}
               </g>
-            ) : null,
-          )}
+            ) : null
+          })}
         </svg>
       </div>
       <div className="legend">
         {form.series.map((s) => (
           <span className="legend__i" key={s.id}>
-            <span className="legend__dot" style={{ background: s.color }} />
+            <span className="legend__dot" style={{ background: onDark(s.color) }} />
             {s.name}
           </span>
         ))}
@@ -200,8 +206,10 @@ function Ranking({ players }) {
           <div className="bar" key={p.id}>
             <span className="bar__name">{p.name}</span>
             <span className="bar__track">
+              {/* The track is --well, which in book mode is the deepest wood in the
+                  palette. Same lift as the chart, against that ground rather than felt. */}
               <span className="bar__fill"
-                    style={{ width: `${p.captured}%`, background: p.color }} />
+                    style={{ width: `${p.captured}%`, background: onDark(p.color, '#241409') }} />
             </span>
             <span className="bar__val num">{p.captured}%</span>
           </div>
