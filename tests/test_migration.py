@@ -185,6 +185,30 @@ def test_board_hides_picks_until_kickoff():
         "get_board would leak unplayed picks"
 
 
+def test_the_record_book_can_only_see_finished_games():
+    """get_season_picks is the only function that hands the client pick_abbr and
+    confidence for a whole season, so it is the one place the rule that outranks
+    everything could be lost in a single deleted line.
+
+    It is safe because of its join, not because of its caller: a game has a winner only
+    once it has finished, and a game cannot finish before it kicks off. That makes it
+    strictly narrower than get_board, which reveals at kickoff. There is no parameter
+    that widens it. Drop the predicate and every unplayed pick in the season leaks.
+    """
+    picks = body("get_season_picks")
+    assert "g.winner_abbr is not null" in picks, (
+        "get_season_picks would return picks on games that have not finished, and it "
+        "returns pick_abbr and confidence, so that is every unplayed pick in the season"
+    )
+    assert "g.in_slate" in picks, "the alternates are not part of anybody's record"
+    assert "w.published" in picks, (
+        "an unpublished week would leak out of the record book before Dad releases it"
+    )
+    # Read-only, like every other season function. A record book must never write.
+    for banned in ("insert", "update ", "delete"):
+        assert banned not in picks.lower(), "get_season_picks is not read-only"
+
+
 def test_auto_pick_takes_the_favourite():
     """Reversed on 2026-09-04: the favourite, not the underdog.
 
