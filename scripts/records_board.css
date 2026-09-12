@@ -1,0 +1,310 @@
+/* Options board: three variants for every part of the record book.
+
+   Grant on 2026-09-11, after the squares shipped: "I want to handpick every part of this
+   records page. for each section, create three variants. Make them unique and distinct
+   from each other, not three brothers. Something to break up the gold a little bit too.
+   maybe some green velvet would be cool."
+
+   So the rule for this board is that no two variants in a row may share a MATERIAL. Three
+   shades of brass would be three brothers. Every row therefore offers one velvet, one
+   that uses no plate at all, and one from a material the case does not have yet: cream
+   ledger stock, glass, a ticket stub, oxblood leather.
+
+   Velvet is in every row because he asked for it, and because it is the only material
+   here that is dark, warm and NOT gold, which is exactly the gap. Its trick is the nap: a
+   soft off-centre highlight plus a tight inset shadow all round, so it reads as pile
+   rather than as flat green paint. */
+:root {
+  --ground: #eceff3; --panel: #ffffff; --edge: #d8dfe6;
+  --ink: #131a22; --ink-2: #48535e; --ink-3: #5c6873; --mark: #2f6fed; --warn: #b0560f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #11161d; --panel: #1a212a; --edge: #2c3540;
+    --ink: #eef2f6; --ink-2: #b6c1cc; --ink-3: #8c99a6; --mark: #6a9bf5; --warn: #e2934a;
+  }
+}
+:root[data-theme='dark'] {
+  --ground: #11161d; --panel: #1a212a; --edge: #2c3540;
+  --ink: #eef2f6; --ink-2: #b6c1cc; --ink-3: #8c99a6; --mark: #6a9bf5; --warn: #e2934a;
+}
+* { box-sizing: border-box }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1320px; margin: 0 auto; padding: 44px 22px 90px }
+h1, h2, h3 { font-family: 'Archivo', Helvetica, Arial, sans-serif; letter-spacing: -.025em; margin: 0 }
+.doc__eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--mark); margin: 0 0 10px }
+.doc__title { font-size: 42px; font-weight: 700; line-height: 1.06 }
+.doc__sub { color: var(--ink-2); max-width: 70ch; margin: 14px 0 0; font-size: 16.5px }
+section { margin-top: 52px }
+.sec__h { font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3); padding-bottom: 9px; border-bottom: 1px solid var(--edge); margin-bottom: 8px }
+.sec__lede { color: var(--ink-2); max-width: 78ch; margin: 0 0 22px; font-size: 14.5px }
+.callout { background: var(--panel); border: 1px solid var(--edge); border-left: 3px solid var(--warn);
+  border-radius: 0 8px 8px 0; padding: 16px 18px; margin: 0 0 26px; max-width: 80ch }
+.callout p { margin: 0 0 10px; color: var(--ink-2); font-size: 14.5px }
+.callout p:last-child { margin-bottom: 0 }
+.callout b { color: var(--ink) }
+.mono { font-family: 'Cascadia Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12.5px }
+.row { display: flex; flex-wrap: wrap; gap: 26px 20px; align-items: flex-start }
+.opt { margin: 0; width: 400px; flex: 0 0 auto }
+.opt__cap { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 16px;
+  margin-bottom: 2px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap }
+.opt__cap .tag { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: #fff; background: var(--mark); border-radius: 99px; padding: 2px 8px }
+.opt__cap .tag--v { background: #1c7a45 }
+.opt__cap .tag--n { background: #7a5a17 }
+.opt__mat { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 10px }
+.opt__note { color: var(--ink-2); font-size: 13px; line-height: 1.55; margin: 10px 2px 0 }
+.opt__note b { color: var(--ink) }
+
+/* ============================================ the case, as it ships today ==== */
+/* Every sample sits on the real wood, because a material only means something against
+   the thing it is next to. A variant judged on white would lie about all of them. */
+.case {
+  width: 400px; padding: 14px 12px 18px; border-radius: 12px;
+  background-color: #351f11;
+  background-image:
+    repeating-linear-gradient(91deg, rgba(0,0,0,.055) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(89.4deg, rgba(255,226,170,.035) 0 1px, transparent 1px 13px),
+    repeating-linear-gradient(90.6deg, rgba(0,0,0,.045) 0 3px, transparent 3px 23px),
+    linear-gradient(168deg, #4a2d19, #351f11 45%, #241409);
+  box-shadow: 0 10px 26px rgba(19,26,34,.28);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.case .num { font-variant-numeric: tabular-nums lining-nums }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+
+/* --- the two materials the case already has ------------------------------- */
+.brass {
+  background-image: linear-gradient(176deg, #fbf3d6, #e6d3a0 44%, #c7a95f);
+  border: 1px solid #9d7f37; border-radius: 3px; color: #2c2210;
+  box-shadow: 0 2px 5px rgba(12,6,1,.45), inset 0 1px 0 rgba(255,252,236,.62),
+              inset 0 -1px 0 rgba(0,0,0,.24);
+}
+
+/* --- VELVET, the one he asked for -----------------------------------------
+   The nap is the whole thing. A flat green rectangle reads as paint; pile reads as an
+   off-centre soft highlight, a darker rim on every side, and a faint diagonal sheen. The
+   gold piping is a 1px inset ring, which is how velvet is actually finished. */
+.velvet {
+  background-color: #143a24;
+  background-image:
+    linear-gradient(118deg, rgba(255,255,255,.075) 0 22%, transparent 46%),
+    radial-gradient(120% 90% at 28% 8%, rgba(120,220,160,.20), transparent 62%),
+    radial-gradient(140% 120% at 80% 110%, rgba(0,0,0,.55), transparent 60%),
+    linear-gradient(170deg, #1a4a2c, #0d2c1a);
+  border-radius: 3px;
+  color: #f2ead6;
+  box-shadow:
+    inset 0 0 0 1px rgba(201,161,57,.55),
+    inset 0 1px 10px rgba(0,0,0,.5),
+    inset 0 -8px 18px rgba(0,0,0,.35),
+    0 2px 6px rgba(12,6,1,.5);
+}
+
+/* --- CREAM LEDGER STOCK ---------------------------------------------------- */
+.ledger {
+  background-color: #f4ecd9;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(60,90,140,.10) 0 1px, transparent 1px 15px),
+    radial-gradient(circle at 18% 6%, rgba(150,120,70,.10), transparent 60%);
+  border: 1px solid #cbb68c; border-radius: 2px; color: #23201a;
+  box-shadow: 0 2px 5px rgba(12,6,1,.4);
+}
+
+/* ================================================= 1 · THE RECORD SQUARE ==== */
+
+/* R1 velvet swatch */
+.r1 .t { padding: 10px 11px 9px; display: flex; flex-direction: column; min-height: 84px }
+.r1 .k { margin: 0; font-size: 9px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; line-height: 1.25; color: #9dc4a8 }
+.r1 .v { margin: auto 0 0; font-family: 'Archivo', sans-serif; font-size: 25px; font-weight: 700;
+  line-height: 1.05;
+  background: linear-gradient(180deg, #fbf0c4, #d9b458 58%, #a1801f);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.55)) }
+.r1 .w { margin: 2px 0 0; font-size: 11px; color: #dfe9df; display: flex; align-items: center; gap: 5px }
+
+/* R2 carved: no plate at all, cut straight into the wood */
+.r2 .t { padding: 9px 4px 10px; min-height: 84px; display: flex; flex-direction: column;
+  border-bottom: 1px solid rgba(201,161,57,.5) }
+.r2 .k { margin: 0; font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; line-height: 1.25; color: #b39a72 }
+/* The first cut of this was #1b0f06, dark stain on dark stain, and it measured 1.05:1.
+   That is not a risky option, it is an unreadable one, and offering it would have been
+   offering a straw man. A real carve goes THROUGH the stain and exposes pale raw wood, so
+   the glyph is light; what makes it read as cut rather than raised is the shadow sitting
+   on its top edge, because the light is above. Same idea, 9.4:1. */
+.r2 .v { margin: auto 0 0; font-family: 'Archivo', sans-serif; font-size: 27px; font-weight: 800;
+  line-height: 1.05; color: #dcc49c;
+  text-shadow: 0 -1.5px 1px rgba(0,0,0,.85), 0 1px 0 rgba(255,235,190,.18) }
+.r2 .w { margin: 1px 0 0; font-size: 11px; color: #e8d9bd; display: flex; align-items: center; gap: 5px }
+
+/* R3 ledger card: a page from a book, not an object on a wall */
+.r3 .t { padding: 9px 10px 8px; min-height: 84px; display: flex; flex-direction: column }
+.r3 .k { margin: 0 0 3px; font-size: 8.5px; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: #8a2d1b; line-height: 1.25;
+  border-bottom: 1px solid rgba(138,45,27,.4); padding-bottom: 3px }
+.r3 .v { margin: auto 0 0; font-family: 'Archivo', sans-serif; font-size: 26px; font-weight: 800;
+  font-stretch: condensed; line-height: 1.05; color: #1a1712 }
+.r3 .w { margin: 1px 0 0; font-size: 11px; font-style: italic; color: #5c5344;
+  display: flex; align-items: center; gap: 5px }
+.mk { width: 15px; height: 15px; border-radius: 50%; flex: none; display: inline-grid;
+  place-items: center; overflow: hidden }
+.mk img { display: block }
+.wn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1 }
+
+/* ================================================= 2 · SECTION HEADINGS ==== */
+
+/* H1 velvet banner, full bleed across the case */
+.h1v { margin: 0 -12px 9px; padding: 7px 12px;
+  background-color: #143a24;
+  background-image:
+    linear-gradient(118deg, rgba(255,255,255,.07) 0 24%, transparent 48%),
+    linear-gradient(170deg, #1a4a2c, #0d2c1a);
+  border-top: 1px solid rgba(201,161,57,.6); border-bottom: 1px solid rgba(201,161,57,.6);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.4);
+  font-family: 'Archivo', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase; color: #f0e6cd }
+
+/* H2 brass rail, screwed down at both ends */
+.h2b { position: relative; margin: 0 0 9px; padding: 5px 22px;
+  background-image: linear-gradient(176deg, #f7edc8, #d9c48d 50%, #b2924a);
+  border: 1px solid #9d7f37; border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(12,6,1,.45), inset 0 1px 0 rgba(255,252,236,.6);
+  font-family: 'Archivo', sans-serif; font-size: 10.5px; font-weight: 800;
+  letter-spacing: .19em; text-transform: uppercase; color: #3b2d10;
+  text-shadow: 0 1px 0 rgba(255,252,236,.5) }
+.h2b::before, .h2b::after { content: ''; position: absolute; top: 50%; width: 5px; height: 5px;
+  margin-top: -2.5px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff6d8, #8a6a1d 70%, #4a3712);
+  box-shadow: 0 1px 0 rgba(255,250,230,.4) }
+.h2b::before { left: 8px }
+.h2b::after { right: 8px }
+
+/* H3 branded: burned into the case, no plate, a hairline running out to the edge */
+.h3w { display: flex; align-items: center; gap: 10px; margin: 0 0 10px }
+/* Same correction as R2: branded 1.09:1 before, 10.1:1 now, and it still reads as burned
+   in rather than printed on because of where the shadow sits. */
+.h3w span { font-family: 'Archivo', sans-serif; font-size: 15px; font-weight: 800;
+  letter-spacing: .04em; text-transform: uppercase; color: #e2cba4; flex: none;
+  text-shadow: 0 -1.5px 1px rgba(0,0,0,.85), 0 1px 0 rgba(255,235,190,.16) }
+.h3w i { flex: 1; height: 1px;
+  background: linear-gradient(90deg, rgba(201,161,57,.9), rgba(201,161,57,0)) }
+
+/* ==================================================== 3 · WEEK BY WEEK ==== */
+
+/* W1 velvet ribbons */
+.w1 .r { display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin-bottom: 6px }
+.w1 .n { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: #9dc4a8; width: 54px; flex: none }
+.w1 .who { flex: 1; font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 14px;
+  color: #f2ead6 }
+.w1 .p { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 15px; color: #e8c869 }
+
+/* W2 ticket stubs, perforated down the left */
+.w2 .r { position: relative; display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px 9px 22px; margin-bottom: 6px;
+  background: #f4ecd9; border: 1px solid #cbb68c; border-radius: 2px; color: #23201a;
+  box-shadow: 0 2px 4px rgba(12,6,1,.38) }
+.w2 .r::before { content: ''; position: absolute; left: 13px; top: 4px; bottom: 4px; width: 1px;
+  background: repeating-linear-gradient(180deg, #b9a375 0 2px, transparent 2px 5px) }
+.w2 .n { font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: #8a2d1b; width: 50px; flex: none }
+.w2 .who { flex: 1; font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 14px }
+.w2 .p { font-family: 'Archivo', sans-serif; font-weight: 800; font-size: 15px;
+  font-stretch: condensed }
+
+/* W3 thin brass rails, half the height of the plates */
+.w3 .r { display: flex; align-items: center; gap: 10px; padding: 6px 11px; margin-bottom: 4px;
+  background-image: linear-gradient(176deg, #f4e9c4, #d3bc81 55%, #ab8c43);
+  border: 1px solid #9d7f37; border-radius: 2px; color: #2c2210;
+  box-shadow: 0 1px 3px rgba(12,6,1,.4), inset 0 1px 0 rgba(255,252,236,.55) }
+.w3 .n { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  /* 4.82:1 at the FOOT of the rail's gradient, where the label sits, and 12.7:1 at its
+     top. A rail is thinner than a plate, so its gradient runs darker under the text than
+     the full plate's does; #6b5526 measured 3.14 here and passes comfortably up there. */
+  color: #2e2309; width: 48px; flex: none }
+.w3 .who { flex: 1; font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 13px }
+.w3 .p { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 14px }
+
+/* ==================================================== 4 · THE FORM CHART ==== */
+
+/* F1 velvet well, gold gridlines */
+.f1 .well { padding: 10px 10px 4px; background-color: #143a24;
+  background-image:
+    radial-gradient(120% 90% at 30% 6%, rgba(120,220,160,.16), transparent 60%),
+    linear-gradient(170deg, #1a4a2c, #0b2416);
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(201,161,57,.45), inset 0 0 26px rgba(0,0,0,.6) }
+
+/* F2 under glass, in a brass frame */
+.f2 .well { position: relative; overflow: hidden; padding: 10px 10px 4px;
+  background: linear-gradient(170deg, #16202a, #0b1119);
+  border: 2px solid; border-image: linear-gradient(160deg, #f0dca6, #9d7f37) 1;
+  box-shadow: 0 3px 8px rgba(12,6,1,.5) }
+.f2 .well::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(108deg, transparent 34%, rgba(255,255,255,.13) 43%,
+              rgba(255,255,255,.03) 50%, transparent 58%) }
+
+/* F3 graph paper, mounted flat */
+.f3 .well { padding: 10px 10px 4px; background-color: #f2ecdc;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(60,110,90,.16) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(90deg, rgba(60,110,90,.16) 0 1px, transparent 1px 9px);
+  border: 1px solid #b7a684; box-shadow: 0 2px 5px rgba(12,6,1,.4) }
+
+.cw { display: block; width: 100% }
+
+/* ================================================ 5 · ALL FOUR OF YOU ==== */
+
+/* A1 velvet pinboard */
+.a1 .panel { padding: 11px 12px; background-color: #143a24;
+  background-image:
+    linear-gradient(118deg, rgba(255,255,255,.06) 0 24%, transparent 48%),
+    linear-gradient(170deg, #1a4a2c, #0d2c1a);
+  border-radius: 3px; color: #f2ead6;
+  box-shadow: inset 0 0 0 1px rgba(201,161,57,.5), inset 0 1px 10px rgba(0,0,0,.5) }
+.a1 .k { margin: 0 0 7px; font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: #9dc4a8 }
+.a1 .r { display: grid; grid-template-columns: 54px 1fr 1fr 1fr; align-items: center;
+  gap: 6px; margin-top: 6px }
+.a1 .me { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 12.5px }
+.a1 .v { display: flex; align-items: baseline; gap: 4px; font-size: 10px; color: #9dc4a8; min-width: 0 }
+.a1 .v b { margin-left: auto; font-family: 'Archivo', sans-serif; font-size: 12.5px; color: #e8c869 }
+
+/* A2 scorecard: ruled cream, like the page it replaced */
+.a2 .panel { padding: 10px 11px; background-color: #f4ecd9;
+  background-image: repeating-linear-gradient(0deg, rgba(60,90,140,.13) 0 1px, transparent 1px 21px);
+  border: 1px solid #cbb68c; border-radius: 2px; color: #23201a;
+  box-shadow: 0 2px 5px rgba(12,6,1,.4) }
+.a2 .k { margin: 0 0 6px; font-size: 8.5px; font-weight: 700; letter-spacing: .13em;
+  text-transform: uppercase; color: #8a2d1b }
+.a2 .r { display: grid; grid-template-columns: 54px 1fr 1fr 1fr; align-items: center;
+  gap: 6px; height: 21px }
+.a2 .me { font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 12px }
+.a2 .v { display: flex; align-items: baseline; gap: 4px; font-size: 10px; color: #6b6151; min-width: 0 }
+.a2 .v b { margin-left: auto; font-family: 'Archivo', sans-serif; font-size: 12px; color: #23201a }
+
+/* A3 medallions: one disc per person, their record struck around it */
+.a3 .panel { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.a3 .med { display: flex; align-items: center; gap: 9px; padding: 9px 10px;
+  background-image: linear-gradient(176deg, #fbf3d6, #e6d3a0 44%, #c7a95f);
+  border: 1px solid #9d7f37; border-radius: 3px; color: #2c2210;
+  box-shadow: 0 2px 5px rgba(12,6,1,.45), inset 0 1px 0 rgba(255,252,236,.62) }
+.a3 .disc { width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid;
+  place-items: center; font-family: 'Archivo', sans-serif; font-size: 12px; font-weight: 800;
+  color: #f6ecd8;
+  background: radial-gradient(circle at 34% 28%, #2a6b44, #0d2c1a 72%);
+  box-shadow: inset 0 0 0 1.5px rgba(201,161,57,.85), 0 1px 3px rgba(0,0,0,.5) }
+.a3 .nm { font-family: 'Archivo', sans-serif; font-size: 12.5px; font-weight: 700; line-height: 1.1 }
+/* 3.14:1 at #6b5526, which is the same miss as the rail label and for the same reason:
+   a token picked against a full brass plate does not survive a smaller, darker one. */
+.a3 .rc { font-size: 10px; color: #403110; margin-top: 1px }
