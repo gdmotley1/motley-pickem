@@ -7,11 +7,18 @@
  *
  * THE SHAPE, AND WHY EVERY RECORD HAS THE SAME ONE
  *
- * Grant asked on 2026-09-11 for the holder plus the chasing pack, so that everybody sees
- * where THEY are on every record rather than only learning who won it. That forces one
- * rule on the whole file: a record is not "who holds it", it is a VALUE FOR ALL FOUR,
- * ranked. A record that can only name a winner does not belong here, and two candidates
- * were reshaped rather than admitted in that form:
+ * Every record is a VALUE FOR ALL FOUR, ranked, never just "who holds it".
+ *
+ * That started as a rendering decision: Grant asked for the holder plus the chasing pack
+ * on 2026-09-11 and reversed it within the hour, because seventeen records times four
+ * names is sixty-eight numbers and the screen wanted squares. The screen shows only the
+ * holder now.
+ *
+ * The rule survives the reversal anyway, and it is worth being clear why rather than
+ * leaving it looking like dead generality. Ties stand in this pool, so knowing who holds
+ * a record means comparing all four; `holders` cannot be computed without the standing
+ * behind it. The two candidates below were reshaped to fit that and both are better for
+ * it, which is the other reason not to unpick it now:
  *
  *   "20-point disaster" was going to be a count of maximum-confidence losses, which is 0
  *   or 1 for most people most of the season and ranks four players into two buckets. It

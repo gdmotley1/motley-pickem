@@ -3616,7 +3616,6 @@
 .app[data-mode='book'] .srow__name,
 .app[data-mode='book'] .srow__pts,
 .app[data-mode='book'] .tile__v,
-.app[data-mode='book'] .rec__who,
 .app[data-mode='book'] .rec__v,
 .app[data-mode='book'] .fam__v,
 .app[data-mode='book'] .fam__n,
@@ -3725,132 +3724,79 @@
 }
 
 /* ==================================================== the record book ==== */
-/* One plate per record: the holder engraved large, the other three underneath. Grant
-   asked for the chasing pack on 2026-09-11, so a plate that only named a winner would
-   tell three of the four people nothing.
+/* Squares. Label, number, who.
+   
+   These were tall cards carrying the holder plus the other three players, which Grant
+   asked for and then reversed within the hour on 2026-09-11: "make the record simple,
+   easy to understand. We don't need to see everyone's scores. They should just be basic
+   and little squares, not long old cards." Seventeen records times four names was
+   sixty-eight numbers on one screen, and a record book you have to read is not one.
 
-   Written in Slate tokens like everything else, which means book mode re-skins it for
-   free through theme.css. The only book-specific rules are the three gradients further
-   down, and .rec joins the plate rule up there rather than repeating it. */
+   Two columns rather than three. Three fits on a 390px phone only by taking the value
+   down to about 17px, and the value is the entire reason the tile exists; two columns
+   holds 24px and still fits "20-POINT DISASTER" on two label lines. Written in Slate
+   tokens, so book mode re-skins it through theme.css with no rule of its own. */
 .recs {
   padding: 0 12px;
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 
 .rec {
-  padding: 11px 12px 10px;
+  padding: 10px 11px 9px;
   border-radius: var(--r-lg);
   background: var(--card);
   border: 1px solid var(--line);
   box-shadow: var(--sh-1);
-}
-
-.rec__top {
+  /* Every tile the same height whatever its label wraps to, so the grid reads as a wall
+     of squares rather than as a ragged list. */
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.rec__id {
-  flex: 1;
-  min-width: 0;
+  flex-direction: column;
+  min-height: 82px;
 }
 
 .rec__k {
   margin: 0;
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
-.rec__who {
-  margin: 1px 0 0;
-  font-family: var(--display);
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.rec__tie {
-  margin-left: 6px;
-  font-family: var(--ui);
-  font-size: 8.5px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  line-height: 1.25;
   color: var(--ink-3);
 }
 
-.rec__when {
-  margin: 1px 0 0;
-  font-size: 11px;
-  color: var(--ink-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
+/* Pushed to the bottom of the tile by the margin above it, so the numbers line up across
+   a row even when one label wraps to two lines and its neighbour does not. */
 .rec__v {
-  margin: 0;
-  flex: none;
+  margin: auto 0 0;
   font-family: var(--display);
-  font-size: 27px;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.05;
 }
 
-/* The chasing pack. Three names on one line at 390px, so the name gets an ellipsis and
-   the number never does: the number is the reason the row exists. */
-.rec__pack {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 8px;
-  margin-top: 9px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-}
-
-.rec__c {
+.rec__who {
   display: flex;
   align-items: center;
   gap: 5px;
+  margin: 2px 0 0;
   min-width: 0;
   font-size: 11px;
-}
-
-.rec__c i {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.rec__cn {
   color: var(--ink-3);
+}
+
+/* flex:1 and min-width:0 are what make the ellipsis real. Without them this sizes to its
+   own text inside the flex row, so it never overflows itself, the ellipsis never fires,
+   and a long name pushes the row wider instead of truncating. It measured as "not
+   clipped" for exactly that reason, which is the failure mode of checking scrollWidth on
+   a shrink-to-fit box. */
+.rec__wn {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.rec__c b {
-  margin-left: auto;
-  flex: none;
-  font-family: var(--display);
-  font-size: 12.5px;
-}
-
-.rec__blurb {
-  margin: 7px 0 0;
-  font-size: 10.5px;
-  line-height: 1.4;
-  color: var(--ink-3);
 }
 
 /* -------------------------------------------------------- all four of you ---- */

@@ -252,8 +252,9 @@ assert.equal(family.trap.week, 'Week 2')
 
 /* -------------------------------------------------------------- the invariants ---- */
 
-/* Every record ranks every seat. This is the promise Grant chose on 2026-09-11: holder
-   plus the chasing pack, so a record that can only name a winner is a bug. */
+/* Every record ranks every seat, even though the screen now draws only the holder.
+   Ties stand, so `holders` is a comparison across all four and cannot be right without
+   the standing behind it. A record that can only name a winner cannot detect a tie. */
 for (const r of records) {
   assert.equal(r.rows.length, ROSTER.length,
     `${r.key} ranks ${r.rows.length} players, not ${ROSTER.length}`)

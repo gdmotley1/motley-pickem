@@ -277,37 +277,46 @@ function Book({ book }) {
   )
 }
 
-/** One record: the holder engraved large, the other three beneath. */
+/**
+ * One record, as a square.
+ *
+ * Label, number, who. That is the whole tile.
+ *
+ * It carried the other three players underneath for about an hour on 2026-09-11, which
+ * Grant had asked for and then reversed on sight: "make the record simple, easy to
+ * understand. We don't need to see everyone's scores. They should just be basic and
+ * little squares, not long old cards." He is right. Seventeen records times four names
+ * is sixty-eight numbers, and a record book you have to read is not a record book.
+ *
+ * seasonRecords still ranks all four, because `holders` and the tie logic need the full
+ * standing to know who actually holds a record. Only the rendering dropped.
+ */
+/**
+ * Who holds it, in the width a square has.
+ *
+ * Measured at 390px: the name line gets 136px next to a team mark, and
+ * "Grant, James, Parker and Nicole" wants 168. A tie nobody has broken is also the one
+ * case where the names carry no information, since it is everybody, so it collapses.
+ */
+function holderLine(r) {
+  if (!r.holders.length) return '—'
+  // Spelled out: "all four" is how anyone says it, and this is a family app.
+  if (r.holders.length >= r.rows.length) {
+    return `all ${{ 2: 'two', 3: 'three', 4: 'four' }[r.rows.length] || r.rows.length}`
+  }
+  return list(r.holders)
+}
+
 function Plate({ r }) {
-  const [held, ...chasing] = r.rows
+  const [held] = r.rows
   return (
     <div className="rec">
-      <div className="rec__top">
-        <div className="rec__id">
-          <p className="rec__k">{r.label}</p>
-          <p className="rec__who">
-            {/* list(), not join(' and '): four holders read "A and B and C and D"
-                otherwise, which happens on any record everybody is level on. */}
-            {r.holders.length ? list(r.holders) : '—'}
-            {r.shared && <span className="rec__tie">tied</span>}
-          </p>
-          {held.detail && <p className="rec__when">{held.detail}</p>}
-        </div>
-        {/* The team ledger records carry a mark; everything else leaves the slot empty
-            rather than drawing a placeholder disc. */}
-        {held.teamId && <TeamLogo teamId={held.teamId} size={30} />}
-        <p className="rec__v num">{held.display}</p>
-      </div>
-      <div className="rec__pack">
-        {chasing.map((c) => (
-          <span className="rec__c" key={c.id}>
-            <i style={{ background: c.color }} />
-            <span className="rec__cn">{c.name}</span>
-            <b className="num">{c.display}</b>
-          </span>
-        ))}
-      </div>
-      <p className="rec__blurb">{r.blurb}</p>
+      <p className="rec__k">{r.label}</p>
+      <p className="rec__v num">{held.display}</p>
+      <p className="rec__who">
+        {held.teamId && <TeamLogo teamId={held.teamId} size={16} />}
+        <span className="rec__wn">{holderLine(r)}</span>
+      </p>
     </div>
   )
 }

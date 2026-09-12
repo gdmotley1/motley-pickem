@@ -1,9 +1,11 @@
 """The gate for the record book.
 
-Grant chose the content on 2026-09-11: all four groups, and every record shows the holder
-plus the chasing pack so that everybody sees where THEY are rather than only learning who
-won it. That last part is a structural promise, not a styling choice, and it is what most
-of tests/records_check.mjs is about.
+Grant chose the content on 2026-09-11: all four groups. He also chose the holder plus the
+chasing pack that morning and reversed it on sight the same day, so the screen draws small
+squares carrying the label, the number and the holder, and nothing else.
+
+The library still ranks all four behind them. That is not leftover generality: ties stand
+in this pool, so working out who holds a record is a comparison across everybody.
 
 The arithmetic runs under node there, against a hand-made three-player, three-week season
 small enough to check on paper. What is asserted here is the wiring, and the two rules
