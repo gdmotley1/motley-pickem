@@ -256,6 +256,39 @@ check('an empty season produces nothing rather than throwing',
   seasonStats([], fx.seats).players.length === 0 && seasonTotals([], fx.seats).length === 0)
 check('history of nothing is an empty list', weekHistory([]).length === 0)
 
+/* ------------------------------------------------------ a week one game in
+
+   The bug, as it looked on 2026-09-12. One game into Week 2 the Season tab dived every
+   form line to near zero, called Grant's worst week a 0, and credited Nicole with winning
+   Week 2 because she led after a single game. A week is finished once all twenty games
+   are graded, or once a later week has a graded game. Points count live either way. */
+
+const oneGameIn = [
+  row(1, 1, 'Week 1', 186, 16, 20), row(2, 1, 'Week 1', 179, 16, 20),
+  row(3, 1, 'Week 1', 164, 12, 20), row(4, 1, 'Week 1', 147, 10, 20),
+  row(1, 2, 'Week 2', 0, 0, 1), row(2, 2, 'Week 2', 7, 1, 1),
+  row(3, 2, 'Week 2', 1, 1, 1), row(4, 2, 'Week 2', 13, 1, 1),
+]
+const mid = seasonStats(oneGameIn, fx.seats)
+const mby = Object.fromEntries(mid.players.map((p) => [p.name, p]))
+check('a week one game in is not in the books', mid.played === 1, String(mid.played))
+check('and leading it after one game is not winning it',
+  mid.weeks.find((w) => w.week_no === 2).winners.length === 0 && mby.Nicole.weeksWon === 0,
+  `Nicole ${mby.Nicole.weeksWon}`)
+check('its points still count towards the standings',
+  mby.Nicole.points === 160 && mby.Grant.points === 186, `${mby.Nicole.points} ${mby.Grant.points}`)
+check('the form chart waits for it', mid.form.weeks.length === 1, String(mid.form.weeks.length))
+check('an unfinished week cannot be anybody\'s worst week',
+  mby.Grant.worst.week_no === 1 && mby.Grant.worst.points === 186, JSON.stringify(mby.Grant.worst))
+check('a player with graded picks is in the standings before any week finishes',
+  seasonStats(oneGameIn.filter((r) => r.week_no === 2), fx.seats).players.length === 4)
+
+const nextWeekStarted = seasonStats([...oneGameIn, row(1, 3, 'Week 3', 5, 1, 1)], fx.seats)
+check('a graded game in a later week finishes the one before it', nextWeekStarted.played === 2,
+  String(nextWeekStarted.played))
+check('and then it has a winner',
+  nextWeekStarted.weeks.find((w) => w.week_no === 2).winners.map((x) => x.name).join() === 'Nicole')
+
 /* ------------------------------------------------------------- the form chart
 
    A chart is the one thing on either tab that can look completely plausible and be

@@ -151,8 +151,8 @@
    frame from a hotel corridor.
 
    So the case is navy wool now, off a letterman jacket, and brass survives as the accent
-   only. The record badges are enamel pins with their own plating, which is where all the
-   metal went; see .pin in app.css and src/lib/badgeIcons.js.
+   only. The record badges carry their own chrome and gold, which is where all the metal
+   went; see .medal in app.css and scripts/build_badges.py.
 
    ONE THING GOT SIMPLER AND IT IS WORTH SAYING WHY.
 

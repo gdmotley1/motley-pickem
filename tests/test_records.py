@@ -1,17 +1,14 @@
 """The gate for the record book.
 
-Grant chose the content on 2026-09-11: all four groups. He also chose the holder plus the
-chasing pack that morning and reversed it on sight the same day, so the screen draws small
-squares carrying the label, the number and the holder, and nothing else.
+Grant chose the seventeen entries off a ballot on 2026-09-12 and the layouts by number the
+same evening: headlines for everyone's numbers (6), the trophy room for the Hall of fame
+(7), the red panel for the Hall of shame (10). The badges are his art, from ChatGPT.
 
-The library still ranks all four behind them. That is not leftover generality: ties stand
-in this pool, so working out who holds a record is a comparison across everybody.
-
-The arithmetic runs under node there, against a hand-made three-player, three-week season
-small enough to check on paper. What is asserted here is the wiring, and the two rules
-that would be silently wrong: that the screen renders every group the library emits, and
-that nothing reaches for the picks except through the one RPC that can only see finished
-games.
+The arithmetic runs under node in tests/records_check.mjs, against a three-player season
+small enough to check on paper, including the half-played-week bug. What is asserted here
+is the wiring, the art, the text floor, and the two rules that would be silently wrong:
+that nothing reaches for the picks except through the RPC that can only see finished
+games, and that a failed picks call cannot take the Season tab down.
 """
 from __future__ import annotations
 
@@ -19,11 +16,13 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 
 import pytest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CHECK = os.path.join(ROOT, "tests", "records_check.mjs")
+ART = os.path.join(ROOT, "src", "assets", "badges")
 
 node = shutil.which("node")
 needs_node = pytest.mark.skipif(node is None, reason="node is not on PATH")
@@ -42,108 +41,132 @@ def test_the_record_arithmetic():
     assert proc.returncode == 0, "\n" + proc.stdout + proc.stderr
 
 
-def test_every_group_the_library_emits_is_rendered():
-    """Walked, not listed. A record whose group no section renders is computed, shipped
-    in the bundle and invisible, and nothing about the screen looks broken. This reads the
-    group names out of the library and requires each one to appear in GROUPS, which is
-    what the screen maps over.
-    """
-    lib = read("src", "lib", "seasonRecords.js")
-    emitted = set(re.findall(r"record\('[\w]+', '(\w+)'", lib))
-    assert emitted, "no records are being emitted at all; has record() been renamed?"
-
-    declared = set(re.findall(r"\['(\w+)', '[^']+'\]", lib.split("export const GROUPS")[1]))
-    missing = emitted - declared
-    assert not missing, (
-        "these record groups are computed but no section renders them: %s"
-        % ", ".join(sorted(missing))
-    )
-    unused = declared - emitted
-    assert not unused, (
-        "GROUPS declares %s but nothing is in it, so the screen will draw an empty heading"
-        % ", ".join(sorted(unused))
-    )
-
-
-def test_the_screen_renders_the_book():
+def test_the_screen_draws_all_three_parts_of_the_book():
     body = read("src", "screens", "Season.jsx")
-    assert "seasonRecords" in body, "the Season tab is not computing the record book"
-    assert "GROUPS" in body, (
-        "the screen is not mapping over GROUPS, so a new group would never appear"
-    )
-    assert "getSeasonPicks" in body or "picks" in body, "nothing fetches the picks"
+    assert "seasonRecords(rows, picks, roster)" in body, "the Season tab is not building the book"
+    for part in ("book.fame", "book.shame", "book.numbers"):
+        assert part in body, "the Season tab no longer draws %s" % part
+    # Order is the one Grant picked: fame, then shame, then everyone's numbers.
+    at = [body.index("<HallOfFame"), body.index("<HallOfShame"), body.index("<Numbers")]
+    assert at == sorted(at), "the three parts of the record book are out of order"
 
 
-def test_a_missing_migration_cannot_take_down_the_season_tab():
-    """The state the family is actually in between a deploy and Grant pasting 015.
-
-    get_season_picks does not exist until the paste, so the call errors. Inside the
-    Promise.all it rejected the whole thing and replaced standings, form, weeks and
-    ranking with an error message: the leaderboard lost to a record book nobody had yet.
-    The book is additive and may never be the reason the rest of the screen is missing.
-    """
+def test_a_failed_picks_call_cannot_take_down_the_season_tab():
+    """The book is additive. Inside the Promise.all an erroring get_season_picks once
+    replaced standings, form and everything else with an error message."""
     body = read("src", "screens", "Season.jsx")
     assert "api.getSeasonPicks().catch(" in body, (
-        "the picks fetch is no longer failing soft; a Season tab deployed before "
-        "migration 015 is pasted will show an error instead of the standings"
-    )
-    # Stronger than it was. The book no longer merely COPES with missing picks: eight of
-    # the twelve records are computed from the aggregate rows the tab already has, so a
-    # Season tab deployed before the paste shows two thirds of a record book rather than
-    # an empty section.
-    assert "seasonRecords(rows, picks, roster)" in body, (
-        "the record book is no longer built from the season rows as well as the picks, "
-        "so it will be completely empty until migration 015 is pasted"
+        "the picks fetch no longer fails soft; one bad call blanks the whole Season tab"
     )
 
 
 def test_the_picks_come_only_from_the_guarded_rpc():
-    """get_season_picks is the only function that can hand the client a whole season of
-    pick_abbr and confidence, and it is safe because its join can only see finished games.
-    A second route to the same data would not have that guarantee."""
+    """get_season_picks is the only function that hands the client a season of pick_abbr
+    and confidence, and it is safe because its join can only see finished games."""
     api = read("src", "lib", "api.js")
     assert "get_season_picks" in api, "api.js has no way to fetch the record book"
-    # get_board is the only other function that returns picks, and it is per-week.
     pick_rpcs = set(re.findall(r"rpc\('(\w*(?:pick|board)\w*)'", api))
     assert pick_rpcs <= {"get_board", "save_picks", "get_season_picks", "my_picks"}, (
         "an unexpected pick-bearing RPC appeared in api.js: %s" % pick_rpcs
     )
 
 
-def test_records_never_invent_a_value_for_someone_it_does_not_apply_to():
-    """A player who has never lost a pick has no worst pick. Returning zero would sort
-    them last and read as them being worst at it, when it means the opposite."""
+def test_an_unclaimed_award_is_drawn_as_up_for_grabs():
+    """Nobody has thrown a perfect week, so "Perfect week, 0, all four" would be an
+    absence dressed as a statistic. It is an empty socket with a label instead."""
+    body = read("src", "screens", "Season.jsx")
+    assert "Up for grabs" in body, "unclaimed awards no longer say they are up for grabs"
+    assert "a.claimed" in body, "the screen no longer tells a claimed award from an open one"
+
+
+def test_the_record_book_css_has_no_tiny_text():
+    """Grant, 2026-09-12: "Remember, I don't want any tiny text." The book before this one
+    had 8.5px labels. Walks every font-size in the record book block, and the two labels
+    elsewhere on the tab that were under the floor."""
+    css = read("src", "app.css")
+    start = css.index("the record book ==== */")
+    block = css[start:]
+    sizes = [float(s) for s in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", block)]
+    assert len(sizes) >= 15, "found only %d font sizes; did the block move?" % len(sizes)
+    small = [s for s in sizes if s < 13]
+    assert not small, "the record book has text under 13px: %s" % small
+
+    for klass in ("eyebrow", "srow__ptslabel"):
+        rule = re.search(r"\n\.%s\s*\{(.*?)\}" % re.escape(klass), css, re.S)
+        assert rule, ".%s is gone" % klass
+        size = float(re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", rule.group(1))[-1])
+        assert size >= 13, ".%s is %spx, under the 13px floor" % (klass, size)
+
+
+def test_the_way_into_the_hall_of_fame_has_no_hard_edge():
+    """Grant: "the transition from the season standings to the hall of fame is really
+    rough." It was a near-black panel starting on a hard edge. The stage's background has
+    to start transparent, so the dark comes up out of the page instead."""
+    css = read("src", "app.css")
+    rule = re.search(r"\n\.fame\s*\{(.*?)\n\}", css, re.S)
+    assert rule, ".fame is gone"
+    gradient = re.search(r"linear-gradient\(\s*180deg,\s*(rgba\([^)]*\)\s*\w*)", rule.group(1))
+    assert gradient, "the stage no longer fades in from the top"
+    assert re.fullmatch(r"rgba\([^)]*,\s*0\)\s*0(px)?", gradient.group(1).strip()), (
+        "the stage's first colour stop is no longer transparent, so it starts on a hard "
+        "edge under the standings again"
+    )
+
+
+Image = None
+try:
+    from PIL import Image  # noqa: F811
+except ImportError:  # pragma: no cover
+    pass
+needs_pil = pytest.mark.skipif(Image is None, reason="pip install pillow")
+
+
+@needs_pil
+def test_every_badge_is_a_square_with_a_transparent_corner():
+    files = sorted(f for f in os.listdir(ART) if f.endswith(".webp"))
+    assert len(files) == 17, "expected 17 badges, found %d" % len(files)
+    for name in files:
+        im = Image.open(os.path.join(ART, name))
+        assert im.size == (320, 320), "%s is %s, not 320x320" % (name, im.size)
+        alpha = im.convert("RGBA").getchannel("A")
+        assert alpha.getpixel((0, 0)) == 0, "%s has lost its transparent background" % name
+
+
+@needs_pil
+def test_the_shipped_badges_match_grants_art():
+    """What ships is rebuilt from inputs/badges, byte for byte. A new PNG dropped into
+    inputs without re-running the script would otherwise never reach a phone, and the
+    tab would quietly keep the old art."""
+    proc = subprocess.run(
+        [sys.executable, os.path.join(ROOT, "scripts", "build_badges.py"), "--check"],
+        capture_output=True, text=True, cwd=ROOT, timeout=180,
+    )
+    assert proc.returncode == 0, (
+        "src/assets/badges is stale; run python scripts/build_badges.py\n" + proc.stdout
+    )
+
+
+def test_the_badge_list_is_the_same_in_the_script_and_the_book():
+    """build_badges.py writes exactly the art the book can draw. Both lists are parsed out
+    of their files rather than restated here."""
+    script = read("scripts", "build_badges.py")
+    ids = re.findall(r'"(\w+)"', script.split("IDS = [", 1)[1].split("]", 1)[0])
     lib = read("src", "lib", "seasonRecords.js")
-    assert "value == null" in lib, "the null handling in standing() is gone"
+    keys = re.findall(r"\{ key: '(\w+)'", lib)
+    assert sorted(ids) == sorted(keys), (
+        "scripts/build_badges.py and src/lib/seasonRecords.js disagree: %s"
+        % sorted(set(ids) ^ set(keys))
+    )
 
 
-def test_a_record_nobody_has_set_is_unclaimed_not_a_tie_on_zero():
-    """Nobody has thrown a perfect week, so "Perfect week, 0, all four" is an absence
-    dressed as a statistic. That is precisely the kind of thing that made Grant say
-    "literally none of these stats makes sense at all" about the first record book."""
-    lib = read("src", "lib", "seasonRecords.js")
-    assert "unclaimed" in lib, "the unclaimed state is gone from the library"
-    screen = read("src", "screens", "Season.jsx")
-    assert "r.unclaimed" in screen, "the screen no longer renders an unclaimed record"
-    assert "not yet" in screen, "an unclaimed record no longer says so"
-
-
-def test_no_record_needs_a_glossary():
-    """The first book had seventeen invented terms: The Fade, Chalk rate, Perfect order,
-    The Anchor, Money team, Coin flips. Every one needed a sentence of explanation and the
-    sentence had been deleted when the cards became squares.
-
-    Every label now has to be readable cold. Enforced by banning the names that failed,
-    which is crude but is the thing that actually went wrong.
-    """
-    lib = read("src", "lib", "seasonRecords.js")
-    labels = re.findall(r"record\('\w+', '\w+', '([^']+)'", lib)
-    assert len(labels) == 12, "expected 12 records, found %d" % len(labels)
-    banned = ("anchor", "fade", "chalk", "homer", "nemesis", "money team", "coin flip",
-              "slept", "perfect order", "sharpest", "hot streak", "lone wolf",
-              "most picked", "biggest miss", "upset special")
-    for label in labels:
-        for b in banned:
-            assert b not in label.lower(), (
-                "%r is one of the invented terms Grant threw out" % label
-            )
+def test_the_game_icons_glyphs_are_gone():
+    """The CC BY credit line was a condition of shipping game-icons.net artwork. That art
+    is gone, so the credit went with it; this makes sure the art did not come back
+    without it."""
+    assert not os.path.exists(os.path.join(ROOT, "src", "lib", "badgeIcons.js"))
+    for base, _dirs, files in os.walk(os.path.join(ROOT, "src")):
+        for name in files:
+            if name.endswith((".js", ".jsx")):
+                assert "badgeIcons" not in read(os.path.relpath(os.path.join(base, name), ROOT)), (
+                    "%s imports the old game-icons glyphs" % name
+                )

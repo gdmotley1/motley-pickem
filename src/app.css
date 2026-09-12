@@ -211,8 +211,9 @@
   font-size: 19px;
 }
 
+/* 13px, up from 11, on every tab: Grant's floor for any text he looks at. */
 .eyebrow {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2158,7 +2159,7 @@
 .srow__ptslabel {
   display: block;
   font-family: var(--ui);
-  font-size: 9.5px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -3706,185 +3707,388 @@
 }
 
 /* ==================================================== the record book ==== */
-/* Enamel pins, three squares to a row.
+/* Three parts, each picked by Grant by number on 2026-09-12 off a board of twelve:
+   the trophy room for the Hall of fame (7), the red panel for the Hall of shame (10), and
+   headlines for everyone's numbers (6). The badges are his, made in ChatGPT.
 
-   These were flat brass tiles, then flat brass tiles with hand-drawn glyphs, and the
-   verdict on both was that they looked like AI slop. They were right: the drawings were
-   thin geometric paths. The artwork is now by four illustrators off game-icons.net and
-   the only thing left of mine is the pin around it.
+   NOTHING HERE IS UNDER 13PX. He asked for that outright after the previous book's 8.5px
+   labels, and tests/test_records.py walks every font-size in this block. */
 
-   A pin is a rim, an enamel, and one crescent of polish. The enamel is FLAT, because
-   enamel is; every gradient lives in the rim, and the rim is conic rather than linear
-   because that is what makes metal look turned rather than painted. */
-.recs {
-  padding: 0 12px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px 6px;
+/* ------------------------------------------------------------------ badges --- */
+/* An unclaimed badge is the same art in grey inside a dashed socket. The dashes live on
+   the wrapper and the grey on the image, so the filter cannot grey the socket too. */
+.medal {
+  --medal-size: 48px;
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--medal-size);
+  height: var(--medal-size);
+  border-radius: 50%;
 }
 
-.pin {
+.medal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 7px rgba(3, 7, 14, 0.6));
+}
+
+.medal.is-open {
+  outline: 2px dashed rgba(224, 172, 75, 0.5);
+  outline-offset: 3px;
+}
+
+.medal.is-open img {
+  filter: grayscale(1) brightness(0.55) contrast(1.05);
+  opacity: 0.6;
+}
+
+.hold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.hold__faces,
+.head__faces {
+  display: inline-flex;
+  flex: none;
+}
+
+.hold__faces .avatar,
+.head__faces .avatar {
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+.hold__faces .avatar + .avatar,
+.head__faces .avatar + .avatar {
+  margin-left: -7px;
+}
+
+.book-kick {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  font-stretch: condensed;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ------------------------------------------------------- 7: the trophy room --- */
+/* The way in. This used to be a near-black panel starting on a hard edge right under
+   the last standings row, and Grant called the transition "really rough". Now the dark
+   comes up out of the page over the first 110px, a brass rail with a stud marks the
+   threshold, the spotlight sits behind the title, and the bottom fades back into the
+   page so the Hall of shame is not butted against a second edge. */
+.fame {
+  position: relative;
+  margin-top: 14px;
+  padding: 64px 12px 42px;
+  text-align: center;
+  background:
+    radial-gradient(60% 170px at 50% 122px, rgba(255, 214, 120, 0.22), transparent 72%),
+    linear-gradient(
+      180deg,
+      rgba(5, 10, 19, 0) 0,
+      rgba(5, 10, 19, 0.7) 110px,
+      rgba(5, 10, 19, 0.8) 55%,
+      rgba(5, 10, 19, 0.5) 88%,
+      rgba(5, 10, 19, 0) 100%
+    );
+}
+
+.fame::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--brass-500) 24%,
+    var(--brass-100) 50%,
+    var(--brass-500) 76%,
+    transparent
+  );
+}
+
+.fame::after {
+  content: '';
+  position: absolute;
+  top: 26px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, var(--brass-100), var(--brass-500));
+  box-shadow: 0 0 10px rgba(246, 228, 180, 0.6);
+}
+
+.fame__title {
+  margin: 6px 0 24px;
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--lead);
+  text-shadow: 0 0 30px rgba(255, 214, 120, 0.55);
+}
+
+.fame__won {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px 10px;
+}
+
+/* An odd number of claimed awards: the first one takes the whole row. */
+.fame__won.is-odd > .award:first-child {
+  grid-column: 1 / -1;
+}
+
+.award {
   display: flex;
   flex-direction: column;
   align-items: center;
   min-width: 0;
-}
-
-.pin__disc {
-  position: relative;
-  width: 74px;
-  height: 74px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  padding: 4px;
-  background: var(--pin-metal);
-  box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.32);
-}
-
-/* The post. Every pin is pinned to something. */
-.pin__disc::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 5px;
-  border-radius: 0 0 4px 4px;
-  background: linear-gradient(180deg, #8b97a5, #3e4753);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-}
-
-.pin__field {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  position: relative;
-  overflow: hidden;
-  background: var(--pin-enamel);
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45);
-}
-
-/* The polish. One hard crescent top-left, where a domed pin catches a ceiling light.
-   Static: twelve of these animating at once would be a disco, not a record book. */
-.pin__field::after {
-  content: '';
-  position: absolute;
-  left: -18%;
-  top: -38%;
-  width: 96%;
-  height: 78%;
-  border-radius: 50%;
-  pointer-events: none;
-  background: linear-gradient(
-    145deg,
-    rgba(255, 255, 255, 0.32),
-    rgba(255, 255, 255, 0.05) 58%,
-    transparent 70%
-  );
-}
-
-.pin__ico {
-  width: 74%;
-  height: 74%;
-  display: block;
-  position: relative;
-  z-index: 1;
-  color: var(--pin-glyph);
-}
-
-.pin__k {
-  margin: 9px 0 0;
-  font-size: 8.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   text-align: center;
-  line-height: 1.25;
-  color: var(--ink-3);
 }
 
-.pin__v {
-  margin: 2px 0 0;
+.award__k {
+  margin: 14px 0 8px;
   font-family: var(--display);
   font-size: 15px;
-  font-weight: 700;
-  text-align: center;
+  font-weight: 800;
+  font-stretch: condensed;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--ink);
+  text-wrap: balance;
 }
 
-.pin__who {
-  margin: 0;
-  font-size: 10px;
-  text-align: center;
+.award__d {
+  margin: 6px 0 0;
+  font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-wrap: balance;
+}
+
+.fame__sub {
+  margin: 32px 0 14px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
   color: var(--ink-3);
-  line-height: 1.3;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-/* The four platings. Difficulty, as a material. */
-.pin--t1 {
-  --pin-metal: conic-gradient(from 215deg, #6e7a88, #dde5ec, #8d98a6, #f2f6fa, #6e7a88);
-  --pin-enamel: #16253d;
-  --pin-glyph: #e8eff7;
-}
-.pin--t2 {
-  --pin-metal: conic-gradient(from 215deg, #8a6118, #f6da9c, #b98a2e, #fff0c8, #8a6118);
-  --pin-enamel: #7a2018;
-  --pin-glyph: #ffe9df;
-}
-.pin--t3 {
-  --pin-metal: conic-gradient(from 215deg, #171c24, #5c6675, #242b35, #78838f, #171c24);
-  --pin-enamel: #2b1a46;
-  --pin-glyph: #eaddff;
-}
-.pin--t4 {
-  --pin-metal: conic-gradient(from 215deg, #8a5e06, #ffeeb8, #c79a24, #fffbe8, #8a5e06);
-  --pin-enamel: #4a3000;
-  --pin-glyph: #ffe9a8;
-}
-.pin--t4 .pin__disc {
-  box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.32),
-    0 0 20px rgba(255, 217, 118, 0.4);
+/* Three to a row, centred, so a short last row sits in the middle rather than hanging
+   off the left. Two to a row when there are exactly two or four. */
+.fame__grabs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  row-gap: 18px;
 }
 
-/* Unclaimed. Not a dim pin: the empty socket the pin goes in, with the shape showing
-   through so you can see what is missing. */
-.pin.is-open .pin__disc {
-  background: none;
-  border: 2px dashed rgba(226, 196, 120, 0.45);
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.65);
-}
-.pin.is-open .pin__disc::after {
-  display: none;
-}
-.pin.is-open .pin__field {
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: none;
-}
-.pin.is-open .pin__field::after {
-  display: none;
-}
-.pin.is-open .pin__ico {
-  opacity: 0.34;
+.grab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 33.333%;
+  min-width: 0;
+  padding: 0 3px;
 }
 
-/* CC BY 3.0 is a condition of using the artwork. */
-.credit {
-  margin: 26px 14px 0;
-  font-size: 9.5px;
-  line-height: 1.5;
+.fame__grabs.is-pairs .grab {
+  width: 50%;
+}
+
+.grab p {
+  margin: 10px 0 0;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 800;
+  font-stretch: condensed;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--ink-2);
+  text-wrap: balance;
+}
+
+/* ------------------------------------------------------- 10: the red panel --- */
+.shame {
+  margin: 10px 12px 0;
+  padding: 16px 16px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 106, 94, 0.55);
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(255, 106, 94, 0.24), rgba(255, 106, 94, 0.05) 60%, transparent),
+    var(--sunk);
+  box-shadow: 0 0 30px rgba(255, 106, 94, 0.18);
+}
+
+.shame__title {
+  margin: 0 0 12px;
   text-align: center;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--bad);
+}
+
+.shame__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.shame__row + .shame__row {
+  margin-top: 14px;
+}
+
+.shame__txt {
+  min-width: 0;
+}
+
+.shame__k {
+  margin: 0 0 6px;
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.shame__d {
+  margin: 4px 0 0;
+  font-family: var(--ui);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------- 6: everyone's numbers --- */
+.book-head {
+  padding: 30px 16px 12px;
+}
+
+.book-head h3 {
+  margin: 4px 0 0;
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+.heads {
+  margin: 0 10px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid var(--stitch);
+  background: linear-gradient(180deg, var(--wool-600), var(--wool-700));
+  box-shadow: 0 6px 18px rgba(3, 7, 14, 0.5);
+}
+
+.head {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+  padding: 14px 14px 13px;
+}
+
+.head + .head {
+  border-top: 1px solid var(--stitch);
+}
+
+.head__body {
+  min-width: 0;
+}
+
+.head__k {
+  margin: 2px 0 7px;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 800;
+  font-stretch: condensed;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  color: var(--accent);
+}
+
+.head.is-bad .head__k {
+  color: var(--bad);
+}
+
+.head__lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 9px;
+  margin: 0;
+}
+
+.head__lead b {
+  font-family: var(--display);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.head__v {
+  font-family: var(--display);
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--lead);
+  text-shadow: 0 0 18px rgba(246, 228, 180, 0.3);
+}
+
+.head.is-bad .head__v {
+  color: var(--bad);
+  text-shadow: none;
+}
+
+.head__lead em {
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 600;
+  font-style: normal;
+  color: var(--ink-2);
+}
+
+.head__rest {
+  margin: 7px 0 0;
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.head__wait {
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
   color: var(--ink-3);
 }

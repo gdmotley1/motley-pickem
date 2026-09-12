@@ -12,6 +12,9 @@
 
 import { ceiling } from './weekRecap.js'
 
+/** Every week in this pool is twenty games. memory/decisions.md. */
+export const SLATE = 20
+
 /** Everyone tied on the best value of `key`. Empty in, empty out. */
 function topBy(list, key) {
   if (!list.length) return []
@@ -20,12 +23,38 @@ function topBy(list, key) {
 }
 
 /**
+ * The week numbers that are over.
+ *
+ * A week is finished when all twenty of its games are graded, or when a later week has
+ * graded games, which covers a game that never gets a result.
+ *
+ * THE BUG THIS EXISTS FOR. Weeks used to count the moment one game was graded. On
+ * 2026-09-12, one game into Week 2, the Season tab dived every form line to near zero,
+ * named Grant's "fewest points in a week" as 0 when the real answer was Nicole's 147, and
+ * credited Nicole with winning Week 2 because she led after a single game. Week records,
+ * weeks won, the form chart and "N weeks in the books" all read finished weeks only.
+ * Points keep counting live: the standings and season totals include every graded game.
+ */
+export function finishedWeeks(rows) {
+  const graded = new Map()
+  for (const r of rows || []) {
+    const n = Number(r.week_no)
+    graded.set(n, Math.max(graded.get(n) || 0, Number(r.games) || 0))
+  }
+  const nos = [...graded.keys()].sort((a, b) => a - b)
+  return new Set(
+    nos.filter((n, i) => graded.get(n) >= SLATE || nos.slice(i + 1).some((m) => graded.get(m) > 0)),
+  )
+}
+
+/**
  * Group the flat rows into weeks, newest first, each knowing who took it.
  *
- * A week counts as played once any game in it has been graded, so the current week
- * appears and moves through the weekend rather than arriving all at once on Monday.
+ * Every week with a row is listed, so the current one is there while it is played, but
+ * only a FINISHED week has winners. Leading after one game of twenty is not winning.
  */
 export function weekHistory(rows) {
+  const done = finishedWeeks(rows)
   const byWeek = new Map()
   for (const r of rows) {
     if (!byWeek.has(r.week_no)) {
@@ -37,6 +66,7 @@ export function weekHistory(rows) {
   return [...byWeek.values()]
     .map((w) => {
       const graded = Math.max(...w.entries.map((e) => Number(e.games) || 0), 0)
+      const finished = done.has(Number(w.week_no))
       const winners = topBy(
         w.entries.map((e) => ({ ...e, points: Number(e.points) })),
         'points',
@@ -44,10 +74,10 @@ export function weekHistory(rows) {
       return {
         ...w,
         graded,
-        // A week with nothing graded has no leader, only four zeroes.
-        winners: graded ? winners.map((e) => ({ id: e.player_id, name: e.player_name })) : [],
-        best: graded ? Number(winners[0].points) : 0,
-        shared: graded && winners.length > 1,
+        finished,
+        winners: finished ? winners.map((e) => ({ id: e.player_id, name: e.player_name })) : [],
+        best: finished ? Number(winners[0].points) : 0,
+        shared: finished && winners.length > 1,
       }
     })
     .sort((a, b) => b.week_no - a.week_no)
@@ -81,6 +111,7 @@ export function seasonTotals(rows, roster) {
     })
   }
 
+  const done = finishedWeeks(rows)
   for (const r of rows) {
     const s = by.get(r.player_id)
     if (!s) continue
@@ -89,10 +120,14 @@ export function seasonTotals(rows, roster) {
     const games = Number(r.games)
     if (!games) continue
 
+    // Live: every graded game counts towards the season, finished week or not.
     s.points += points
     s.correct += correct
     s.games += games
     s.ceiling += ceiling(correct, games)
+
+    // Per-week: only a week that is over. See finishedWeeks.
+    if (!done.has(Number(r.week_no))) continue
     s.weeks += 1
     s.byWeek.set(r.week_no, points)
 
@@ -109,7 +144,9 @@ export function seasonTotals(rows, roster) {
   }
 
   const players = [...by.values()]
-    .filter((s) => s.weeks > 0)
+    // Anyone with a graded pick is in the standings, so Week 1 has a leaderboard before
+    // its last game. Filtering on finished weeks would blank the tab until Monday.
+    .filter((s) => s.games > 0)
     .map((s) => ({
       ...s,
       wrong: s.games - s.correct,
@@ -168,7 +205,7 @@ export function seasonRecords(players, weeks) {
       key: 'weeksWon',
       label: 'Weeks won',
       value: String(won[0].weeksWon),
-      unit: `of ${weeks.filter((w) => w.graded).length}`,
+      unit: `of ${weeks.filter((w) => w.finished).length}`,
       who: won.map((p) => p.name).join(' and '),
     })
   }
@@ -192,7 +229,8 @@ export function seasonRecords(players, weeks) {
  * reads left to right in time and a list reads newest first.
  */
 export function seasonForm(players, weeks) {
-  const order = [...weeks].filter((w) => w.graded).sort((a, b) => a.week_no - b.week_no)
+  // Finished weeks only: a week one game in plotted as a collapse to near zero for everyone.
+  const order = [...weeks].filter((w) => w.finished).sort((a, b) => a.week_no - b.week_no)
   const max = Math.max(1, ...players.flatMap((p) => [...p.byWeek.values()]))
   return {
     weeks: order.map((w) => ({ week_no: w.week_no, label: w.label })),
@@ -257,6 +295,6 @@ export function seasonStats(rows, roster) {
     weeks,
     records: seasonRecords(players, weeks),
     form: seasonForm(players, weeks),
-    played: weeks.filter((w) => w.graded).length,
+    played: weeks.filter((w) => w.finished).length,
   }
 }

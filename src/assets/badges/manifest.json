@@ -1,0 +1,76 @@
+{
+ "settings": {
+  "px": 320,
+  "quality": 86
+ },
+ "badges": {
+  "best_week": {
+   "source": "b18ebe8877f406c898ffdfe1ec7a4e955653b53ccabca1cabe8693a0355ca183",
+   "output": "487852c0ee190e6c339065087d784205b5422ebd9e809c35fc5cf426bb6fed9f"
+  },
+  "best_record": {
+   "source": "af03e5af9a06843a2253cbe9089666baaa5f00fa7c14fbefee56a984c72506c6",
+   "output": "ae9dee8c99b467ffdf32fbb84fc0cdf3e2f1c00605409a3dcd79ed1ad5b39fa6"
+  },
+  "low_week": {
+   "source": "838407be875fd684dea114420de80b07087d0ca3d2e7680f44e079e65e0df348",
+   "output": "53fc61a6dd41ca19732c7cc6c8e226492f67474eec91b204c1a3304b0f70fba4"
+  },
+  "streak": {
+   "source": "ec13cfa31e008526a9f2182a6b2d15e8f222e4672027c472a29fe42be8a4d4c3",
+   "output": "17dd576d8fda6a7860f11eeeb9e092075dd52bc7362d9029af6a6a0ce1094072"
+  },
+  "worst_miss": {
+   "source": "5745782af64a55a57efe2c581bf915f3386427b9fa369ed59095a2579f9b9386",
+   "output": "ce0658bb1aa13cc800218d8507be847f49a53809bb5ba7839d6e374e64857ca7"
+  },
+  "my_upset": {
+   "source": "b9883832ec9573b12e043d227ee95d11a7e99e249e5880ae5ca230dd35fe9935",
+   "output": "3bc677ffa31ef7f726a2ccc371a83be8e6372bba3564f924697e87719dde102d"
+  },
+  "weeks_won": {
+   "source": "84afa25187ee83595556579062a95e0a54632354f4bf138dcc1f48fda885be13",
+   "output": "5bdaa9845343b330d6d077d678915eb39686eff5490ac9545718a564c861445b"
+  },
+  "season_record": {
+   "source": "f1c1cd27bb56a8fd6c0737a8eb762894c5630b1e3c502260bd223c24b29fa1a2",
+   "output": "5accafb3bdf186338681316cf35dc425a711ab67a66e2768e624f2aea4d6af95"
+  },
+  "perfect_week": {
+   "source": "efa656780cf73f070c7f2037b7d85e51950a62b149d908dfe0a7f42eea4a478e",
+   "output": "c66408f0ff3e5174873ebe12fc19280df2b567889dfe1f97c4c9c9e5164991b7"
+  },
+  "only_one": {
+   "source": "f1e26dae713f44f0e41af38c2923acb07aa77e9c7c61fe73a60b1a463686c89b",
+   "output": "a8df0c37b0e8bc4f3baff1a78a47052b273185fc3287675369289c25833d1ee3"
+  },
+  "season_points": {
+   "source": "1189241860ce012229483aa2e09f3b6ced01b65b38874f444cc328422053fa7d",
+   "output": "67ac02a8c198900a9e3cbb3b6d45eaaf5bf2528eaff133f0c9858162d5a517d2"
+  },
+  "big_upset": {
+   "source": "2d820a42901857644958973d2ecaa986160d3c86d4918db097c517961a6e89be",
+   "output": "185813bb0270f5e2008949fa8a875b6551abbdb9e723b56b2255141e7615ebac"
+  },
+  "win_by_20": {
+   "source": "fce4caa29e2bfe0c31665b07d692b266c2fae5f2e32340c7549fce13efdf8c45",
+   "output": "a9a566c3b64b36d4b1ec2e29b6b6037e148007ebf911fe77649a7bb618e53d10"
+  },
+  "two_td_upset": {
+   "source": "ee3f99753c40be38da63d48deceea87c0170ee272810f10bd8fb1bda6e27ef31",
+   "output": "de7c48952e9158c338f7c9baa38a6f6c5fd6d53e0882b63986faaea4e2b93cda"
+  },
+  "three_upsets": {
+   "source": "f357f8de4b0c983576862070a04238c2847ba2a49dd534521aa87979a306f106",
+   "output": "24061e80e31cc832acfb088ac9b5a668be7696c69d00a1eb7e491783901a6c18"
+  },
+  "margin": {
+   "source": "16e2ec9b37ec6cd40280e5d6ba894c54a6679926754558a97ba73d448f596fe6",
+   "output": "3e1027306a3d322d84c0bdcde69f5b282d755ae53f625e6e173367f14cd46027"
+  },
+  "lost_20": {
+   "source": "7ccec84a03c4b211de50d64a0f681af059fe1c4401a6907e282d312dfaa9b253",
+   "output": "e30c23d6d2762da3cf6bdc2bd8320b3cdf1049b2e1bba7531ab9c251ccb6d06a"
+  }
+ }
+}

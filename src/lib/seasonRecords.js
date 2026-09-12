@@ -1,273 +1,442 @@
 /**
- * The record book. Twelve records, each one a sentence anyone can read.
+ * The record book: everyone's numbers, the Hall of fame and the Hall of shame.
  *
- * WHAT WENT WRONG THE FIRST TIME, BECAUSE IT IS THE POINT OF THIS FILE
+ * WHAT GRANT CHOSE, AND HOW
  *
- * The first version had seventeen records and Grant's verdict on seeing it was "literally
- * none of these stats makes sense at all". He was right. They were things like The Fade
- * (points lost by ranking a correct pick too low), Chalk rate, Perfect order and The
- * Anchor: every one needed a sentence of explanation, and the sentence had just been
- * deleted when the tall cards became squares. What shipped was seventeen invented terms
- * over seventeen bare numbers.
+ * Every entry here came off a ballot he filled in on 2026-09-12, and the layouts off a
+ * numbered board the same evening: 6, headlines for everyone's numbers; 7, the trophy room
+ * for the Hall of fame; 10, the red panel for the Hall of shame. Each key is also the file
+ * name of his badge art, so a record added here without art fails tests/records_check.mjs.
  *
- * Every record here is one Grant picked off a list, in his words, and every one can be
- * read cold: "Most points in a week. 195. Grant." If a record ever needs explaining
- * again, it does not belong in this file.
+ * The version before this had twelve records drawn as tiny squares, and the one before
+ * that had seventeen invented statistics ("literally none of these stats makes sense at
+ * all"). Every label must still read cold: "Worst miss. 20 on OU. Parker."
  *
- * WHERE EACH ONE COMES FROM
+ * WEEKS
  *
- * Eight of the twelve come from get_season, which the tab already fetches: one row per
- * player per week with points, correct and games. Four need the picks themselves and so
- * need migration 015. That split is deliberate rather than incidental. It means the book
- * is not empty while 015 waits to be pasted, and it means losing the picks for any reason
- * still leaves two thirds of a record book standing.
+ * Anything "in a week" counts finished weeks only, via finishedWeeks. Season totals, the
+ * season record and every pick record count every graded game. See seasonStats.js for
+ * the bug that split them.
  *
- * TIES, AND RECORDS NOBODY HAS SET
+ * TIES, NULLS AND NOBODY-YET
  *
- * Ties stand, so `holders` is a list. Separately, a record nobody has set yet is
- * UNCLAIMED, not a four-way tie on zero. Nobody has thrown a perfect week, so "Perfect
- * week, 0, all four" is an absence dressed as a statistic, which is exactly the kind of
- * thing that made the first book nonsense.
+ * Ties stand, so a record has leaders, plural. A player a record does not apply to (never
+ * lost a pick, so no worst miss) has a null, sorts last and never leads; returning zero
+ * would rank them as worst at it. An award nobody has earned is UNCLAIMED, drawn as up for
+ * grabs, never as a tie on zero.
+ *
+ * WITHOUT THE PICKS
+ *
+ * Seven of the seventeen need get_season_picks (migration 015). If that call fails, they
+ * are left out rather than shown as unclaimed, because "up for grabs" would be a claim
+ * this book cannot back. The rest come from get_season, which the tab already has.
  */
+
+import { SLATE, finishedWeeks } from './seasonStats.js'
+
+/* ------------------------------------------------------------------ the lists ---- */
+
+/** Everyone's numbers, in the order the tab draws them. */
+export const NUMBERS = [
+  { key: 'best_week', label: 'Most points in a week' },
+  { key: 'best_record', label: 'Best record in a week' },
+  { key: 'low_week', label: 'Fewest points in a week', lower: true, bad: true },
+  { key: 'streak', label: 'Longest winning streak', picks: true },
+  { key: 'worst_miss', label: 'Worst miss', bad: true, picks: true },
+  { key: 'my_upset', label: 'Biggest upset you called', picks: true },
+  { key: 'weeks_won', label: 'Weeks won' },
+  { key: 'season_record', label: 'Season record' },
+]
+
+/** The Hall of fame, easiest first, which is the order it fills up in. */
+export const FAME = [
+  { key: 'season_points', label: 'Most points in a season' },
+  { key: 'margin', label: 'Biggest margin of victory in a week' },
+  { key: 'big_upset', label: 'Biggest upset called', picks: true },
+  { key: 'only_one', label: 'Only one who called it', picks: true },
+  { key: 'three_upsets', label: 'Three upsets in one week', picks: true },
+  { key: 'two_td_upset', label: 'Two-touchdown upset', picks: true },
+  { key: 'win_by_20', label: 'Won a week by 20 or more' },
+  { key: 'perfect_week', label: 'Perfect week' },
+]
+
+export const SHAME = [{ key: 'lost_20', label: 'Lost your 20', picks: true }]
+
+/** Every badge the book can draw, one art file each. */
+export const BADGE_KEYS = [...NUMBERS, ...FAME, ...SHAME].map((x) => x.key)
+
+/* ---------------------------------------------------------------- formatting ---- */
+
+const num = (v) => Number(v) || 0
+const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+const DASH = '–'
+
+export function joinNames(names) {
+  if (names.length <= 1) return names[0] || ''
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
 
 /* ------------------------------------------------------------------ shaping ---- */
 
-/** One row per player per week, from get_season. */
-function byWeek(rows) {
+function shapeWeeks(rows) {
   return (rows || [])
     .map((r) => ({
       player_id: r.player_id,
-      week_no: Number(r.week_no),
+      week_no: num(r.week_no),
       label: r.week_label,
-      points: Number(r.points),
-      correct: Number(r.correct),
-      games: Number(r.games),
+      points: num(r.points),
+      correct: num(r.correct),
+      games: num(r.games),
     }))
     .filter((w) => w.games > 0)
 }
 
-/** Group pick rows by game, so a game knows every pick made on it. */
-function byGame(rows) {
-  const m = new Map()
-  for (const r of rows || []) {
-    if (!m.has(r.game_id)) {
-      m.set(r.game_id, {
+/** Every graded pick, in kickoff order across the season, which is what a streak walks. */
+function shapePicks(rows) {
+  return (rows || [])
+    .map((r) => {
+      const spread = r.spread_line == null ? null : Math.abs(Number(r.spread_line))
+      return {
+        player_id: r.player_id,
+        week_no: num(r.week_no),
+        label: r.week_label,
         game_id: r.game_id,
         kickoff: r.kickoff,
-        winner_abbr: r.winner_abbr,
-        underdog_abbr: r.underdog_abbr,
-        spread_line: r.spread_line == null ? null : Number(r.spread_line),
-        picks: [],
-      })
-    }
-    m.get(r.game_id).picks.push({
-      player_id: r.player_id,
-      pick_abbr: r.pick_abbr,
-      confidence: Number(r.confidence),
-      won: r.pick_abbr === r.winner_abbr,
+        team: r.pick_abbr,
+        stake: num(r.confidence),
+        won: r.pick_abbr === r.winner_abbr,
+        dog: spread != null && r.pick_abbr === r.underdog_abbr,
+        spread,
+      }
     })
-  }
-  /* Kickoff order across the whole season, which is what a streak has to walk. Ties on
-     kickoff break by id so the order is stable rather than whatever the server returned. */
-  return [...m.values()].sort(
-    (a, b) => new Date(a.kickoff) - new Date(b.kickoff) || Number(a.game_id) - Number(b.game_id),
-  )
+    .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff) || Number(a.game_id) - Number(b.game_id))
 }
 
-/* ---------------------------------------------------------------- the record ---- */
+/* ------------------------------------------------------------------ ranking ---- */
 
 /**
- * Rank every seat on one record.
+ * Rank every seat on one record, best first. Standard competition ranking, so a tie
+ * shares a place (1, 1, 3). Nulls sort last and hold nothing.
  *
- * @param lower  a smaller number wins it. Only "Fewest points in a week" uses this.
+ * On a bad-news record the top of the ranking is the WORST: the biggest miss, or the
+ * fewest points, which is why `lower` and `bad` are separate.
  */
-function standing(seats, valueFor, { lower = false } = {}) {
-  const rows = seats.map((p) => {
-    const v = valueFor(p) || {}
-    return {
-      id: p.id,
-      name: p.name,
-      color: p.color,
-      team_id: p.team_id,
-      value: v.value == null ? null : v.value,
-      display: v.display ?? (v.value == null ? '—' : String(v.value)),
-    }
-  })
-  const ranked = [...rows].sort((a, b) => {
+function rank(rows, { lower = false, bad = false } = {}) {
+  const vals = rows.map((r) => r.value).filter((v) => v != null)
+  for (const r of rows) {
+    r.rank = r.value == null ? null : 1 + vals.filter((v) => (lower ? v < r.value : v > r.value)).length
+    r.mark = null
+    if (r.rank === 1) r.mark = bad ? 'worst' : r.value > 0 ? 'best' : null
+  }
+  // Array sort is stable, so a tie keeps seat order.
+  return [...rows].sort((a, b) => {
     if (a.value == null && b.value == null) return 0
     if (a.value == null) return 1
     if (b.value == null) return -1
     return lower ? a.value - b.value : b.value - a.value
   })
-  const scored = ranked.filter((r) => r.value != null)
-  const best = scored.length ? scored[0].value : null
+}
 
-  // Nobody has set it. See the note at the top of the file.
-  const unclaimed = !scored.length || (!lower && best === 0)
+/* How the rest of the family reads under a headline. A week in brackets is dropped when
+   it is the same week the headline already names: "James 179 (Week 1) · Parker 164
+   (Week 1)" said Week 1 four times on the board Grant picked from. */
+const REST = {
+  best_week: '{v} ({d})',
+  best_record: '{v} ({d})',
+  low_week: '{v} ({d})',
+  streak: '{v}',
+  worst_miss: '{v} {d}',
+  my_upset: '{v} {d}',
+  weeks_won: '{v}',
+  season_record: '{v}',
+}
+const NONE = { worst_miss: 'no misses yet' }
+
+/**
+ * One record as a headline: who holds it, the number, and everyone else in one line.
+ * Null when nobody leads it, which the screen draws as waiting.
+ */
+export function headline(key, rows) {
+  const leaders = rows.filter((r) => r.mark)
+  if (!leaders.length) return null
+  const lead = leaders[0]
+  const sameDetail = leaders.every((r) => r.detail === lead.detail)
+
+  const groups = []
+  for (const r of rows) {
+    if (r.mark) continue
+    const k = `${r.value == null}|${r.display}|${r.detail}`
+    const last = groups[groups.length - 1]
+    if (last && last.k === k) last.names.push(r.name)
+    else groups.push({ k, names: [r.name], r })
+  }
+  const rest = groups.map(({ names, r }) => {
+    const who = joinNames(names)
+    if (r.value == null) return `${who} ${r.detail || NONE[key] || 'none yet'}`
+    let form = REST[key] || '{v}'
+    if (sameDetail && r.detail === lead.detail) form = form.replace(' ({d})', '')
+    return `${who} ${form.replace('{v}', r.display).replace('{d}', r.detail)}`.trim()
+  })
 
   return {
-    rows: ranked,
-    best,
-    unclaimed,
-    holders: unclaimed ? [] : scored.filter((r) => r.value === best).map((r) => r.name),
-    shared: !unclaimed && scored.filter((r) => r.value === best).length > 1,
+    leaders,
+    value: lead.display,
+    detail: sameDetail ? lead.detail : '',
+    rest: rest.join(' · '),
   }
 }
 
-const record = (key, group, label, s) => ({ key, group, label, ...s })
-const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
+/* ------------------------------------------------------------------- the book ---- */
 
 /**
  * @param seasonRows  get_season output. Required.
- * @param pickRows    get_season_picks output, or null before migration 015 is pasted.
- * @param roster      claimed seats
+ * @param pickRows    get_season_picks output, or null if that call failed.
+ * @param roster      claimed seats: { id, name, color, team_id }
  */
 export function seasonRecords(seasonRows, pickRows, roster) {
-  const weeks = byWeek(seasonRows)
-  const seats = (roster || []).filter((p) => p.name)
-  if (!weeks.length || !seats.length) return { records: [], weeks: 0, hasPicks: false }
+  const seats = (roster || []).filter((p) => p && p.name)
+  const weeks = shapeWeeks(seasonRows)
+  if (!weeks.length || !seats.length) {
+    return { numbers: [], fame: [], shame: [], weeks: 0, hasPicks: false }
+  }
 
-  const mine = (p) => weeks.filter((w) => w.player_id === p.id)
-  const weekNos = [...new Set(weeks.map((w) => w.week_no))].sort((a, b) => a - b)
-  const out = []
+  const done = finishedWeeks(seasonRows)
+  const doneNos = [...done].sort((a, b) => a - b)
+  const lastDone = doneNos.length ? doneNos[doneNos.length - 1] : 0
+  const picks = shapePicks(pickRows)
+  const hasPicks = picks.length > 0
+  const label = new Map(weeks.map((w) => [w.week_no, w.label]))
+  const seatOf = new Map(seats.map((p) => [p.id, p]))
+  const person = (p) => ({ id: p.id, name: p.name, color: p.color, team_id: p.team_id })
 
-  /* ================================================================ BY THE WEEK ==== */
+  const finishedFor = (p) => weeks.filter((w) => w.player_id === p.id && done.has(w.week_no))
+  const picksFor = (p) => picks.filter((x) => x.player_id === p.id)
+  const topOf = (n) => Math.max(...weeks.filter((w) => w.week_no === n).map((w) => w.points))
 
-  out.push(record('week_points', 'week', 'Most points in a week',
-    standing(seats, (p) => {
-      const ws = mine(p)
+  /* ------------------------------------------------------ everyone's numbers ---- */
+
+  const calc = {
+    best_week(p) {
+      const ws = finishedFor(p)
       if (!ws.length) return {}
-      return { value: Math.max(...ws.map((w) => w.points)) }
-    })))
-
-  out.push(record('week_record', 'week', 'Best record in a week',
-    standing(seats, (p) => {
-      const ws = mine(p)
+      const b = ws.reduce((a, c) => (c.points >= a.points ? c : a))
+      return { value: b.points, display: String(b.points), detail: b.label }
+    },
+    best_record(p) {
+      const ws = finishedFor(p)
       if (!ws.length) return {}
-      const b = ws.reduce((a, c) => (c.correct > a.correct ? c : a))
-      return { value: b.correct, display: `${b.correct}-${b.games - b.correct}` }
-    })))
-
-  /* The only record where the lowest number wins it, and the only one where holding it is
-     bad news. Grant asked for it by name. */
-  out.push(record('week_low', 'week', 'Fewest points in a week',
-    standing(seats, (p) => {
-      const ws = mine(p)
-      if (!ws.length) return {}
-      return { value: Math.min(...ws.map((w) => w.points)) }
-    }, { lower: true })))
-
-  out.push(record('blowout', 'week', 'Biggest blowout',
-    standing(seats, (p) => {
+      const b = ws.reduce((a, c) => (c.correct >= a.correct ? c : a))
+      return { value: b.correct, display: `${b.correct}-${b.games - b.correct}`, detail: b.label }
+    },
+    // Needs two finished weeks. With one, everybody's fewest is the same number as their
+    // most, which reads as a bug.
+    low_week(p) {
+      const ws = finishedFor(p)
+      if (ws.length < 2) return {}
+      const b = ws.reduce((a, c) => (c.points <= a.points ? c : a))
+      return { value: b.points, display: String(b.points), detail: b.label }
+    },
+    streak(p) {
+      const mine = picksFor(p)
+      if (!mine.length) return {}
+      let run = 0
       let best = 0
-      for (const n of weekNos) {
-        const meThis = weeks.find((w) => w.player_id === p.id && w.week_no === n)
-        if (!meThis) continue
-        const others = weeks.filter((w) => w.week_no === n && w.player_id !== p.id)
-        if (!others.length) continue
-        const margin = meThis.points - Math.max(...others.map((w) => w.points))
-        if (margin > best) best = margin
+      for (const x of mine) {
+        run = x.won ? run + 1 : 0
+        if (run > best) best = run
       }
-      return { value: best }
-    })))
-
-  /* ============================================================== BY THE SEASON ==== */
-
-  out.push(record('weeks_won', 'season', 'Most weeks won',
-    standing(seats, (p) => {
-      let n = 0
-      for (const wk of weekNos) {
-        const inWeek = weeks.filter((w) => w.week_no === wk)
-        const top = Math.max(...inWeek.map((w) => w.points))
-        // Ties stand, so a shared week counts for everyone who shared it.
-        if (inWeek.some((w) => w.player_id === p.id && w.points === top)) n += 1
-      }
-      return { value: n }
-    })))
-
-  out.push(record('record', 'season', 'Best overall record',
-    standing(seats, (p) => {
-      const ws = mine(p)
+      return { value: best, display: String(best), detail: 'in a row' }
+    },
+    // Stake and team only, per Grant: "8 on GT". Not the opponent, not the score.
+    worst_miss(p) {
+      const lost = picksFor(p).filter((x) => !x.won)
+      if (!lost.length) return {}
+      const w = lost.reduce((a, c) => (c.stake >= a.stake ? c : a))
+      return { value: w.stake, display: String(w.stake), detail: `on ${w.team}` }
+    },
+    my_upset(p) {
+      const ups = picksFor(p).filter((x) => x.won && x.dog)
+      if (!ups.length) return { detail: 'none yet' }
+      const u = ups.reduce((a, c) => (c.spread >= a.spread ? c : a))
+      return { value: u.spread, display: `+${fmt(u.spread)}`, detail: u.team }
+    },
+    // Ties stand, so a shared week counts for everyone who shared it.
+    weeks_won(p) {
+      if (!doneNos.length) return {}
+      const n = doneNos.filter((wk) =>
+        weeks.some((w) => w.player_id === p.id && w.week_no === wk && w.points === topOf(wk)),
+      ).length
+      return { value: n, display: String(n), detail: `of ${doneNos.length}` }
+    },
+    // Live: every graded pick, finished week or not.
+    season_record(p) {
+      const ws = weeks.filter((w) => w.player_id === p.id)
       if (!ws.length) return {}
       const c = ws.reduce((n, w) => n + w.correct, 0)
       const g = ws.reduce((n, w) => n + w.games, 0)
-      return { value: c, display: `${c}-${g - c}` }
-    })))
-
-  out.push(record('points', 'season', 'Most points in a season',
-    standing(seats, (p) => {
-      const ws = mine(p)
-      if (!ws.length) return {}
-      return { value: ws.reduce((n, w) => n + w.points, 0) }
-    })))
-
-  /* A week is always twenty games in this pool, per memory/decisions.md, and `games` here
-     counts only the ones already GRADED. Without the floor, the first final of a Thursday
-     night makes whoever called it 1-for-1 and hands them a perfect week. */
-  out.push(record('perfect', 'season', 'Perfect week',
-    standing(seats, (p) => {
-      const n = mine(p).filter((w) => w.games >= 20 && w.correct === w.games).length
-      return { value: n, display: n ? `${n}x` : '0' }
-    })))
-
-  /* ============================================================== SINGLE GAMES ==== */
-  /* The four that need the picks, and therefore migration 015. Everything above works
-     from the aggregates the tab already fetches. */
-
-  const games = byGame(pickRows)
-  const hasPicks = games.length > 0
-
-  if (hasPicks) {
-    const picksOf = new Map()
-    for (const g of games) {
-      for (const pk of g.picks) {
-        if (!picksOf.has(pk.player_id)) picksOf.set(pk.player_id, [])
-        picksOf.get(pk.player_id).push({ ...pk, game: g })
-      }
-    }
-    const theirs = (p) => picksOf.get(p.id) || []
-
-    out.push(record('streak', 'games', 'Longest winning streak',
-      standing(seats, (p) => {
-        let run = 0
-        let best = 0
-        for (const x of theirs(p)) {
-          run = x.won ? run + 1 : 0
-          if (run > best) best = run
-        }
-        return { value: best }
-      })))
-
-    out.push(record('upset', 'games', 'Biggest upset called',
-      standing(seats, (p) => {
-        const hit = theirs(p).filter(
-          (x) => x.won && x.game.spread_line != null && x.pick_abbr === x.game.underdog_abbr)
-        if (!hit.length) return { value: 0, display: '—' }
-        const line = Math.max(...hit.map((x) => Math.abs(x.game.spread_line)))
-        return { value: line, display: `+${fmt(line)}` }
-      })))
-
-    out.push(record('worst_pick', 'games', 'Worst pick',
-      standing(seats, (p) => {
-        const lost = theirs(p).filter((x) => !x.won)
-        if (!lost.length) return {}
-        return { value: Math.max(...lost.map((x) => x.confidence)) }
-      })))
-
-    out.push(record('lone', 'games', 'Only one who called it',
-      standing(seats, (p) => ({
-        value: theirs(p).filter(
-          (x) => x.won &&
-            x.game.picks.filter((q) => q.pick_abbr === x.game.winner_abbr).length === 1,
-        ).length,
-      }))))
+      return { value: c, display: `${c}-${g - c}`, detail: '' }
+    },
   }
 
-  return { records: out, weeks: weekNos.length, hasPicks }
-}
+  const waiting = (key) => {
+    if (key === 'low_week') return `Starts once Week ${Math.max(2, lastDone + 1)} is final`
+    if (key === 'best_week' || key === 'best_record' || key === 'weeks_won') {
+      return `Starts once Week ${lastDone + 1} is final`
+    }
+    return 'Nothing yet'
+  }
 
-export const GROUPS = [
-  ['week', 'By the week'],
-  ['season', 'By the season'],
-  ['games', 'Single games'],
-]
+  const numbers = NUMBERS.filter((d) => hasPicks || !d.picks).map((d) => {
+    const raw = seats.map((p) => {
+      const v = calc[d.key](p) || {}
+      return {
+        ...person(p),
+        value: v.value == null ? null : v.value,
+        display: v.value == null ? DASH : v.display,
+        detail: v.detail || '',
+      }
+    })
+    const rows = rank(raw, d)
+    const open = rows.some((r) => r.value != null) ? null : waiting(d.key)
+    return {
+      key: d.key,
+      label: d.label,
+      bad: !!d.bad,
+      open,
+      rows,
+      headline: open ? null : headline(d.key, rows),
+    }
+  })
+
+  /* ----------------------------------------------------------- fame and shame ---- */
+
+  // Holders in the order they first earned it, each with how many times.
+  const counted = (ids) => {
+    const m = new Map()
+    for (const id of ids) m.set(id, (m.get(id) || 0) + 1)
+    return [...m].filter(([id]) => seatOf.has(id)).map(([id, count]) => ({ ...person(seatOf.get(id)), count }))
+  }
+
+  const totals = new Map(
+    seats.map((p) => [p.id, weeks.filter((w) => w.player_id === p.id).reduce((n, w) => n + w.points, 0)]),
+  )
+  const topTotal = Math.max(0, ...totals.values())
+
+  const margins = []
+  for (const n of doneNos) {
+    const inWeek = weeks.filter((w) => w.week_no === n).sort((a, b) => b.points - a.points)
+    if (inWeek.length > 1 && inWeek[0].points > inWeek[1].points) {
+      margins.push({ id: inWeek[0].player_id, week_no: n, by: inWeek[0].points - inWeek[1].points })
+    }
+  }
+
+  const ups = picks.filter((x) => x.won && x.dog)
+
+  const byGame = new Map()
+  for (const x of picks) {
+    if (!byGame.has(x.game_id)) byGame.set(x.game_id, [])
+    byGame.get(x.game_id).push(x)
+  }
+  const lone = [...byGame.values()]
+    .filter((xs) => xs.length > 1)
+    .map((xs) => xs.filter((x) => x.won))
+    .filter((right) => right.length === 1)
+    .map((right) => right[0])
+
+  const award = {
+    season_points() {
+      const ids = seats.filter((p) => topTotal > 0 && totals.get(p.id) === topTotal).map((p) => p.id)
+      return { holders: counted(ids), detail: `${topTotal} points` }
+    },
+    margin() {
+      if (!margins.length) return {}
+      const m = Math.max(...margins.map((x) => x.by))
+      const best = margins.filter((x) => x.by === m)
+      return {
+        holders: counted(best.map((x) => x.id)),
+        detail: best.length === 1 ? `Won ${label.get(best[0].week_no)} by ${m}` : `${m} points clear`,
+      }
+    },
+    big_upset() {
+      if (!ups.length) return {}
+      const m = Math.max(...ups.map((x) => x.spread))
+      const best = ups.filter((x) => x.spread === m)
+      const teams = [...new Set(best.map((x) => x.team))]
+      // One record, not a tally: calling the same size of upset twice is not "x2".
+      const holders = counted(best.map((x) => x.player_id)).map((h) => ({ ...h, count: 1 }))
+      return { holders, detail: `${teams.join(' and ')} +${fmt(m)}` }
+    },
+    only_one() {
+      return {
+        holders: counted(lone.map((x) => x.player_id)),
+        detail: lone.length === 1 ? `${lone[0].team}, ${lone[0].label}` : plural(lone.length, 'game', 'games'),
+      }
+    },
+    three_upsets() {
+      const hits = []
+      for (const n of [...new Set(ups.map((x) => x.week_no))].sort((a, b) => a - b)) {
+        for (const p of seats) {
+          if (ups.filter((x) => x.week_no === n && x.player_id === p.id).length >= 3) {
+            hits.push({ id: p.id, week_no: n })
+          }
+        }
+      }
+      return {
+        holders: counted(hits.map((h) => h.id)),
+        detail: hits.length === 1 ? label.get(hits[0].week_no) : plural(hits.length, 'week', 'weeks'),
+      }
+    },
+    two_td_upset() {
+      const hits = ups.filter((x) => x.spread >= 14)
+      return {
+        holders: counted(hits.map((x) => x.player_id)),
+        detail: hits.length === 1 ? `${hits[0].team} +${fmt(hits[0].spread)}` : plural(hits.length, 'upset', 'upsets'),
+      }
+    },
+    win_by_20() {
+      const hits = margins.filter((x) => x.by >= 20)
+      return {
+        holders: counted(hits.map((x) => x.id)),
+        detail: hits.length === 1 ? `Won ${label.get(hits[0].week_no)} by ${hits[0].by}` : plural(hits.length, 'week', 'weeks'),
+      }
+    },
+    perfect_week() {
+      const hits = weeks.filter((w) => done.has(w.week_no) && w.games >= SLATE && w.correct === w.games)
+      return {
+        holders: counted(hits.map((w) => w.player_id)),
+        detail: hits.length === 1 ? hits[0].label : plural(hits.length, 'week', 'weeks'),
+      }
+    },
+    lost_20() {
+      const hits = picks.filter((x) => x.stake === SLATE && !x.won)
+      return {
+        holders: counted(hits.map((x) => x.player_id)),
+        detail: hits.length === 1 ? `${SLATE} on ${hits[0].team}, ${hits[0].label}` : plural(hits.length, 'time', 'times'),
+      }
+    },
+  }
+
+  const awards = (list) =>
+    list
+      .filter((d) => hasPicks || !d.picks)
+      .map((d) => {
+        const a = award[d.key]() || {}
+        const holders = a.holders || []
+        return {
+          key: d.key,
+          label: d.label,
+          holders,
+          claimed: holders.length > 0,
+          detail: holders.length ? a.detail : '',
+        }
+      })
+
+  return {
+    numbers,
+    fame: awards(FAME),
+    shame: awards(SHAME),
+    weeks: doneNos.length,
+    hasPicks,
+  }
+}
