@@ -47,10 +47,12 @@
   color: var(--on-field);
 }
 
+/* 13px, up from 11: Grant's floor for any text he looks at. The header grows 3px, which
+   the Board's pinned scorebug absorbs on its own because useHeaderOffset measures it. */
 .apphdr__week {
   display: block;
   font-family: var(--ui);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -124,6 +126,9 @@
   border-top: 1px solid var(--line);
 }
 
+/* Labels at 13px, up from 10.5, with the line box tightened to 1.2 so the bar stays
+   within a pixel or two of the height it had. The bar's position is where the iOS gap of
+   2026-09-10 lived (memory/traps.md), so its footprint moves as little as possible. */
 .tabbar__btn {
   display: flex;
   flex-direction: column;
@@ -133,7 +138,8 @@
   padding: 5px 0;
   border-radius: var(--r-md);
   color: var(--ink-3);
-  font-size: 10.5px;
+  font-size: 13px;
+  line-height: 1.2;
   font-weight: 600;
   transition: color 0.16s ease, background 0.16s ease;
 }

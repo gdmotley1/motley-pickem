@@ -236,5 +236,14 @@ edge under the last standings row. Its background now starts transparent, darken
 - A PowerShell `Get-Content -Raw` rewrite read a UTF-8 builder as cp1252 and wrote "â€“"
   into 16 cells of a board. A screenshot caught it. Replacements go through the Edit tool.
 
-**Open:** app-wide labels still under 13px, the tab bar at 10.5px and the header's week
-line at 11px, flagged as their own task.
+**Then the chrome, the same night.** Grant: "fix the tab bar and header tiny text too."
+The tab labels went from 10.5px to 13px with the line box tightened to 1.2, so the bar grew
+1px (62 to 63) rather than 4, which mattered because the bar is where the iOS gap of
+2026-09-10 lived. The header's week line went from 11px to 13px and the header grew 3px;
+the Board's pinned scorebug followed on its own because `useHeaderOffset` measures it.
+Measured at 393 and 375 through iframes, because headless Edge will not render a viewport
+narrower than about 500px and reported 518 for both.
+
+**Open:** 65 declarations under 13px remain on other screens (the Board's scorebug rows,
+chips, Setup, sign-in). `tests/test_text_floor.py` holds them as a ceiling that only goes
+down, so no new tiny text can land while they wait.
