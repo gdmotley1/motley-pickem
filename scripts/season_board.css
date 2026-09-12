@@ -1,0 +1,312 @@
+/* Options board: six ways to give the Season tab football flare.
+   Grant on 2026-09-11: the scoreboard at the top is right, everything under it is
+   lackluster, the app is "cold and techy", and he wants artsy, records, and some
+   background or animation.
+
+   Every option shows the SAME three things in the same order: the shipped standings
+   block (which is not up for debate, he likes it), then the record book header, three
+   records, and the form chart. Only the skin under the standings changes, because the
+   real question is whether the flare can sit under a Slate component without the seam
+   showing. Judging a skin on its own would hide exactly the thing that matters. */
+:root{
+  --ground:#eceff3; --panel:#ffffff; --edge:#d8dfe6;
+  --ink:#131a22; --ink-2:#48535e; --ink-3:#5c6873; --mark:#2f6fed; --warn:#b0560f;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#11161d; --panel:#1a212a; --edge:#2c3540;
+    --ink:#eef2f6; --ink-2:#b6c1cc; --ink-3:#8c99a6; --mark:#6a9bf5; --warn:#e2934a;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#11161d; --panel:#1a212a; --edge:#2c3540;
+  --ink:#eef2f6; --ink-2:#b6c1cc; --ink-3:#8c99a6; --mark:#6a9bf5; --warn:#e2934a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1400px;margin:0 auto;padding:44px 22px 90px}
+h1,h2,h3{font-family:'Archivo',Helvetica,Arial,sans-serif;letter-spacing:-.025em;margin:0}
+.doc__eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mark);margin:0 0 10px}
+.doc__title{font-size:42px;font-weight:700;line-height:1.06}
+.doc__sub{color:var(--ink-2);max-width:70ch;margin:14px 0 0;font-size:16.5px}
+section{margin-top:54px}
+.sec__h{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-3);padding-bottom:9px;border-bottom:1px solid var(--edge);margin-bottom:22px}
+.sec__lede{color:var(--ink-2);max-width:76ch;margin:0 0 26px}
+.callout{background:var(--panel);border:1px solid var(--edge);border-left:3px solid var(--warn);
+  border-radius:0 8px 8px 0;padding:16px 18px;margin:0 0 26px;max-width:80ch}
+.callout p{margin:0 0 10px;color:var(--ink-2);font-size:14.5px}
+.callout p:last-child{margin-bottom:0}
+.callout b{color:var(--ink)}
+.rec{background:var(--panel);border:1px solid var(--edge);border-radius:10px;
+  padding:20px 22px;max-width:80ch}
+.rec h3{font-size:17px;margin-bottom:8px}
+.rec p{margin:0 0 11px;color:var(--ink-2)}
+.rec p:last-child{margin-bottom:0}
+.rec b{color:var(--ink)}
+.mono{font-family:'Cascadia Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12.5px}
+.row{display:flex;flex-wrap:wrap;gap:36px 24px;align-items:flex-start}
+.opt{margin:0;width:372px;flex:0 0 auto}
+.opt__cap{font-family:'Archivo',sans-serif;font-weight:700;font-size:16.5px;
+  margin-bottom:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.opt__cap .tag{font-size:9.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:#fff;background:var(--mark);border-radius:99px;padding:2px 8px}
+.opt__cap .tag--warn{background:var(--warn)}
+.opt__kind{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 11px}
+.opt__note{color:var(--ink-2);font-size:13.5px;line-height:1.55;margin:11px 3px 0}
+.opt__note b{color:var(--ink)}
+.ph{width:372px;border:1px solid var(--edge);border-radius:16px;overflow:hidden;
+  box-shadow:0 10px 26px rgba(19,26,34,.16)}
+
+/* =============================== the app exactly as it ships, above the fold ==== */
+.ph{
+  --page:#f3f6f8; --card:#f8fafb; --surface:#ffffff; --sunk:#eef2f6; --well:#e7ecf1;
+  --line:#dde4eb; --line-strong:#c9d2dc;
+  --pink:#131a22; --pink-2:#48535e; --pink-3:#5c6873;
+  --field:#28313d; --field-deep:#10151c; --on-field:#f2f6fa; --on-field-2:#97a5b3;
+  --accent:#2f6fed; --accent-deep:#1f56c4; --accent-wash:#eaf1fe; --accent-bright:#6a9bf5;
+  --good:#177541; --bad:#c33c2c; --lead:#ffd25a;
+  --display:'Archivo',Helvetica,Arial,sans-serif;
+  --ui:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --sh-1:0 1px 1px rgba(19,26,34,.04), 0 1px 3px rgba(19,26,34,.05);
+  background:var(--page);color:var(--pink);font-family:var(--ui);font-size:16px;
+  line-height:1.45;
+}
+.ph .num{font-variant-numeric:tabular-nums lining-nums;font-feature-settings:'tnum' 1}
+.apphdr{display:flex;align-items:center;gap:10px;padding:11px 13px;
+  background:var(--field);color:var(--on-field)}
+.apphdr__ttl{flex:1;font-family:var(--display);font-size:15px;font-weight:700}
+.apphdr__wk{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--on-field-2)}
+.scrn{padding:14px 12px 4px}
+.scrn__eye{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent-deep);margin:0 0 3px}
+.scrn__ttl{font-family:var(--display);font-size:27px;font-weight:700;letter-spacing:-.02em;
+  margin:0}
+.scrn__sub{font-size:12.5px;color:var(--pink-3);margin:5px 0 0}
+.stand{padding:10px 12px 0;display:grid;gap:8px}
+.srow{display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:10px;
+  background:var(--card);border:1px solid var(--line);box-shadow:var(--sh-1)}
+.srow.is-leader{border-color:var(--accent-bright);
+  background:linear-gradient(180deg,var(--accent-wash),var(--card) 62%)}
+.srow__pos{font-family:var(--display);font-size:15px;font-weight:700;color:var(--pink-3);
+  min-width:20px}
+.srow.is-leader .srow__pos{color:var(--accent-deep)}
+.srow__body{flex:1;min-width:0}
+.srow__name{display:block;font-family:var(--display);font-size:16px;font-weight:700}
+.srow__meta{display:block;font-size:11.5px;color:var(--pink-3);margin-top:1px}
+.srow__pts{display:block;font-family:var(--display);font-size:25px;font-weight:700;
+  color:var(--field);line-height:1;text-align:right}
+.srow__lbl{display:block;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--pink-3);text-align:right;margin-top:3px}
+.avatar{display:inline-grid;place-items:center;border-radius:50%;overflow:hidden;
+  color:#fff;font-family:var(--display);font-weight:700;flex:none}
+.avatar img{display:block}
+
+/* The join. Every option has one and it is the thing to look at: the shipped Slate
+   standings stop here and the skin starts. A seam that needs a label is a seam. */
+.seam{margin:14px 12px 2px;font-size:8.5px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;color:#b0560f;text-align:center}
+.seam i{display:block;height:1px;margin:5px 0;opacity:.5;
+  background:repeating-linear-gradient(90deg,#b0560f 0 5px,transparent 5px 10px)}
+
+/* ======================================================= S1  MEDIA GUIDE ==== */
+.s1 .sk{background:#f0e7d8;color:#1b1813;padding:20px 16px 22px;
+  background-image:
+    radial-gradient(circle at 20% 8%,rgba(120,90,50,.08),transparent 55%),
+    radial-gradient(circle at 86% 82%,rgba(120,90,50,.07),transparent 50%),
+    repeating-linear-gradient(94deg,rgba(90,70,40,.035) 0 1px,transparent 1px 3px)}
+.s1 .sk__kick{font-family:var(--display);font-size:9px;font-weight:700;letter-spacing:.26em;
+  text-transform:uppercase;color:#9c3218;margin:0 0 4px}
+.s1 .sk__hd{font-family:var(--display);font-size:31px;font-weight:800;letter-spacing:-.03em;
+  font-stretch:condensed;text-transform:uppercase;margin:0;line-height:.92}
+.s1 .sk__rule{border:0;border-top:3px solid #1b1813;border-bottom:1px solid #1b1813;
+  height:3px;margin:9px 0 2px;padding:0}
+.s1 .r{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;padding:11px 0 9px;
+  border-bottom:1px solid rgba(27,24,19,.18)}
+.s1 .r__k{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.11em;
+  text-transform:uppercase;flex:none;max-width:150px}
+.s1 .r__dots{flex:1;height:1px;transform:translateY(-3px);min-width:14px;
+  background:repeating-linear-gradient(90deg,rgba(27,24,19,.5) 0 1.5px,transparent 1.5px 5px)}
+.s1 .r__v{font-family:var(--display);font-size:29px;font-weight:800;font-stretch:condensed;
+  line-height:1;flex:none}
+.s1 .r__u{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#7d6a4e;margin-left:3px}
+.s1 .r__who{font-size:11.5px;font-style:italic;color:#5d5040;margin:3px 0 0;width:100%;
+  display:flex;align-items:center;gap:5px}
+.s1 .r--bad .r__v{color:#9c3218}
+.s1 .mk{width:19px;height:19px}
+.s1 .sk__cw{margin-top:16px;background:rgba(255,252,246,.55);
+  border:1px solid rgba(27,24,19,.22);padding:9px 10px 4px}
+.s1 .sk__ch{font-family:var(--display);font-size:10px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;margin:0 0 6px;color:#5d5040}
+
+/* ======================================================= S2  BULB BOARD ==== */
+.s2 .sk{background:#07090c;color:#f6e7c9;padding:20px 15px 22px;
+  background-image:
+    radial-gradient(circle at 50% 0%,rgba(255,176,32,.11),transparent 62%),
+    radial-gradient(circle at 1px 1px,rgba(255,176,32,.085) 1px,transparent 1.4px);
+  background-size:auto,9px 9px}
+.s2 .sk__hd{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:.15em;
+  font-stretch:condensed;text-transform:uppercase;color:#ffb020;margin:0;
+  text-shadow:0 0 12px rgba(255,176,32,.55)}
+.s2 .sk__bulbs{height:6px;margin:9px 0 14px;opacity:.75;
+  background:radial-gradient(circle at 3px 3px,#ffb020 1.7px,transparent 2.1px);
+  background-size:11px 6px}
+.s2 .r{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;
+  background:#0d1218;border:1px solid #1b232c;border-left:3px solid #ffb020;
+  padding:10px 12px;margin-bottom:8px}
+.s2 .r__k{font-family:var(--display);font-size:10px;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;color:#a08a63}
+.s2 .r__v{font-family:var(--display);font-size:32px;font-weight:800;line-height:.9;
+  color:#ffb020;text-align:right;text-shadow:0 0 14px rgba(255,176,32,.5);
+  animation:s2glow 3.4s ease-in-out infinite}
+.s2 .r--bad .r__v{color:#ff5f45;text-shadow:0 0 14px rgba(255,95,69,.45);animation:none}
+.s2 .r__who{font-family:var(--display);font-size:12.5px;font-weight:700;
+  letter-spacing:.03em;text-transform:uppercase;color:#f6e7c9;
+  display:flex;align-items:center;gap:6px}
+.s2 .r__u{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#a08a63;text-align:right}
+/* Never from 0: a backgrounded tab pauses the animation and a strip that started
+   invisible stays invisible. Same trap CLAUDE.md warns about for overlays. */
+@keyframes s2glow{0%,100%{opacity:1}47%{opacity:.84}53%{opacity:1}}
+.s2 .mk{width:19px;height:19px}
+.s2 .sk__cw{margin-top:14px;border:1px solid #1b232c;background:#0d1218;padding:9px 10px 4px}
+.s2 .sk__ch{font-family:var(--display);font-size:9.5px;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;margin:0 0 6px;color:#a08a63}
+
+/* ====================================================== S3  TURF & CHALK ==== */
+.s3 .sk{background:#16341e;color:#eaf2e6;padding:20px 15px 22px;position:relative;
+  background-image:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.022) 0 26px,transparent 26px 52px),
+    radial-gradient(ellipse at 50% -12%,rgba(255,255,255,.10),transparent 60%)}
+.s3 .sk::before{content:"";position:absolute;left:6px;top:58px;bottom:16px;width:7px;
+  background:repeating-linear-gradient(180deg,rgba(255,255,255,.32) 0 1px,transparent 1px 13px)}
+.s3 .sk__hd{font-family:var(--display);font-size:26px;font-weight:800;letter-spacing:.02em;
+  font-stretch:condensed;text-transform:uppercase;margin:0;color:#fff;
+  text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.s3 .sk__sub{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:#a9c4a5;margin:3px 0 15px}
+.s3 .r{margin:0 0 9px 16px;background:rgba(0,0,0,.26);border:1px dashed rgba(255,255,255,.34);
+  border-radius:3px;padding:10px 12px;display:grid;grid-template-columns:1fr auto;
+  align-items:center;gap:3px 10px}
+.s3 .r__k{font-family:var(--display);font-size:10px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:#a9c4a5}
+.s3 .r__v{font-family:var(--display);font-size:30px;font-weight:800;font-stretch:condensed;
+  line-height:.9;text-align:right;color:#fff}
+.s3 .r--bad .r__v{color:#ff8f7a}
+.s3 .r__u{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:#a9c4a5;text-align:right}
+.s3 .r__who{font-family:var(--display);font-size:13px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.03em;display:flex;align-items:center;gap:6px}
+.s3 .mk{width:19px;height:19px}
+.s3 .sk__cw{margin:14px 0 0 16px;background:rgba(0,0,0,.26);border-radius:3px;
+  border:1px dashed rgba(255,255,255,.34);padding:9px 10px 4px}
+.s3 .sk__ch{font-family:var(--display);font-size:9.5px;font-weight:700;letter-spacing:.17em;
+  text-transform:uppercase;margin:0 0 6px;color:#a9c4a5}
+
+/* ==================================================== S4  TRADING CARDS ==== */
+.s4 .sk{background:#0f1319;padding:18px 0 22px;
+  background-image:radial-gradient(ellipse at 50% 0%,rgba(120,150,220,.15),transparent 62%)}
+.s4 .sk__hd{font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:.13em;
+  text-transform:uppercase;color:#fff;margin:0 0 3px;padding:0 15px}
+.s4 .sk__sub{font-size:10.5px;color:#8391a5;margin:0 0 13px;padding:0 15px}
+.s4 .cards{display:flex;gap:11px;overflow-x:auto;padding:2px 15px 12px;scrollbar-width:none}
+.s4 .cards::-webkit-scrollbar{display:none}
+.s4 .card{flex:0 0 152px;border-radius:11px;padding:2px;overflow:hidden;
+  background:linear-gradient(150deg,#f6d97a,#b9892b 28%,#fff3c4 46%,#a8781f 62%,#f0cf6e)}
+.s4 .card__in{border-radius:9px;padding:11px 11px 12px;height:100%;position:relative;
+  overflow:hidden;background:linear-gradient(168deg,var(--c1),var(--c2))}
+.s4 .card__in::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,transparent 34%,rgba(255,255,255,.42) 50%,transparent 64%);
+  transform:translateX(-120%);animation:s4foil 4.6s ease-in-out infinite}
+@keyframes s4foil{0%,62%{transform:translateX(-120%)}92%,100%{transform:translateX(120%)}}
+.s4 .card__k{font-family:var(--display);font-size:8.5px;font-weight:800;letter-spacing:.15em;
+  text-transform:uppercase;color:rgba(255,255,255,.85);margin:0 0 5px;position:relative}
+.s4 .card__v{font-family:var(--display);font-size:40px;font-weight:800;line-height:.86;
+  color:#fff;margin:0;position:relative;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+.s4 .card__u{font-size:8.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:rgba(255,255,255,.82);margin:3px 0 9px;position:relative}
+.s4 .card__who{display:flex;align-items:center;gap:6px;position:relative;
+  border-top:1px solid rgba(255,255,255,.3);padding-top:8px;
+  font-family:var(--display);font-size:12px;font-weight:700;color:#fff;
+  text-transform:uppercase;letter-spacing:.02em}
+.s4 .mk{width:20px;height:20px}
+.s4 .sk__cw{margin:6px 15px 0;background:#161c25;border:1px solid #242d39;border-radius:9px;
+  padding:9px 10px 4px}
+.s4 .sk__ch{font-family:var(--display);font-size:9.5px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;margin:0 0 6px;color:#8391a5}
+
+/* ======================================================== S5  BROADCAST ==== */
+.s5 .sk{background:#10151c;color:#f2f6fa;padding:0 0 20px}
+.s5 .sk__band{background:#0a0e13;padding:11px 15px 10px;position:relative;overflow:hidden;
+  border-bottom:2px solid #2f6fed}
+.s5 .sk__band::after{content:"";position:absolute;top:0;bottom:0;left:0;width:58%;
+  background:linear-gradient(100deg,transparent,rgba(47,111,237,.32),transparent);
+  transform:translateX(-110%);animation:s5wipe 5s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes s5wipe{0%,58%{transform:translateX(-110%)}88%,100%{transform:translateX(290%)}}
+.s5 .sk__hd{font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:.14em;
+  font-stretch:condensed;text-transform:uppercase;margin:0;position:relative}
+.s5 .sk__sub{font-size:9.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:#97a5b3;margin:2px 0 0;position:relative}
+.s5 .r{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:11px;
+  min-height:56px;padding-right:14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.s5 .r__blk{align-self:stretch;display:grid;place-items:center;background:var(--c1);
+  clip-path:polygon(0 0,100% 0,86% 100%,0 100%)}
+.s5 .r__k{font-family:var(--display);font-size:9.5px;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;color:#97a5b3;display:block}
+.s5 .r__who{font-family:var(--display);font-size:15px;font-weight:700;font-stretch:condensed;
+  letter-spacing:.03em;text-transform:uppercase;display:block;margin-top:1px}
+.s5 .r__v{font-family:var(--display);font-size:27px;font-weight:800;line-height:1;
+  text-align:right;color:#ffd25a}
+.s5 .r--bad .r__v{color:#ff6a52}
+.s5 .r__u{font-size:8.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:#97a5b3;text-align:right;display:block;margin-top:2px}
+.s5 .mk{width:22px;height:22px}
+.s5 .sk__cw{margin:14px 14px 0;border:1px solid rgba(255,255,255,.1);
+  background:rgba(255,255,255,.04);padding:9px 10px 4px}
+.s5 .sk__ch{font-family:var(--display);font-size:9.5px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;margin:0 0 6px;color:#97a5b3}
+
+/* ====================================================== S6  TROPHY CASE ==== */
+.s6 .sk{padding:20px 15px 22px;color:#f3e9d8;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.34),transparent 22%),
+    repeating-linear-gradient(91deg,rgba(0,0,0,.10) 0 3px,transparent 3px 9px),
+    linear-gradient(160deg,#54331d,#3a2213 55%,#4a2d19)}
+.s6 .sk__hd{font-family:var(--display);font-size:21px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;margin:0 0 2px;color:transparent;
+  background:linear-gradient(180deg,#fbf0c4,#c9a139 52%,#8a6a1d);
+  -webkit-background-clip:text;background-clip:text;
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.5))}
+.s6 .sk__sub{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;
+  color:#b39a72;margin:0 0 14px}
+.s6 .r{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;
+  margin-bottom:9px;padding:10px 13px;border-radius:2px;color:#2c2210;
+  background:linear-gradient(176deg,#efe0af,#c7a95f 46%,#9d7f37);
+  box-shadow:0 2px 5px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.5),
+             inset 0 -1px 0 rgba(0,0,0,.28)}
+.s6 .r__k{font-family:var(--display);font-size:9.5px;font-weight:800;letter-spacing:.17em;
+  text-transform:uppercase;color:#6b5526;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.s6 .r__v{font-family:var(--display);font-size:28px;font-weight:800;line-height:.92;
+  text-align:right;text-shadow:0 1px 0 rgba(255,255,255,.45)}
+.s6 .r--bad .r__v{color:#7d2010}
+.s6 .r__u{font-size:8.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
+  color:#6b5526;text-align:right}
+.s6 .r__who{font-family:var(--display);font-size:13px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.03em;display:flex;align-items:center;gap:6px;
+  text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.s6 .mk{width:19px;height:19px}
+.s6 .sk__cw{margin-top:15px;padding:10px 11px 5px;border-radius:3px;
+  background:linear-gradient(170deg,#123a22,#0c2717);
+  box-shadow:inset 0 0 22px rgba(0,0,0,.55),0 1px 0 rgba(255,255,255,.09)}
+.s6 .sk__ch{font-family:var(--display);font-size:9.5px;font-weight:700;letter-spacing:.17em;
+  text-transform:uppercase;margin:0 0 6px;color:#b39a72}
+
+/* ---------------------------------------------------------------- the chart ---- */
+.cw{width:100%;height:76px;display:block}
