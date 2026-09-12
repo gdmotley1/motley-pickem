@@ -5,6 +5,7 @@ import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx
 import { formGeometry, seasonStats } from '../lib/seasonStats.js'
 import { onDark } from '../lib/onDark.js'
 import { GROUPS, seasonRecords } from '../lib/seasonRecords.js'
+import { ICONS, ICON_CREDIT, TIER } from '../lib/badgeIcons.js'
 
 /**
  * The whole year: totals, who took each week, form, and the records so far.
@@ -52,8 +53,6 @@ export default function Season() {
     [rows, roster],
   )
 
-  /* The record book is the whole reason 015 exists. It is derived from the picks, not
-     from the aggregates above, so it is computed separately and joined only on screen. */
   /* Eight of the twelve records come from the same rows the standings do, so the book
      needs `picks` only for the last four and renders without them. That is what keeps it
      from being empty before migration 015 is pasted. */
@@ -86,13 +85,11 @@ export default function Season() {
           <div key={p.id} className={`srow${p.rank === 1 ? ' is-leader' : ''}`}>
             <span className="srow__pos num">{p.rank}</span>
             <Avatar name={p.name} color={p.color} teamId={p.team_id} size={36} />
+            {/* Rank, name, points. The record and the weeks won used to sit here too
+                and are now the "Best overall record" and "Most weeks won" badges, so the
+                same number is not printed twice on one screen. */}
             <span className="srow__body">
               <span className="srow__name">{p.name}</span>
-              <span className="srow__meta num">
-                {p.correct}-{p.wrong} · {p.accuracy}%
-                {p.weeksWon > 0 &&
-                  ` · ${p.weeksWon} ${p.weeksWon === 1 ? 'week' : 'weeks'} won`}
-              </span>
             </span>
             <span>
               <span className="srow__pts num">{p.points}</span>
@@ -103,9 +100,11 @@ export default function Season() {
       </div>
 
       <Form form={stats.form} played={stats.played} />
-      <Weeks weeks={stats.weeks} />
-      <Ranking players={stats.players} />
       <Book book={book} />
+
+      {/* CC BY 3.0 requires this. It is a condition of using the artwork, not a
+          courtesy, and tests/test_records.py fails if it disappears. */}
+      {book?.records.length > 0 && <p className="credit">{ICON_CREDIT}</p>}
     </Screen>
   )
 }
@@ -189,60 +188,6 @@ function Form({ form, played }) {
   )
 }
 
-function Weeks({ weeks }) {
-  const graded = weeks.filter((w) => w.graded)
-  if (!graded.length) return null
-  return (
-    <>
-      <div className="screen">
-        <h3 className="h2">Week by week</h3>
-        <p className="sub">Who took each week, and on what.</p>
-      </div>
-      <div className="wks">
-        {graded.map((w) => (
-          <div className="wk" key={w.week_no}>
-            <span className="wk__n">{w.label}</span>
-            <span className="wk__w">
-              {list(w.winners.map((x) => x.name))}
-              {w.shared && <span className="chip chip--accent">shared</span>}
-            </span>
-            <span className="wk__p num">{w.best}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
-function Ranking({ players }) {
-  const sorted = [...players].sort((a, b) => b.captured - a.captured)
-  return (
-    <>
-      <div className="screen">
-        <h3 className="h2">Ranking over the season</h3>
-        <p className="sub">
-          Points banked against the sum of every week&apos;s ceiling. Who is best at
-          ordering their confidence, separately from who is best at picking.
-        </p>
-      </div>
-      <div className="bars">
-        {sorted.map((p) => (
-          <div className="bar" key={p.id}>
-            <span className="bar__name">{p.name}</span>
-            <span className="bar__track">
-              {/* The track is --well, which in book mode is the deepest wood in the
-                  palette. Same lift as the chart, against that ground rather than felt. */}
-              <span className="bar__fill"
-                    style={{ width: `${p.captured}%`, background: onDark(p.color, '#241409') }} />
-            </span>
-            <span className="bar__val num">{p.captured}%</span>
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-
 /**
  * The record book.
  *
@@ -289,16 +234,37 @@ function holderLine(r) {
   return list(r.holders)
 }
 
-/** One record: label, number, who. */
+/**
+ * One record, as an enamel pin.
+ *
+ * A hard enamel pin is three things and nothing else: a die-struck metal rim, flat enamel
+ * poured inside it, and one hard crescent where the light catches the polish. The enamel
+ * has no gradient of its own; all of it lives in the rim, which is a conic gradient rather
+ * than a linear one because that is the difference between metal that looks painted and
+ * metal that looks turned.
+ *
+ * The glyph is not ours. See src/lib/badgeIcons.js: three passes of hand-drawn SVG were
+ * rejected, and these are by four illustrators off game-icons.net under CC BY 3.0.
+ * dangerouslySetInnerHTML is safe here because the strings are build-time constants from
+ * a vendored file, never anything a player can reach.
+ *
+ * Plating is the difficulty tier. An unclaimed record is not a dim pin, it is the empty
+ * socket the pin would go in, so you can see what is missing.
+ */
 function Plate({ r }) {
   const [held] = r.rows
+  const tier = TIER[r.key] || 1
   return (
-    <div className={`rec${r.unclaimed ? ' is-open' : ''}`}>
-      <p className="rec__k">{r.label}</p>
-      <p className="rec__v num">{r.unclaimed ? '—' : held.display}</p>
-      <p className="rec__who">
-        <span className="rec__wn">{holderLine(r)}</span>
-      </p>
+    <div className={`pin pin--t${tier}${r.unclaimed ? ' is-open' : ''}`}>
+      <span className="pin__disc">
+        <span className="pin__field">
+          <svg className="pin__ico" viewBox="0 0 512 512" aria-hidden="true"
+               dangerouslySetInnerHTML={{ __html: ICONS[r.key] || '' }} />
+        </span>
+      </span>
+      <p className="pin__k">{r.label}</p>
+      <p className="pin__v num">{r.unclaimed ? '—' : held.display}</p>
+      <p className="pin__who">{holderLine(r)}</p>
     </div>
   )
 }

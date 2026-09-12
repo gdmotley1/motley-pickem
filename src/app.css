@@ -3543,513 +3543,304 @@
 /* ==========================================================================
    BOOK MODE  ·  what a flat token cannot say
    ==========================================================================
-   theme.css already re-skinned every component by redefining the semantic tokens, which
-   is most of this mode and cost no component a single line. Three things are left, and
-   all three are left for the same reason: they are GRADIENTS, and a custom property in
-   this codebase holds one colour.
+   theme.css already re-skinned every component by redefining the semantic tokens. What is
+   left here is what a custom property cannot hold: the wool weave, and the two places the
+   wool has to change character.
 
-     the case   wood, with grain
-     the plate  brass, lit from the top edge
-     the well   felt, lit from nowhere
+   This block used to be three gradients: wood grain, brass plates, felt wells. The plates
+   are gone because the records are enamel pins now and carry their own metal, and the wood
+   is gone because Grant killed it on 2026-09-11: "the gold and brown really don't look
+   good together." Navy took the brown's place and brass survived as the accent. */
 
-   Plus the one place Slate's contract does not survive the move. Slate assumes --ink
-   reads on both --page and --card because both are light; here the page is dark wood and
-   a card is a light brass plate, so --ink is what is engraved into brass and --on-wood is
-   for the handful of things sitting on the case itself. Those are listed below and there
-   is no way around listing them, so tests/test_book_mode.py measures every text node on
-   the Season screen against its real background instead of trusting the list. */
-
-/* --- the case ------------------------------------------------------------
-   Grain, not stripes. Three repeating gradients at different periods and under 6% each,
-   because v1 painted yard lines behind the sign-in at a contrast you could count and
-   they read as wireframe banding on a phone. The lesson from that is not "no texture",
-   it is "no texture with a countable period". */
+/* --- the wool ------------------------------------------------------------
+   A weave, not a stripe. Two fine cross-hatches at opposing angles, both under 5%, plus
+   one soft light from above. The app has been burned once by drawn-on texture reading as
+   wireframe banding on a phone, so the rule is the same as it was for the yard lines: no
+   texture with a period you can count. At 3px and 52 degrees these cross and cancel. */
 .app[data-mode='book'] {
-  background-color: var(--wood-800);
+  /* Re-resolve the inherited text colour, and this is not belt and braces.
+     `body` sets `color: var(--ink)`, which resolves there against SLATE's near-black and
+     then inherits into this subtree as a fixed literal: custom properties cascade down,
+     an already-computed `color` does not re-resolve. Under wood it went unnoticed because
+     the plates were light brass and dark ink was right on them. Wool made every surface
+     dark and the whole screen went dark-on-dark: the title, three of the four names, and
+     every number on a badge. One line, and it has to be here rather than on body. */
+  color: var(--ink);
+  background-color: var(--wool-700);
   background-image:
-    repeating-linear-gradient(91deg, rgba(0, 0, 0, 0.055) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(89.4deg, rgba(255, 226, 170, 0.035) 0 1px, transparent 1px 13px),
-    repeating-linear-gradient(90.6deg, rgba(0, 0, 0, 0.045) 0 3px, transparent 3px 23px),
-    linear-gradient(168deg, var(--wood-700), var(--wood-800) 45%, var(--wood-900));
+    repeating-linear-gradient(52deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-52deg, rgba(0, 0, 0, 0.045) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 55% at 50% -6%, #1C2C48, transparent 62%);
   background-attachment: fixed;
 }
 
-/* The header and the tab bar are the case's frame, so they get the end grain: darker,
-   and lit along the edge that meets the page. This is the half of the mode that makes
-   walking into Season feel like a room change rather than a themed panel. */
+/* The header and the tab bar are the frame the wool is stretched over: same weave, darker
+   bolt, with a brass hairline where they meet the page. This is the half of the mode that
+   makes walking into Season feel like a room change rather than a themed panel. */
 .app[data-mode='book'] .apphdr {
   background-image:
-    repeating-linear-gradient(91deg, rgba(0, 0, 0, 0.09) 0 2px, transparent 2px 6px),
-    linear-gradient(180deg, var(--wood-700), var(--field-deep));
+    repeating-linear-gradient(52deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, var(--wool-700), var(--field-deep));
   border-bottom: 1px solid var(--brass-700);
-  box-shadow: 0 1px 0 rgba(255, 226, 170, 0.14) inset, 0 4px 14px rgba(12, 6, 1, 0.5);
+  box-shadow: inset 0 1px 0 rgba(246, 228, 180, 0.1), 0 4px 14px rgba(3, 7, 14, 0.5);
 }
 
 .app[data-mode='book'] .tabbar {
   background-image:
-    repeating-linear-gradient(91deg, rgba(0, 0, 0, 0.09) 0 2px, transparent 2px 6px),
-    linear-gradient(0deg, var(--wood-700), var(--field-deep));
+    repeating-linear-gradient(52deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
+    linear-gradient(0deg, var(--wool-700), var(--field-deep));
   border-top: 1px solid var(--brass-700);
 }
 
-/* --- the plate -----------------------------------------------------------
-   Every --card surface on the Season tab at once: the standings rows, the record tiles,
-   the week ledger. Screwed to the wall and lit from above, which is three inset edges
-   and a real drop shadow. Slate's elevation is a cool 4% wash and is invisible on wood. */
-.app[data-mode='book'] .srow,
-.app[data-mode='book'] .tile,
-.app[data-mode='book'] .rec,
-.app[data-mode='book'] .wk {
-  background-image: linear-gradient(176deg, var(--brass-100), var(--brass-300) 44%, var(--brass-500));
-  border-color: var(--brass-700);
-  border-radius: 3px;
-  box-shadow:
-    0 2px 5px rgba(12, 6, 1, 0.45),
-    inset 0 1px 0 rgba(255, 252, 236, 0.62),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.24);
-}
-
-/* Engraved, not printed: a light edge below the stroke is the whole trick. */
-.app[data-mode='book'] .srow__name,
-.app[data-mode='book'] .srow__pts,
-.app[data-mode='book'] .tile__v,
-.app[data-mode='book'] .rec__v,
-.app[data-mode='book'] .wk__w {
-  text-shadow: 0 1px 0 rgba(255, 252, 236, 0.5);
-}
-
-/* First place. Gold cannot mark the leader in a case made of gold, so the leading plate
-   is the one cut from deeper brass with a felt-green seed, and it is the only plate that
-   carries the case's own colour. */
-.app[data-mode='book'] .srow.is-leader {
-  background-image: linear-gradient(176deg, #fdf7e0, #f0dca6 40%, #d6b04a);
-  border-color: var(--lead);
-  box-shadow:
-    0 3px 8px rgba(12, 6, 1, 0.5),
-    inset 0 1px 0 rgba(255, 255, 248, 0.8),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-    0 0 0 1px rgba(15, 74, 41, 0.35);
-}
-
-.app[data-mode='book'] .srow__pts {
-  color: var(--ink);
-}
-
-/* The leader's rank number. Slate gives it --accent-deep, which here is a dark gold on a
-   gold plate: 2.62:1 at the foot of the leader's own gradient, the worst reading on the
-   screen. Green is the answer twice over. It is the only colour in the case that is
-   neither brass nor wood, so it can actually be seen; and it is already the felt and
-   already this plate's border, so first place reads as one idea instead of two. */
-.app[data-mode='book'] .srow.is-leader .srow__pos {
-  color: var(--lead);
-}
-
-/* The tab bar. This is the one the token walk could never have caught: in Slate the bar
-   is a light card and its labels take --ink-3, and book mode turned the bar into dark
-   wood and left the labels alone. 2.10:1, on the app's primary navigation. The bar is
-   chrome now, so its labels take the chrome's ink. */
+/* The tab bar labels. In Slate the bar is a light card so they take --ink-3; the bar is
+   dark wool here, and this exact line was 2.10:1 on the app's primary navigation before
+   a DOM contrast walk caught it. */
 .app[data-mode='book'] .tabbar__btn {
   color: var(--on-field-2);
 }
 
 .app[data-mode='book'] .tabbar__btn.is-on {
-  color: var(--ink);
-  background: var(--brass-200);
+  color: var(--field-deep);
+  background: var(--brass-300);
 }
 
-/* --- the well ------------------------------------------------------------
-   Felt, for the two things that are set INTO the case rather than onto it: the chart and
-   the progress tracks. Lit from nowhere, so the shadow is inset on every side. */
-.app[data-mode='book'] .chartwrap {
-  margin: 2px 12px 0;
-  padding: 10px 10px 4px;
+/* --- the standings, the one panel left -----------------------------------
+   Wool with a stitched edge rather than a plate, because the pins below are where all
+   the metal in this mode lives and two metals fight. */
+.app[data-mode='book'] .srow {
+  background-image: linear-gradient(176deg, var(--wool-600), var(--wool-700));
+  border-color: var(--stitch);
   border-radius: 3px;
-  background-image: linear-gradient(170deg, var(--felt-700), var(--felt-800));
-  box-shadow:
-    inset 0 0 24px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 226, 170, 0.1);
+  box-shadow: 0 2px 5px rgba(3, 7, 14, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.app[data-mode='book'] .bar__track {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
-/* --- text sitting on the case itself -------------------------------------
-   The exhaustive list, and the reason test_book_mode.py exists: an exhaustive list is
-   exactly the kind of thing that is right the day it is written. Everything NOT here is
-   on a plate or in a well and takes --ink from the tokens. */
-.app[data-mode='book'] .h1,
-.app[data-mode='book'] .h2,
-.app[data-mode='book'] .bar__name {
-  color: var(--on-wood);
-}
-
-.app[data-mode='book'] .sub,
-.app[data-mode='book'] .bar__val,
-.app[data-mode='book'] .legend__i {
-  color: var(--on-wood-2);
-}
-
-.app[data-mode='book'] .chart__tick {
-  fill: var(--on-wood-3);
-}
-
-.app[data-mode='book'] .chart__grid {
-  stroke: rgba(255, 226, 170, 0.16);
-}
-
-/* The eyebrow is the one that must not take --accent-deep. On wood that gold is 2.1:1
-   and it is the first line on the screen. */
-.app[data-mode='book'] .eyebrow {
-  color: var(--accent-bright);
-}
-
-/* Engraved into the case, the way the section headings on a trophy wall are. Gold
-   gradient type needs a dark drop below it or it floats. */
-.app[data-mode='book'] .h2 {
-  background: linear-gradient(180deg, #fbf0c4, #c9a139 54%, #8a6a1d);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55));
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  font-size: 16px;
-  font-stretch: condensed;
-}
-
-/* ==================================================== the record book ==== */
-/* Squares. Label, number, who.
-   
-   These were tall cards carrying the holder plus the other three players, which Grant
-   asked for and then reversed within the hour on 2026-09-11: "make the record simple,
-   easy to understand. We don't need to see everyone's scores. They should just be basic
-   and little squares, not long old cards." Seventeen records times four names was
-   sixty-eight numbers on one screen, and a record book you have to read is not one.
-
-   Two columns rather than three. Three fits on a 390px phone only by taking the value
-   down to about 17px, and the value is the entire reason the tile exists; two columns
-   holds 24px and still fits "20-POINT DISASTER" on two label lines. Written in Slate
-   tokens, so book mode re-skins it through theme.css with no rule of its own. */
-.recs {
-  padding: 0 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.rec {
-  padding: 10px 11px 9px;
-  border-radius: var(--r-lg);
-  background: var(--card);
-  border: 1px solid var(--line);
-  box-shadow: var(--sh-1);
-  /* Every tile the same height whatever its label wraps to, so the grid reads as a wall
-     of squares rather than as a ragged list. */
-  display: flex;
-  flex-direction: column;
-  min-height: 82px;
-}
-
-.rec__k {
-  margin: 0;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  line-height: 1.25;
-  color: var(--ink-3);
-}
-
-/* Pushed to the bottom of the tile by the margin above it, so the numbers line up across
-   a row even when one label wraps to two lines and its neighbour does not. */
-.rec__v {
-  margin: auto 0 0;
-  font-family: var(--display);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.05;
-}
-
-.rec__who {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin: 2px 0 0;
-  min-width: 0;
-  font-size: 11px;
-  color: var(--ink-3);
-}
-
-/* flex:1 and min-width:0 are what make the ellipsis real. Without them this sizes to its
-   own text inside the flex row, so it never overflows itself, the ellipsis never fires,
-   and a long name pushes the row wider instead of truncating. It measured as "not
-   clipped" for exactly that reason, which is the failure mode of checking scrollWidth on
-   a shrink-to-fit box. */
-.rec__wn {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* A record nobody has set yet. Dimmed, and only the number: the label still has to be
-   readable, because an unclaimed record is an invitation and needs to say what it is. */
-.rec.is-open .rec__v {
-  opacity: 0.5;
-}
-
-/* ==========================================================================
-   BOOK MODE  ·  what a flat token cannot say
-   ==========================================================================
-   theme.css already re-skinned every component by redefining the semantic tokens, which
-   is most of this mode and cost no component a single line. Three things are left, and
-   all three are left for the same reason: they are GRADIENTS, and a custom property in
-   this codebase holds one colour.
-
-     the case   wood, with grain
-     the plate  brass, lit from the top edge
-     the well   felt, lit from nowhere
-
-   Plus the one place Slate's contract does not survive the move. Slate assumes --ink
-   reads on both --page and --card because both are light; here the page is dark wood and
-   a card is a light brass plate, so --ink is what is engraved into brass and --on-wood is
-   for the handful of things sitting on the case itself. Those are listed below and there
-   is no way around listing them, so tests/test_book_mode.py measures every text node on
-   the Season screen against its real background instead of trusting the list. */
-
-/* --- the case ------------------------------------------------------------
-   Grain, not stripes. Three repeating gradients at different periods and under 6% each,
-   because v1 painted yard lines behind the sign-in at a contrast you could count and
-   they read as wireframe banding on a phone. The lesson from that is not "no texture",
-   it is "no texture with a countable period". */
-.app[data-mode='book'] {
-  background-color: var(--wood-800);
-  background-image:
-    repeating-linear-gradient(91deg, rgba(0, 0, 0, 0.055) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(89.4deg, rgba(255, 226, 170, 0.035) 0 1px, transparent 1px 13px),
-    repeating-linear-gradient(90.6deg, rgba(0, 0, 0, 0.045) 0 3px, transparent 3px 23px),
-    linear-gradient(168deg, var(--wood-700), var(--wood-800) 45%, var(--wood-900));
-  background-attachment: fixed;
-}
-
-/* The header and the tab bar are the case's frame, so they get the end grain: darker,
-   and lit along the edge that meets the page. This is the half of the mode that makes
-   walking into Season feel like a room change rather than a themed panel. */
-.app[data-mode='book'] .apphdr {
-  background-image:
-    repeating-linear-gradient(91deg, rgba(0, 0, 0, 0.09) 0 2px, transparent 2px 6px),
-    linear-gradient(180deg, var(--wood-700), var(--field-deep));
-  border-bottom: 1px solid var(--brass-700);
-  box-shadow: 0 1px 0 rgba(255, 226, 170, 0.14) inset, 0 4px 14px rgba(12, 6, 1, 0.5);
-}
-
-.app[data-mode='book'] .tabbar {
-  background-image:
-    repeating-linear-gradient(91deg, rgba(0, 0, 0, 0.09) 0 2px, transparent 2px 6px),
-    linear-gradient(0deg, var(--wood-700), var(--field-deep));
-  border-top: 1px solid var(--brass-700);
-}
-
-/* --- the plate -----------------------------------------------------------
-   Every --card surface on the Season tab at once: the standings rows, the record tiles,
-   the week ledger. Screwed to the wall and lit from above, which is three inset edges
-   and a real drop shadow. Slate's elevation is a cool 4% wash and is invisible on wood. */
-.app[data-mode='book'] .srow,
-.app[data-mode='book'] .tile,
-.app[data-mode='book'] .rec,
-.app[data-mode='book'] .wk {
-  background-image: linear-gradient(176deg, var(--brass-100), var(--brass-300) 44%, var(--brass-500));
-  border-color: var(--brass-700);
-  border-radius: 3px;
-  box-shadow:
-    0 2px 5px rgba(12, 6, 1, 0.45),
-    inset 0 1px 0 rgba(255, 252, 236, 0.62),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.24);
-}
-
-/* Engraved, not printed: a light edge below the stroke is the whole trick. */
-.app[data-mode='book'] .srow__name,
-.app[data-mode='book'] .srow__pts,
-.app[data-mode='book'] .tile__v,
-.app[data-mode='book'] .rec__v,
-.app[data-mode='book'] .wk__w {
-  text-shadow: 0 1px 0 rgba(255, 252, 236, 0.5);
-}
-
-/* First place. Gold cannot mark the leader in a case made of gold, so the leading plate
-   is the one cut from deeper brass with a felt-green seed, and it is the only plate that
-   carries the case's own colour. */
+/* First place gets the polished brass, which is the only thing in the mode that does. */
 .app[data-mode='book'] .srow.is-leader {
-  background-image: linear-gradient(176deg, #fdf7e0, #f0dca6 40%, #d6b04a);
-  border-color: var(--lead);
-  box-shadow:
-    0 3px 8px rgba(12, 6, 1, 0.5),
-    inset 0 1px 0 rgba(255, 255, 248, 0.8),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-    0 0 0 1px rgba(15, 74, 41, 0.35);
+  background-image: linear-gradient(176deg, #22344F, var(--wool-600));
+  border-color: var(--brass-300);
+  box-shadow: 0 2px 6px rgba(3, 7, 14, 0.5), inset 0 1px 0 rgba(246, 228, 180, 0.18);
 }
 
+/* The points. Slate paints these --field, its dark chrome, which is correct on a white
+   card and 1.08:1 on wool. This is the same class of bug as the inherited `color` above:
+   a token whose value is right for the surface it was written against. */
 .app[data-mode='book'] .srow__pts {
   color: var(--ink);
 }
 
-/* The leader's rank number. Slate gives it --accent-deep, which here is a dark gold on a
-   gold plate: 2.62:1 at the foot of the leader's own gradient, the worst reading on the
-   screen. Green is the answer twice over. It is the only colour in the case that is
-   neither brass nor wood, so it can actually be seen; and it is already the felt and
-   already this plate's border, so first place reads as one idea instead of two. */
-.app[data-mode='book'] .srow.is-leader .srow__pos {
+.app[data-mode='book'] .srow.is-leader .srow__pos,
+.app[data-mode='book'] .srow.is-leader .srow__pts {
   color: var(--lead);
 }
 
-/* The tab bar. This is the one the token walk could never have caught: in Slate the bar
-   is a light card and its labels take --ink-3, and book mode turned the bar into dark
-   wood and left the labels alone. 2.10:1, on the app's primary navigation. The bar is
-   chrome now, so its labels take the chrome's ink. */
-.app[data-mode='book'] .tabbar__btn {
-  color: var(--on-field-2);
-}
-
-.app[data-mode='book'] .tabbar__btn.is-on {
-  color: var(--ink);
-  background: var(--brass-200);
-}
-
-/* --- the well ------------------------------------------------------------
-   Felt, for the two things that are set INTO the case rather than onto it: the chart and
-   the progress tracks. Lit from nowhere, so the shadow is inset on every side. */
+/* --- the chart, set into the wool ---------------------------------------- */
 .app[data-mode='book'] .chartwrap {
   margin: 2px 12px 0;
   padding: 10px 10px 4px;
   border-radius: 3px;
-  background-image: linear-gradient(170deg, var(--felt-700), var(--felt-800));
-  box-shadow:
-    inset 0 0 24px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 226, 170, 0.1);
+  background-image: linear-gradient(170deg, var(--wool-800), var(--wool-900));
+  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(246, 228, 180, 0.08);
 }
 
-.app[data-mode='book'] .bar__track {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
+/* --- headings ------------------------------------------------------------
+   Brass caps. The wood version used gradient-clipped gold type with a drop shadow, which
+   needed the brown behind it to read as engraving; on wool it just looked smudged. */
+.app[data-mode='book'] .h2 {
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 13px;
+  font-stretch: condensed;
 }
 
-/* --- text sitting on the case itself -------------------------------------
-   The exhaustive list, and the reason test_book_mode.py exists: an exhaustive list is
-   exactly the kind of thing that is right the day it is written. Everything NOT here is
-   on a plate or in a well and takes --ink from the tokens. */
-.app[data-mode='book'] .h1,
-.app[data-mode='book'] .h2,
-.app[data-mode='book'] .bar__name {
-  color: var(--on-wood);
-}
-
-.app[data-mode='book'] .sub,
-.app[data-mode='book'] .bar__val,
-.app[data-mode='book'] .legend__i {
-  color: var(--on-wood-2);
-}
-
-.app[data-mode='book'] .chart__tick {
-  fill: var(--on-wood-3);
-}
-
-.app[data-mode='book'] .chart__grid {
-  stroke: rgba(255, 226, 170, 0.16);
-}
-
-/* The eyebrow is the one that must not take --accent-deep. On wood that gold is 2.1:1
-   and it is the first line on the screen. */
 .app[data-mode='book'] .eyebrow {
   color: var(--accent-bright);
 }
 
-/* Engraved into the case, the way the section headings on a trophy wall are. Gold
-   gradient type needs a dark drop below it or it floats. */
-.app[data-mode='book'] .h2 {
-  background: linear-gradient(180deg, #fbf0c4, #c9a139 54%, #8a6a1d);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55));
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  font-size: 16px;
-  font-stretch: condensed;
+.app[data-mode='book'] .chart__grid {
+  stroke: rgba(246, 228, 180, 0.13);
 }
 
 /* ==================================================== the record book ==== */
-/* Squares. Label, number, who.
-   
-   These were tall cards carrying the holder plus the other three players, which Grant
-   asked for and then reversed within the hour on 2026-09-11: "make the record simple,
-   easy to understand. We don't need to see everyone's scores. They should just be basic
-   and little squares, not long old cards." Seventeen records times four names was
-   sixty-eight numbers on one screen, and a record book you have to read is not one.
+/* Enamel pins, three squares to a row.
 
-   Two columns rather than three. Three fits on a 390px phone only by taking the value
-   down to about 17px, and the value is the entire reason the tile exists; two columns
-   holds 24px and still fits "20-POINT DISASTER" on two label lines. Written in Slate
-   tokens, so book mode re-skins it through theme.css with no rule of its own. */
+   These were flat brass tiles, then flat brass tiles with hand-drawn glyphs, and the
+   verdict on both was that they looked like AI slop. They were right: the drawings were
+   thin geometric paths. The artwork is now by four illustrators off game-icons.net and
+   the only thing left of mine is the pin around it.
+
+   A pin is a rim, an enamel, and one crescent of polish. The enamel is FLAT, because
+   enamel is; every gradient lives in the rim, and the rim is conic rather than linear
+   because that is what makes metal look turned rather than painted. */
 .recs {
   padding: 0 12px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px 6px;
 }
 
-.rec {
-  padding: 10px 11px 9px;
-  border-radius: var(--r-lg);
-  background: var(--card);
-  border: 1px solid var(--line);
-  box-shadow: var(--sh-1);
-  /* Every tile the same height whatever its label wraps to, so the grid reads as a wall
-     of squares rather than as a ragged list. */
+.pin {
   display: flex;
   flex-direction: column;
-  min-height: 82px;
+  align-items: center;
+  min-width: 0;
 }
 
-.rec__k {
-  margin: 0;
-  font-size: 9px;
+.pin__disc {
+  position: relative;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  background: var(--pin-metal);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.32);
+}
+
+/* The post. Every pin is pinned to something. */
+.pin__disc::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 5px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(180deg, #8b97a5, #3e4753);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.pin__field {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--pin-enamel);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.45);
+}
+
+/* The polish. One hard crescent top-left, where a domed pin catches a ceiling light.
+   Static: twelve of these animating at once would be a disco, not a record book. */
+.pin__field::after {
+  content: '';
+  position: absolute;
+  left: -18%;
+  top: -38%;
+  width: 96%;
+  height: 78%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.32),
+    rgba(255, 255, 255, 0.05) 58%,
+    transparent 70%
+  );
+}
+
+.pin__ico {
+  width: 74%;
+  height: 74%;
+  display: block;
+  position: relative;
+  z-index: 1;
+  color: var(--pin-glyph);
+}
+
+.pin__k {
+  margin: 9px 0 0;
+  font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+  text-align: center;
   line-height: 1.25;
   color: var(--ink-3);
 }
 
-/* Pushed to the bottom of the tile by the margin above it, so the numbers line up across
-   a row even when one label wraps to two lines and its neighbour does not. */
-.rec__v {
-  margin: auto 0 0;
-  font-family: var(--display);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.05;
-}
-
-.rec__who {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.pin__v {
   margin: 2px 0 0;
-  min-width: 0;
-  font-size: 11px;
-  color: var(--ink-3);
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
 }
 
-/* flex:1 and min-width:0 are what make the ellipsis real. Without them this sizes to its
-   own text inside the flex row, so it never overflows itself, the ellipsis never fires,
-   and a long name pushes the row wider instead of truncating. It measured as "not
-   clipped" for exactly that reason, which is the failure mode of checking scrollWidth on
-   a shrink-to-fit box. */
-.rec__wn {
-  flex: 1;
-  min-width: 0;
+.pin__who {
+  margin: 0;
+  font-size: 10px;
+  text-align: center;
+  color: var(--ink-3);
+  line-height: 1.3;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* The four platings. Difficulty, as a material. */
+.pin--t1 {
+  --pin-metal: conic-gradient(from 215deg, #6e7a88, #dde5ec, #8d98a6, #f2f6fa, #6e7a88);
+  --pin-enamel: #16253d;
+  --pin-glyph: #e8eff7;
+}
+.pin--t2 {
+  --pin-metal: conic-gradient(from 215deg, #8a6118, #f6da9c, #b98a2e, #fff0c8, #8a6118);
+  --pin-enamel: #7a2018;
+  --pin-glyph: #ffe9df;
+}
+.pin--t3 {
+  --pin-metal: conic-gradient(from 215deg, #171c24, #5c6675, #242b35, #78838f, #171c24);
+  --pin-enamel: #2b1a46;
+  --pin-glyph: #eaddff;
+}
+.pin--t4 {
+  --pin-metal: conic-gradient(from 215deg, #8a5e06, #ffeeb8, #c79a24, #fffbe8, #8a5e06);
+  --pin-enamel: #4a3000;
+  --pin-glyph: #ffe9a8;
+}
+.pin--t4 .pin__disc {
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.32),
+    0 0 20px rgba(255, 217, 118, 0.4);
+}
+
+/* Unclaimed. Not a dim pin: the empty socket the pin goes in, with the shape showing
+   through so you can see what is missing. */
+.pin.is-open .pin__disc {
+  background: none;
+  border: 2px dashed rgba(226, 196, 120, 0.45);
+  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.65);
+}
+.pin.is-open .pin__disc::after {
+  display: none;
+}
+.pin.is-open .pin__field {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: none;
+}
+.pin.is-open .pin__field::after {
+  display: none;
+}
+.pin.is-open .pin__ico {
+  opacity: 0.34;
+}
+
+/* CC BY 3.0 is a condition of using the artwork. */
+.credit {
+  margin: 26px 14px 0;
+  font-size: 9.5px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ink-3);
 }

@@ -143,120 +143,113 @@
 }
 
 /* ==========================================================================
-   BOOK MODE  ·  the trophy case
+   BOOK MODE  ·  navy wool
    ==========================================================================
-   Option S6 from outputs/season-board.html, chosen by Grant on 2026-09-11 out of six:
-   "the wood and gold is awesome... have the whole app kinda go into a different mode
-   almost, like, it feels like a record book."
+   Was wood and brass, chosen 2026-09-11 and killed the same day: "the gold and brown
+   really don't look good together." The gold was never the problem, the brown was. Gold
+   on near-black or on navy is a century of trophy cabinets; gold on mid-brown is a picture
+   frame from a hotel corridor.
+
+   So the case is navy wool now, off a letterman jacket, and brass survives as the accent
+   only. The record badges are enamel pins with their own plating, which is where all the
+   metal went; see .pin in app.css and src/lib/badgeIcons.js.
+
+   ONE THING GOT SIMPLER AND IT IS WORTH SAYING WHY.
+
+   Brass mode broke Slate's contract: it assumed --ink reads on both --page and --card,
+   and brass made the card LIGHT while the page stayed dark, so ink had to fork into --ink
+   and --on-wood. Wool makes both surfaces dark again, so the fork closes and one light ink
+   serves everything. The --on-wood tokens are kept, pointing at the same values, because
+   app.css names them in a handful of rules and because the fork would have to come back
+   the day anyone tries a light plate again.
 
    Scoped to `[data-mode="book"]`, which App.jsx puts on `.app` while the Season tab is
-   open and takes off again when you leave. That one attribute is why the header and the
-   tab bar change with the screen instead of framing a themed panel in Slate chrome:
-   walking into Season has to feel like walking into a different room.
-
-   The pick-making screens deliberately stay Slate. Picks and the Board carry twenty
-   games of red-and-green results, and those two colours are the whole readout; re-solving
-   them against wood is a real piece of work and not one this change needs.
-
-   THIS IS THE THING THE CONTRACT WAS FOR. app.css only ever names semantic tokens, so
-   redefining them here re-skins every component at once, including ones nobody thought
-   about. Where a component still looks wrong it is because a FLAT token cannot express
-   a gradient, not because it was missed: brass, wood grain and felt are three gradients
-   and they live in app.css under the same attribute.
-
-   The one place the Slate contract genuinely does not survive: Slate assumes --ink reads
-   on both --page and --card, because both are light. Here --page is dark wood and --card
-   is a light brass plate, so a single ink cannot do both jobs. --ink is therefore the
-   colour engraved INTO brass, and the handful of things that sit directly on wood take
-   --on-wood. tests/book_mode_check.mjs measures every one of them and fails by name on
-   any ink token that has not been told which ground it sits on. */
+   open. That is why the header and tab bar change with the screen. The pick-making screens
+   deliberately stay Slate: Picks and the Board carry twenty games of red-and-green results
+   and those two colours are the entire readout. */
 [data-mode='book'] {
-  /* --- the case: wood, brass, felt -------------------------------------- */
-  --wood-900: #241409;
-  --wood-800: #351f11;
-  --wood-700: #4a2d19;
-  --wood-600: #5b3a22;
+  /* --- the wool ---------------------------------------------------------- */
+  --wool-900: #070E1A;
+  --wool-800: #0A1120;
+  --wool-700: #101A2B;
+  --wool-600: #17253C;
+  --wool-500: #1C2C46;
+  --stitch: #2A3B57;
 
-  /* Brass runs light to dark as a real plate does, lit from the top. */
-  --brass-100: #fbf3d6;
-  --brass-200: #f3e6b8;
-  --brass-300: #e6d3a0;
-  --brass-500: #c7a95f;
-  --brass-700: #9d7f37;
-  /* Dark enough to carry at the FOOT of the plate gradient, not just its midpoint.
-     #5e4a1f measured 5.73:1 against brass-300 and 3.74:1 against brass-500, and
-     small text sits at the bottom of a row as often as the middle. */
-  --brass-900: #4c3a15;
+  /* --- brass, the accent and nothing else --------------------------------- */
+  --brass-100: #F6E4B4;
+  --brass-300: #E0AC4B;
+  --brass-500: #C08F32;
+  --brass-700: #8A6118;
+  --brass-900: #5E4210;
 
-  --felt-800: #0b2415;
-  --felt-700: #123a22;
-
-  --cream: #f6ecd8;
-  --cream-2: #d8c39a;
-  --cream-3: #b39a72;
+  --cream: #F2F5F9;
+  --cream-2: #A6B6CB;
+  /* #71849C measured 3.66:1 against --surface, the lightest wool. Muted ink still has
+     to be readable, so it clears 5.1:1 on every surface in the mode rather than only on
+     the page it was eyeballed against. */
+  --cream-3: #8A9EB8;
 
   /* --- chrome: the header and tab bar, the case's own frame -------------- */
-  --field: var(--wood-900);
-  --field-deep: #180d05;
-  --field-press: var(--wood-800);
+  --field: var(--wool-800);
+  --field-deep: #050A13;
+  --field-press: var(--wool-700);
   --on-field: var(--cream);
   --on-field-2: var(--cream-3);
 
-  /* --- surfaces ---------------------------------------------------------- */
-  --page: var(--wood-800);
-  --card: var(--brass-300); /* a plate */
-  --surface: var(--brass-200);
-  --sunk: var(--felt-700); /* a felt well */
-  --well: var(--wood-900);
-  --line: #8a6c2c;
-  --line-strong: var(--brass-900);
+  /* --- surfaces. All dark now, which is what closes the ink fork. -------- */
+  --page: var(--wool-700);
+  --card: var(--wool-600);
+  --surface: var(--wool-500);
+  --sunk: var(--wool-800);
+  --well: var(--wool-900);
+  --line: var(--stitch);
+  --line-strong: #3A5075;
 
-  --page-a: rgba(53, 31, 17, 0.94);
-  --card-a: rgba(230, 211, 160, 0.93);
+  --page-a: rgba(16, 26, 43, 0.94);
+  --card-a: rgba(23, 37, 60, 0.93);
 
-  /* --- ink: engraved INTO brass. Text on wood takes --on-wood. ----------- */
-  --ink: #2c2210;
-  --ink-2: #4a3a18;
-  --ink-3: var(--brass-900);
+  /* --- ink. One set, because every surface is dark. ---------------------- */
+  --ink: var(--cream);
+  --ink-2: var(--cream-2);
+  --ink-3: var(--cream-3);
   --on-wood: var(--cream);
   --on-wood-2: var(--cream-2);
   --on-wood-3: var(--cream-3);
 
-  /* --- accent: gold, because in a trophy case nothing else can be --------- */
-  --accent: #b8892b;
-  --accent-deep: #7a5a17;
-  --accent-bright: #f0cf6e;
-  --accent-wash: #f7ecc4;
+  /* --- accent ------------------------------------------------------------
+     Deep brass, not polished. Both had to exist and be told apart, because the accent is
+     on every heading while --lead means first place: one brass doing both jobs makes the
+     leader look like a section title. Polished against deep measures 2.3:1, which is the
+     difference between a plate you rub and one you do not. */
+  --accent: var(--brass-500);
+  --accent-deep: var(--brass-700);
+  --accent-bright: var(--brass-100);
+  --accent-wash: rgba(224, 172, 75, 0.14);
 
-  --pick: #8a6a1d;
-  --pick-edge: #7a5a17;
+  --pick: var(--brass-300);
+  --pick-edge: var(--brass-500);
   --pick-soft: var(--brass-500);
-  --pick-wash: var(--brass-100);
+  --pick-wash: rgba(224, 172, 75, 0.14);
 
-  /* First place. Gold IS the whole palette here, so the leader cannot be gold and be
-     seen: it would say the same thing as the frame around it. Deep green is the only
-     colour in the case that is not brass and not wood, and it is already the felt. */
-  --lead: #0f4a29;
+  /* First place: polished brass, the brightest thing in the case. Gold works here and
+     died on brown for one reason, and it was never the gold. */
+  --lead: var(--brass-100);
 
-  /* Right and wrong still have to be right and wrong. Both are darkened until they
-     carry on a brass plate, where the Slate pair washed out completely. */
-  --good: #14602f;
-  --good-wash: #cfd9a8;
-  --bad: #8f2213;
-  --bad-wash: #e3c49c;
+  --good: #3FCB83;
+  --good-wash: rgba(63, 203, 131, 0.16);
+  --bad: #FF6A5E;
+  --bad-wash: rgba(255, 106, 94, 0.16);
 
-  --scrim: rgba(20, 11, 4, 0.66);
-  --glow: rgba(240, 207, 110, 0.24);
-  --glow-out: rgba(24, 13, 5, 0);
-  --shadow-tint: rgba(16, 8, 2, 0.5);
+  --scrim: rgba(5, 10, 19, 0.68);
+  --glow: rgba(224, 172, 75, 0.24);
+  --glow-out: rgba(7, 14, 26, 0);
+  --shadow-tint: rgba(3, 7, 14, 0.55);
 
-  /* Deeper than Slate on purpose. A plate screwed to a wall casts a real shadow, and
-     Slate's shallow cool elevation is invisible against wood. */
-  --sh-1: 0 1px 2px rgba(12, 6, 1, 0.4), inset 0 1px 0 rgba(255, 250, 230, 0.42);
-  --sh-2: 0 2px 5px rgba(12, 6, 1, 0.45), inset 0 1px 0 rgba(255, 250, 230, 0.5),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.26);
-  --sh-3: 0 6px 14px rgba(12, 6, 1, 0.5);
-  --sh-4: 0 12px 30px rgba(12, 6, 1, 0.6);
+  --sh-1: 0 1px 2px rgba(3, 7, 14, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-2: 0 2px 6px rgba(3, 7, 14, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --sh-3: 0 6px 16px rgba(3, 7, 14, 0.6);
+  --sh-4: 0 12px 32px rgba(3, 7, 14, 0.68);
 }
 
 * {

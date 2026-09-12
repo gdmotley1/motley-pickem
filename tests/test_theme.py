@@ -55,13 +55,41 @@ def test_no_component_reaches_into_the_colour_ramp(path):
 
 
 def test_every_token_a_component_uses_is_defined():
-    defined = set(DEFINED.findall(read(THEME)))
+    """The real rule is that no var() resolves to nothing.
+
+    Originally this only looked in theme.css, which made it reject a legitimate pattern:
+    a component-scoped variable set on one class and read by a child. The record badge
+    uses three (--pin-metal, --pin-enamel, --pin-glyph) to carry its plating, and those
+    are emphatically not theme tokens; putting them in theme.css would say every screen
+    may reach for a pin's metal.
+
+    So a token counts as defined if theme.css defines it OR the same file does. That is
+    not a loosening: a typo still fails, and a token removed from theme.css still fails
+    everywhere it is used.
+    """
+    theme = set(DEFINED.findall(read(THEME)))
     missing = {}
     for path in component_files():
-        for token in set(USED.findall(read(path))):
-            if token not in defined:
+        body = read(path)
+        local = set(DEFINED.findall(body))
+        for token in set(USED.findall(body)):
+            if token not in theme and token not in local:
                 missing.setdefault(token, []).append(os.path.relpath(path, ROOT))
     assert not missing, "undefined tokens: %s" % missing
+
+
+def test_component_local_tokens_are_namespaced():
+    """A component-scoped variable must not look like a theme token, or the next person
+    adds `--card` to one component and spends an afternoon on why it only applies there.
+    Anything defined outside theme.css has to carry its component's prefix."""
+    theme = set(DEFINED.findall(read(THEME)))
+    for path in component_files():
+        body = read(path)
+        stem = os.path.basename(path).split(".")[0]
+        for token in set(DEFINED.findall(body)) - theme:
+            assert "-" in token[2:], (
+                "%s defines %s, which reads like a theme token" % (stem, token)
+            )
 
 
 def test_selection_and_result_are_separate_colours():

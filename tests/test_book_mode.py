@@ -65,23 +65,59 @@ def test_only_the_season_tab_takes_the_mode():
         )
 
 
-def test_the_chart_and_the_bars_lift_their_colours():
-    """Three places put a seat colour on a dark ground in this mode, and all three were
-    wrong on the first build: the chart lines in the felt well, the legend dots on wood,
-    and the ranking bar fills in a wood track. A guard that checked one of them would
-    have passed."""
+def test_the_chart_lifts_its_colours():
+    """Two places still put a seat colour on a dark ground: the chart lines in the well
+    and the legend dots beside it. There were three until the ranking bars were cut on
+    2026-09-11; the guard said three and correctly failed when one went away, which is
+    the whole reason to spell the number out rather than write >= 1."""
     body = read("src", "screens", "Season.jsx")
     assert "from '../lib/onDark.js'" in body, "Season.jsx no longer lifts anything"
-    assert body.count("onDark(") >= 3, (
-        "expected onDark at all three dark-ground call sites (chart, legend, bars); "
+    assert body.count("onDark(") == 2, (
+        "expected onDark at both dark-ground call sites, the chart and the legend; "
         "found %d" % body.count("onDark(")
     )
-    # The bars sit in --well, which is deeper than the felt, so they take their own ground.
-    assert "onDark(p.color, '#241409')" in body, (
-        "the ranking bars are being lifted against the felt rather than against the wood "
-        "track they actually sit in"
-    )
     assert "stroke={s.color}" not in body, "a chart line is still drawn in the raw seat colour"
+
+
+def test_book_mode_re_resolves_the_inherited_text_colour():
+    """`body` sets `color: var(--ink)` and resolves it against Slate's near-black. Custom
+    properties cascade into this subtree; an already-computed `color` does not re-resolve,
+    so without this line the whole screen inherits Slate's dark ink onto dark wool.
+
+    It was invisible under the wood palette because the plates were light brass and dark
+    ink was correct on them. Wool made every surface dark and the title, three of the four
+    names and every number on a badge went dark-on-dark at once.
+    """
+    css = read("src", "app.css")
+    i = css.index(".app[data-mode='book'] {")
+    block = css[i: css.index("}", i)]
+    assert "color: var(--ink)" in block, (
+        "the book scope no longer re-resolves `color`, so everything that does not set "
+        "its own colour will inherit Slate's ink onto dark wool"
+    )
+
+
+def test_no_section_of_app_css_is_duplicated():
+    """This shipped. Three byte-identical copies of the BOOK MODE block and three
+    different record-book blocks were live on 2026-09-11, two of them dead code, because
+    an index-based edit inserted where it meant to replace and nobody looked.
+
+    Duplicate CSS is not a style problem: the last copy silently wins, so editing the
+    first one changes nothing and the next person loses an hour to it.
+    """
+    css = read("src", "app.css")
+    for marker in (
+        "BOOK MODE  ·  the trophy case",
+        "BOOK MODE  ·  what a flat token cannot say",
+        "the record book ==== */",
+        "the week's scorebug ==== */",
+        "==== standings",
+    ):
+        n = css.count(marker)
+        assert n <= 1, (
+            "%r appears %d times in app.css. A duplicated section means the last copy "
+            "wins and edits to the others do nothing." % (marker, n)
+        )
 
 
 def test_the_three_gradients_survive():
@@ -96,9 +132,5 @@ def test_the_three_gradients_survive():
         (".app[data-mode='book'] .chartwrap", "the felt well the chart sits in"),
     ):
         assert sel in css, "%s is gone" % what
-    # The plate is one rule covering three components; losing any one of them leaves a
-    # flat brass rectangle next to two lit ones, which reads as a rendering bug.
-    i = css.index(".app[data-mode='book'] .srow,")
-    plate = css[i: css.index("}", i)]
-    for cls in (".tile", ".wk"):
-        assert cls in plate, "%s no longer gets the brass plate" % cls
+    # The pin carries its own metal, so the panel rule only has to cover the standings.
+    assert ".app[data-mode='book'] .srow" in css, "the standings lost their panel"
