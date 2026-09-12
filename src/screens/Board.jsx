@@ -123,7 +123,14 @@ export default function Board({ me, weekId, week, onNavigate }) {
 
       {showScore && (
         <>
-          <WeekScore score={score} cardRef={cardRef} me={me} label={week?.label || 'This week'} />
+          <WeekScore
+            score={score}
+            cardRef={cardRef}
+            me={me}
+            label={week?.label || 'This week'}
+            record
+            light
+          />
           <ScoreBug score={score} pinned={pinned} top={headerH} />
         </>
       )}

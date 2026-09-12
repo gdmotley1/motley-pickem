@@ -4,11 +4,16 @@
  *
  * Both read the same object from `weekScore`, so the two can never disagree.
  *
- * Option S2 from outputs/scorebug-board.html, chosen by Grant on 2026-09-10: dark chrome,
- * a solid block of the player's school colour carrying their seed and mark, condensed
- * caps for the name, and the score set large in tabular figures. The condensed cut is
- * Archivo's `wdth` axis, which index.html now asks Google Fonts for; it is the same
- * family the app already loaded, so it costs no extra request.
+ * Option S2 from outputs/scorebug-board.html, chosen by Grant on 2026-09-10: a solid
+ * block of the player's school colour carrying their seed and mark, condensed caps for
+ * the name, and the score set large in tabular figures. The condensed cut is Archivo's
+ * `wdth` axis, which index.html now asks Google Fonts for; it is the same family the app
+ * already loaded, so it costs no extra request.
+ *
+ * S2 shipped with dark chrome on the Board and a light cut on the Week tab. Grant asked
+ * on 2026-09-11 for one scoreboard, not two, so both screens now pass `light` and
+ * `record` and the two are pixel-identical. The props stay because the dark chrome is
+ * still the base the light cut overrides, and because putting it back is one word.
  */
 import { useEffect, useState } from 'react'
 import { Portal } from './ui.jsx'
@@ -102,8 +107,11 @@ function Row({ p, best, total, mine, record, skeleton }) {
         {p.name}
         {mine && <span className="bugrow__you">You</span>}
       </span>
-      {/* The Week tab wants a record beside the score; the Board does not have room and
-          does not need one, because the game cards underneath are the record. */}
+      {/* Both screens ask for this now. It was the Week tab's alone until 2026-09-11, on
+          the argument that the Board's game cards underneath ARE the record; Grant wanted
+          the two scoreboards identical, and 16-4 next to 195 is the half of a week the
+          points alone do not tell you. It fits: the family's longest name is six letters
+          and the name column still has ~180px on a 390px phone. */}
       {record && !skeleton && (
         <span className="bugrow__rec num">
           {p.correct}-{p.played - p.correct}
@@ -159,12 +167,13 @@ function footline(score, mine) {
  * @param skeleton  Draw the frame with no numbers in it. Used for a published week
  *                  nobody has played yet, where the alternative was an empty state that
  *                  said nothing and looked like the feature was missing.
- * @param record    Show each player's correct-wrong beside the score. The Week tab wants
- *                  it; the Board does not have the room.
- * @param light     Flip the chrome. The Board keeps the dark cut, where twenty white game
- *                  cards underneath are what a broadcast graphic is meant to sit on. The
- *                  Week tab is followed by light content and has nothing to sit on, so
- *                  the same component there read as a slab from another app.
+ * @param record    Show each player's correct-wrong beside the score.
+ * @param light     Flip the chrome onto a card surface. Both screens pass both of these
+ *                  as of 2026-09-11, so there is one scoreboard in the app and not two.
+ *                  Neither prop has a live `false` any more; they are kept rather than
+ *                  inlined because the dark chrome is the base every `.bug--light` rule
+ *                  overrides, and unpicking that would churn the whole block to change
+ *                  nothing on screen.
  */
 export function WeekScore({
   score, cardRef, me, label = 'This week', skeleton = false, record = false,

@@ -1,15 +1,16 @@
-"""The gate for the Week tab's scoreboard.
+"""The gate for the app's scoreboard.
 
 Two decisions live here and both were reached by looking rather than reasoning.
 
-The tab used to have its own light standings table. It now renders the same <WeekScore>
-the Board does, reading the same weekScore() object, so the two screens cannot drift
-about who is where.
+The Week tab used to have its own light standings table. It now renders the same
+<WeekScore> the Board does, reading the same weekScore() object, so the two screens cannot
+drift about who is where.
 
-And it renders the LIGHT cut. The Board keeps the dark one, because twenty white game
-cards underneath are exactly what a broadcast graphic is meant to sit on; the Week tab is
-followed by Ranking, Your week, Upsets and the numbers, all light, so the same component
-there read as a slab from another app.
+And there is exactly ONE cut of it. For a day the Board took dark chrome with no record
+column and the Week tab took the light cut with one, each with a real argument behind it.
+Grant looked at the two side by side on 2026-09-11 and asked for them to match, so every
+call site now passes `light` and `record`. The guards below walk the call sites rather
+than naming Board and Week, so a third screen cannot quietly reintroduce a second look.
 """
 from __future__ import annotations
 
@@ -71,30 +72,54 @@ def test_the_skeleton_shows_no_numbers_and_no_rank():
     assert "{skeleton ? '—' : p.points}" in body, "the skeleton is printing scores"
 
 
-def test_only_the_week_tab_pays_for_the_record_column():
-    """A fifth column on a 390px phone costs the name its ellipsis, and the Board does not
-    need one: the game cards underneath it ARE the record."""
+def call_sites():
+    """Every <WeekScore ... /> in every screen, as (screen, props-text) pairs.
+
+    Walked, never enumerated. The version of this that named Board.jsx and Week.jsx by
+    hand would have passed happily while a third screen shipped a fourth look.
+    """
+    found = []
+    screens = os.path.join(ROOT, "src", "screens")
+    for fname in sorted(os.listdir(screens)):
+        if not fname.endswith(".jsx"):
+            continue
+        body = read("src", "screens", fname)
+        for chunk in body.split("<WeekScore")[1:]:
+            assert "/>" in chunk, "%s has a <WeekScore> that never closes" % fname
+            found.append((fname, chunk.split("/>")[0]))
+    assert found, "no screen renders the scorebug at all any more"
+    return found
+
+
+def test_the_record_column_stays_opt_in_in_the_css():
+    """Every call site asks for it, but the cost stays visible at one selector rather than
+    being folded into .bugrow, because a fifth column is what spends the name's width."""
     css = read("src", "app.css")
     assert ".bug--rec .bugrow" in css, "the record column is no longer opt-in"
-    board = read("src", "screens", "Board.jsx")
-    assert "record" not in board.split("<WeekScore")[1].split("/>")[0], (
-        "the Board is asking for the record column"
-    )
 
 
-def test_the_two_screens_take_different_cuts():
-    """The Board keeps the dark bug and the Week tab takes the light one. Getting this
-    backwards is the whole bug Grant reported: a dark slab in a light screen."""
-    week = read("src", "screens", "Week.jsx")
-    board = read("src", "screens", "Board.jsx")
-    assert week.count("light") >= 2, (
-        "both Week call sites, the skeleton and the settled week, must ask for the light "
-        "cut; found %d mentions" % week.count("light")
+def test_every_call_site_takes_the_same_cut():
+    """Grant asked on 2026-09-11 for the Board's scoreboard to match the Week tab's. There
+    is one scoreboard in this app: every call site passes both `light` and `record`, or
+    two screens are showing the same numbers in two different skins again."""
+    for fname, props in call_sites():
+        for want in ("light", "record"):
+            assert want in props, (
+                "%s renders the scorebug without `%s`; every call site takes the light "
+                "cut with the record column" % (fname, want)
+            )
+
+
+def test_the_week_tab_still_has_both_of_its_call_sites():
+    """The skeleton and the settled week. Named here rather than in the walk above,
+    because the walk cannot know how many each screen is supposed to have."""
+    sites = [f for f, _ in call_sites()]
+    assert sites.count("Week.jsx") == 2, (
+        "expected the scorebug at both Week call sites, the skeleton and the settled "
+        "week; found %d" % sites.count("Week.jsx")
     )
-    board_call = board.split("<WeekScore")[1].split("/>")[0]
-    assert "light" not in board_call, (
-        "the Board took the light cut; it keeps the dark one, because the game cards "
-        "underneath are what a broadcast graphic is meant to sit on"
+    assert sites.count("Board.jsx") == 1, (
+        "expected exactly one scorebug on the Board; found %d" % sites.count("Board.jsx")
     )
 
 

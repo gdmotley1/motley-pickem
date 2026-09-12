@@ -1666,9 +1666,13 @@
 
 /* ================================================== the week's scorebug ==== */
 /* Option S2, chosen 2026-09-10: the week as a broadcast lower-third rather than a card.
-   Dark chrome so it reads as a graphic laid over the board instead of another panel in
-   it, a solid block of the player's school colour carrying seed and mark, condensed caps
-   for the name, and the score set large in tabular figures.
+   A solid block of the player's school colour carrying seed and mark, condensed caps for
+   the name, and the score set large in tabular figures.
+
+   The dark chrome below is the BASE, and `.bug--light` further down overrides it. As of
+   2026-09-11 every call site takes the light cut, so nothing renders `.bug--dark` any
+   more; it stays because it is what light is defined against, and because it is one word
+   at a call site to bring back.
 
    The condensed cut is Archivo's `wdth` axis. index.html asks Google Fonts for
    `Archivo:wdth,wght@62..125,...`, so this is the family already loaded and not a second
@@ -1824,10 +1828,13 @@
 }
 
 /* ---------------------------------------------------------- the light cut ---
-   W1, chosen 2026-09-10. The Week tab is followed by Ranking, Your week, Upsets and the
-   numbers, all light, so the dark bug had nothing to be laid over and read as a slab
-   from another app. On the Board it stays dark, because twenty white game cards
-   underneath are exactly what a broadcast graphic is supposed to sit on.
+   W1, chosen 2026-09-10 for the Week tab, which is followed by Ranking, Your week, Upsets
+   and the numbers, all light: the dark bug had nothing to be laid over and read as a slab
+   from another app. The Board kept the dark cut for a day, on the argument that twenty
+   white game cards underneath are what a broadcast graphic is supposed to sit on. Grant
+   looked at both on 2026-09-11 and asked for one scoreboard, so this is now the only cut
+   the app renders. It also puts the big card and the pinned `.wkbug` strip on the same
+   chrome, which they never were.
 
    Every bone survives: the colour block, the seed, condensed caps, the record, the big
    tabular score, the progress rule. Only the chrome flips. The blocks need no change at
@@ -1880,8 +1887,11 @@
   border-top: 1px solid var(--line);
 }
 
-/* The Week tab's extra column. The Board omits it: down there the game cards below ARE
-   the record, and a fifth column on a 390px phone costs the name its ellipsis. */
+/* The fifth column. The Board omitted it until 2026-09-11, on the argument that the game
+   cards below ARE the record. Both screens carry it now. It was measured before it was
+   turned on: at 390px the card is 356px inside its padding, the four fixed columns and
+   four gaps take about 174px, and the name keeps the ~180px remaining, which is three
+   times the longest name in the family. Kept opt-in so the cost stays visible here. */
 .bug--rec .bugrow {
   grid-template-columns: 46px 1fr auto auto 26px;
   gap: 8px;
