@@ -1,0 +1,341 @@
+/* Board chrome plus the app's own scorebug rules, lifted verbatim from src/theme.css and
+   src/app.css so what is on screen here is what would be on screen in the app. Anything
+   an option adds is namespaced (.railA, .ptsB, .trk, .railE, .washF) and is the only part
+   that would need copying back. */
+
+:root {
+  --c-000: #ffffff;
+  --c-050: #f8fafb;
+  --c-100: #f3f6f8;
+  --c-150: #eef2f6;
+  --c-200: #e7ecf1;
+  --c-300: #c9d2dc;
+  --c-500: #5c6873;
+  --c-700: #48535e;
+  --c-900: #131a22;
+  --b-700: #1f56c4;
+  --b-600: #2f6fed;
+  --b-100: #eaf1fe;
+  --rd-600: #c33c2c;
+  --s-900: #10151c;
+
+  --page: var(--c-100);
+  --card: var(--c-050);
+  --surface: var(--c-000);
+  --sunk: var(--c-150);
+  --well: var(--c-200);
+  --line: #dde4eb;
+  --ink: var(--c-900);
+  --ink-2: var(--c-700);
+  --ink-3: var(--c-500);
+  --accent: var(--b-600);
+  --accent-deep: var(--b-700);
+  --accent-wash: var(--b-100);
+  --bad: var(--rd-600);
+  --good: #177541;
+  --good-wash: #e4f3ea;
+  --lead: #ffd25a;
+  --field-deep: var(--s-900);
+  --on-field: #f2f6fa;
+  --on-field-2: #97a5b3;
+  --display: 'Archivo', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --ui: 'Inter', -apple-system, system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --sh-1: 0 1px 1px rgba(19, 26, 34, .04), 0 1px 3px rgba(19, 26, 34, .05);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  font-family: var(--ui);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum' 1, 'lnum' 1; }
+
+.avatar {
+  display: grid; place-items: center; border-radius: 50%; color: #fff;
+  font-family: var(--display); font-weight: 700; flex: none; line-height: 1;
+}
+.avatar--team { overflow: hidden; padding: 0; box-shadow: inset 0 0 0 1px rgba(19, 26, 34, .12); }
+.avatar--team img { object-fit: contain; display: block; }
+/* The mark, drawn off a --lg-<id> custom property. One copy of each base64 payload for
+   the whole board instead of one per row; see block() in build_bugrow_board.py. */
+.mk { display: block; background-size: contain; background-repeat: no-repeat; background-position: center; }
+
+/* ============================================================ board chrome == */
+/* Quiet on purpose. The cards are the content; the page around them is a reading column
+   in the app's own Slate, with two things lifted: the assumption to check, and the
+   recommendation. Measured pixels are set in mono, because they are what gets compared. */
+
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 90px; }
+
+h1, h2, h3 { text-wrap: balance; }
+
+header.top { background: var(--field-deep); color: var(--on-field); padding: 32px 0 28px; margin-bottom: 26px; }
+header.top .wrap { padding-bottom: 0; }
+header.top h1 {
+  margin: 0 0 14px; font-family: var(--display); font-size: 30px; font-weight: 800;
+  letter-spacing: -.015em; line-height: 1.1;
+}
+header.top .kick {
+  font-family: var(--display); font-size: 10.5px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; font-stretch: condensed; color: var(--on-field-2); margin: 0 0 10px;
+}
+header.top p { margin: 0 0 10px; color: #c3cede; font-size: 14.5px; line-height: 1.62; max-width: 68ch; }
+header.top b { color: #fff; font-weight: 700; }
+header.top .top__src { font-size: 12.5px; color: var(--on-field-2); margin-top: 14px; }
+
+h2 { font-family: var(--display); font-size: 20px; font-weight: 800; margin: 0; letter-spacing: -.01em; }
+
+.opt { padding: 30px 0 6px; border-top: 1px solid var(--line); }
+.opt__hd { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.opt__k {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 6px;
+  background: var(--ink); color: #fff; font-family: var(--display); font-weight: 800;
+  font-size: 15px; flex: none;
+}
+.opt__px {
+  margin-left: auto; flex: none; font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+  color: var(--ink); background: var(--well); padding: 4px 9px; border-radius: 5px;
+}
+.opt__p { margin: 0 0 8px; font-size: 14.5px; line-height: 1.62; color: var(--ink-2); max-width: 70ch; }
+.opt__cost { margin: 0 0 18px; font-size: 13px; line-height: 1.6; color: var(--ink-3); max-width: 70ch; }
+.opt__cost b { color: var(--ink); }
+
+/* Lifted: the one assumption Grant has to check before any of the options mean anything. */
+.callout {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 15px 17px; margin: 0 0 4px; box-shadow: var(--sh-1); max-width: 760px;
+}
+.callout h3, .rec h3, h3.sub {
+  margin: 0 0 7px; font-family: var(--display); font-size: 12.5px; font-weight: 800;
+  letter-spacing: .08em; text-transform: uppercase; font-stretch: condensed;
+}
+.callout h3 { color: var(--bad); }
+.callout p, .rec p { margin: 0 0 7px; font-size: 13.5px; line-height: 1.62; color: var(--ink-2); max-width: 74ch; }
+.callout p:last-child, .rec p:last-child { margin-bottom: 0; }
+
+/* Lifted: the recommendation. */
+.rec {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: 16px 18px; margin: 4px 0 26px; max-width: 760px;
+  box-shadow: 0 2px 4px rgba(19, 26, 34, .05), 0 6px 16px rgba(19, 26, 34, .07);
+}
+.rec h3 { color: var(--good); font-size: 15px; letter-spacing: .06em; }
+
+h3.sub { color: var(--ink); margin-top: 22px; }
+
+/* The two moments, side by side. */
+/* Pinned to 366px, which is what the card actually measures on a 390px phone once
+   .bug's 12px margins are taken off. Every pixel cost quoted on this board is measured
+   at that width, so the frame must not flex with the browser. */
+.pair { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 4px; }
+.pair__half { flex: 0 0 366px; width: 366px; max-width: 100%; }
+.pair__when {
+  font-family: var(--display); font-size: 9.5px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3); padding: 0 0 6px 13px;
+}
+
+/* ==================================================== the app's own scorebug = */
+/* Copied from src/app.css. Do not edit these to make an option work: add a rule below. */
+
+.bug {
+  margin: 0 0 6px; border-radius: 6px; overflow: hidden; font-family: var(--display);
+  box-shadow: 0 2px 6px rgba(19, 26, 34, .18), 0 8px 22px rgba(19, 26, 34, .16);
+}
+.bug--light { background: var(--card); border: 1px solid var(--line); color: var(--ink); box-shadow: var(--sh-1); }
+
+.bug__top {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  background: var(--sunk); border-bottom: 1px solid var(--line);
+}
+.bug__wk {
+  flex: 1; min-width: 0; font-size: 10.5px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; font-stretch: condensed; color: var(--ink-3);
+}
+.bug__live {
+  display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 2px 7px;
+  border-radius: 3px; background: var(--bad); color: #fff; font-size: 9.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; font-stretch: condensed;
+}
+.bug__live i { display: block; width: 5px; height: 5px; border-radius: 50%; background: #fff; }
+.bug__of {
+  flex: none; font-size: 9.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  font-stretch: condensed; color: var(--ink-3);
+}
+
+.bugrow {
+  position: relative; display: grid; grid-template-columns: 46px 1fr auto 26px;
+  align-items: center; gap: 10px; min-height: 44px; padding-right: 10px;
+  border-top: 1px solid var(--line);
+}
+.bug--rec .bugrow { grid-template-columns: 46px 1fr auto auto 26px; gap: 8px; }
+
+.bugrow__block { position: relative; align-self: stretch; display: grid; place-items: center; }
+.bugrow__seed {
+  position: absolute; top: 2px; left: 5px; font-size: 9px; font-weight: 700;
+  font-stretch: condensed; color: rgba(255, 255, 255, .92);
+}
+.bugrow__mark { box-shadow: inset 0 0 0 1px rgba(19, 26, 34, .12); }
+.bugrow__name {
+  min-width: 0; font-size: 15px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  font-stretch: condensed; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bugrow__you {
+  margin-left: 6px; font-size: 8.5px; font-weight: 700; letter-spacing: .1em;
+  font-stretch: condensed; color: var(--ink-3);
+}
+.bugrow__rec {
+  font-size: 10.5px; font-weight: 700; font-stretch: condensed; letter-spacing: .02em;
+  color: var(--ink-3);
+}
+.bugrow__pts { font-size: 20px; font-weight: 700; text-align: right; }
+.bugrow.is-leader .bugrow__pts { color: var(--accent-deep); }
+.bugrow__gap {
+  font-size: 10.5px; font-weight: 700; font-stretch: condensed; text-align: right; color: var(--ink-3);
+}
+
+.bugrule { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--well); }
+.bugrule i { position: absolute; top: 0; bottom: 0; left: 0; display: block; }
+.bugrule .is-live { opacity: .35; }
+
+.bug__foot {
+  padding: 7px 10px; font-family: var(--ui); font-size: 10px; font-weight: 600;
+  color: var(--ink-3); background: var(--sunk); border-top: 1px solid var(--line); margin: 0;
+}
+
+/* ============================================ what every option fixes first = */
+/* The shift. `auto` sizes a column to ITS OWN row's content, and every .bugrow is its own
+   grid, so nothing is shared between rows. A two-digit score drags every column to its
+   left inboard on that row alone, and a three-character record does the same again in the
+   other direction. Fixed cells, measured against the widest content either column can
+   ever hold: 18.0px for "20-0" and 35.9px for "210". */
+.bug--A .bugrow, .bug--B .bugrow, .bug--C .bugrow,
+.bug--D .bugrow, .bug--E .bugrow, .bug--F .bugrow {
+  grid-template-columns: 46px 1fr 20px 36px 26px;
+}
+.bug--A .bugrow__rec, .bug--B .bugrow__rec, .bug--C .bugrow__rec,
+.bug--D .bugrow__rec, .bug--E .bugrow__rec, .bug--F .bugrow__rec { text-align: right; }
+
+/* -------------------------------------------------------------- A: the rail = */
+.bug--A .bugrow { min-height: 50px; padding-bottom: 6px; }
+.railA {
+  position: absolute; left: 46px; right: 10px; bottom: 7px; height: 6px;
+  background: var(--well); border-radius: 3px; overflow: hidden;
+}
+.railA i { position: absolute; top: 0; bottom: 0; left: 0; display: block; border-radius: 3px; }
+.railA__live { opacity: .26; }
+
+/* ---------------------------------------------------------- B: the numbers = */
+.bug--B .bugrow { min-height: 52px; grid-template-columns: 46px 1fr 20px 40px 26px; }
+.ptsB { display: grid; justify-items: end; line-height: 1; }
+.ptsB b { font-size: 20px; font-weight: 700; font-family: var(--display); }
+.ptsB em {
+  font-style: normal; font-size: 10px; font-weight: 700; font-stretch: condensed;
+  letter-spacing: .02em; margin-top: 3px; opacity: .92;
+}
+.bug--B .bugrow.is-leader .ptsB b { color: var(--accent-deep); }
+
+/* ---------------------------------------------- C and D: no rail, loud foot = */
+.bug--C .bugrow, .bug--D .bugrow { min-height: 42px; }
+.bug__foot--big {
+  font-size: 12px; font-weight: 500; color: var(--ink-2); background: var(--surface);
+  padding: 10px 12px; line-height: 1.45;
+}
+.bug__foot--big b { font-family: var(--display); font-weight: 800; color: var(--ink); font-size: 13px; }
+
+/* ------------------------------------------------------- D: the race track = */
+.trk { border-top: 1px solid var(--line); padding: 7px 12px 8px; background: var(--card); }
+.trk__plot { position: relative; height: 34px; }
+/* One initial per lane, in row order. A fixed column so two close dots cannot collide. */
+.trk__gut { position: absolute; left: 0; top: 0; bottom: 0; width: 12px; }
+.trk__gut b {
+  position: absolute; left: 0; width: 12px; height: 7px; line-height: 7px; text-align: center;
+  font-family: var(--display); font-size: 8.5px; font-weight: 800; font-stretch: condensed;
+}
+.trk__well { position: absolute; left: 16px; right: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--sunk); }
+/* Inset by a dot's radius and change, so a player on the lowest score or the highest
+   ceiling keeps the whole dot inside the well instead of half of it hanging off. */
+.trk__in { position: absolute; left: 6px; right: 6px; top: 0; bottom: 0; }
+/* The lead. Anybody whose line reaches past this is still in it. */
+.trk__floor {
+  position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px;
+  background: var(--ink); border-radius: 1px;
+}
+.trk__whisk { position: absolute; height: 2px; display: block; opacity: .38; border-radius: 1px; }
+.trk__dot {
+  position: absolute; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%;
+  display: block; box-shadow: 0 0 0 1.5px var(--card);
+}
+.trk__dot.is-lead { box-shadow: 0 0 0 1.5px var(--card), 0 0 0 3.5px var(--lead); }
+.trk__sc {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  margin-top: 4px; padding-left: 22px; font-family: var(--display); font-size: 9.5px;
+  font-weight: 700; color: var(--ink-3);
+}
+.trk__note {
+  font-size: 8.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase;
+  font-stretch: condensed; color: var(--ink-3); opacity: .85;
+}
+
+/* --------------------------------------------------- E: the broadcast rail = */
+.bug--E .bugrow { min-height: 58px; padding-bottom: 14px; }
+.railE {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
+  background: var(--field-deep); overflow: hidden;
+}
+.railE i { position: absolute; top: 0; bottom: 0; left: 0; display: block; }
+/* Still live: the player's colour at half strength, cut with dark diagonal stripes so it
+   cannot be mistaken for banked. The colour arrives inline as background-color only; a
+   `background:` shorthand there would wipe this stripe. */
+.railE__live {
+  opacity: .6;
+  background-image: repeating-linear-gradient(115deg, rgba(0, 0, 0, .5) 0 3px, transparent 3px 7px);
+}
+.railE.is-lead::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--lead);
+}
+
+/* -------------------------------------------------------- F: the row washed = */
+/* Starts where the colour block ends, so nought is the block's edge and not under it. */
+.washF { position: absolute; top: 0; bottom: 0; left: 46px; right: 0; overflow: hidden; pointer-events: none; }
+.washF i { position: absolute; top: 0; bottom: 0; left: 0; display: block; }
+.washF__live { opacity: .075; }
+.washF__bank { opacity: .17; }
+/* The banked edge as two notches, top and bottom. A full-height line struck straight
+   through the record column whenever a score landed between 55% and 75%. */
+.washF u {
+  position: absolute; top: 0; bottom: 0; width: 3px; margin-left: -3px; display: block;
+  background: linear-gradient(currentColor 0 7px, transparent 7px calc(100% - 7px), currentColor calc(100% - 7px));
+}
+.bug--F .bugrow > *:not(.washF) { position: relative; z-index: 1; }
+
+/* ---------------------------------------------------------- the fault, marked */
+.mark__note {
+  font-family: var(--mono); font-size: 11px; color: var(--bad); font-weight: 700;
+  margin: 8px 0 0; padding-left: 13px; line-height: 1.6;
+}
+.bug--now .bugrow__rec { outline: 1px solid rgba(195, 60, 44, .55); outline-offset: 2px; }
+.bug--now .bugrule { outline: 1px solid rgba(195, 60, 44, .55); outline-offset: 2px; }
+
+.tbl { overflow-x: auto; margin: 6px 0 4px; }
+table.m { border-collapse: collapse; width: 100%; max-width: 620px; font-variant-numeric: tabular-nums; }
+table.m th, table.m td {
+  text-align: left; padding: 7px 14px 7px 0; font-size: 13px; color: var(--ink-2);
+  border-bottom: 1px solid var(--line); white-space: nowrap;
+}
+table.m th {
+  font-family: var(--display); font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; font-stretch: condensed; color: var(--ink-3);
+}
+table.m td b { font-family: var(--display); font-weight: 800; color: var(--ink); margin-right: 6px; }
+table.m td.n { font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--ink); }
+table.m td.bad { color: var(--bad); font-weight: 700; }
+table.m tr.is-pick td { background: var(--good-wash); }
+table.m tr.is-pick td:first-child { box-shadow: inset 3px 0 0 var(--good); padding-left: 10px; }
+table.m tr td:first-child, table.m tr th:first-child { padding-left: 10px; }

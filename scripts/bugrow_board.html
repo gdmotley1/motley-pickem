@@ -1,0 +1,112 @@
+<header class="top">
+  <div class="wrap">
+    <p class="kick">Motley Pick'em &middot; the Board &middot; Week 2</p>
+    <h1>The week scoreboard, second pass</h1>
+    <p><b>The shift is a bug.</b> Each player's row sizes its own columns to whatever is
+      in that row. Nicole's 13 is a digit wider than everyone else's score, so her record
+      lands 11.9px left of the other three. Every option below fixes it the same way,
+      with fixed columns wide enough for 210, and that fix ships whichever one you
+      pick.</p>
+    <p><b>The bar is a design problem, and a thicker bar would not fix it.</b> It draws
+      points banked against the most you can still finish on, out of 210, and that scale
+      says almost nothing at either end of a week. At noon three of you can still finish
+      on 210. By tonight all four of you are inside 36 points of each other. So every
+      option is drawn twice, once at each end.</p>
+    <p class="top__src">Real Week 2 numbers, run through the app's own scoring code. The
+      noon card is what the database held at noon today; the night card plays the same
+      twenty games out with four upsets.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <aside class="callout">
+    <h3>Which bar I took you to mean</h3>
+    <p>The thin strip along the bottom edge of each player's row: solid is banked, the
+      pale run is the most they can still finish on. It is outlined in red on today's
+      card. If you meant the grey sentence under the four rows instead, <b>C</b> makes
+      that sentence readable and <b>D</b> replaces it.</p>
+  </aside>
+
+  <section class="opt">
+    <div class="opt__hd"><h2>What ships today</h2></div>
+    <p class="opt__p">At noon the bar is four pale strips at 97&ndash;100%%, because
+      nobody has spent anything yet, with a solid nub at 6%% under Nicole. At night the
+      solid runs sit between 54%% and 71%% and the pale ends between 75%% and 80%%.
+      There is no moment in the week where it says something.</p>
+    <p class="opt__p">The night card shows the record column going ragged a second way:
+      Nicole's 9-7 is a character narrower than 12-4, so hers starts 5.3px further
+      right.</p>
+    %(today)s
+    <p class="mark__note">Where each record starts, measured live in the noon card:
+      <span id="m-today">&hellip;</span></p>
+  </section>
+
+  %(options)s
+
+  <section class="opt">
+    <div class="opt__hd"><h2>What I would do</h2></div>
+
+    <div class="rec">
+      <h3>D, the race track</h3>
+      <p>It is the only option whose picture gets <em>more</em> interesting as the week
+        goes on, and the only one that answers the question you actually ask on a
+        Saturday night, which is not &ldquo;what fraction of 210 do I have&rdquo; but
+        &ldquo;can I still catch her.&rdquo; On the night card Parker is on 150, the lead
+        line is drawn there, and all three other tails reach past it: the week is still
+        open with four games left. A rail measured against 210 cannot show that at any
+        thickness.</p>
+      <p>If you want it loud more than you want it to say something, <b>E</b> is the
+        one. If you want no chance of misreading it, <b>B</b>, because a printed number
+        has no scale to get wrong.</p>
+    </div>
+
+    <h3 class="sub">All six, measured</h3>
+    <p class="opt__p">Card height on a 390px phone. Today's record column is off by 11.9px
+      at noon and 5.3px at night; every option is straight at both.</p>
+    <div class="tbl">
+      <table class="m">
+        <thead>
+          <tr><th>Option</th><th>Card height</th><th>Change</th><th>Records straight</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Today</td><td class="n">234.5px</td><td class="n">&nbsp;</td><td class="bad">No</td></tr>
+          <tr><td><b>A</b> Straighten and thicken</td><td class="n">258.5px</td><td class="n">+24</td><td>Yes</td></tr>
+          <tr><td><b>B</b> Numbers, not a bar</td><td class="n">266.5px</td><td class="n">+32</td><td>Yes</td></tr>
+          <tr><td><b>C</b> Cut it</td><td class="n">239.3px</td><td class="n">+5</td><td>Yes</td></tr>
+          <tr class="is-pick"><td><b>D</b> One race track</td><td class="n">264.0px</td><td class="n">+30</td><td>Yes</td></tr>
+          <tr><td><b>E</b> Broadcast rail</td><td class="n">290.5px</td><td class="n">+56</td><td>Yes</td></tr>
+          <tr><td><b>F</b> The row is the bar</td><td class="n">234.5px</td><td class="n">+0</td><td>Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub">The one to avoid</h3>
+    <p class="opt__p"><b>A.</b> It is the obvious answer to &ldquo;you can hardly see
+      it,&rdquo; and it makes the graphic bigger without making it mean more. A six-pixel
+      bar that says nothing is worse than a two-pixel one that says nothing, because now
+      you look at it.</p>
+  </section>
+
+</div>
+
+<script>
+  /* Where each row's record column actually starts, in the rendered noon card. Retried,
+     and re-run on resize, because a hidden or headless first paint can lay the page out
+     at zero width and every reading would be nonsense. */
+  function measure() {
+    var card = document.querySelector('.bug--now');
+    if (!card || card.getBoundingClientRect().width < 300) return;
+    var base = card.getBoundingClientRect().left;
+    var at = [].map.call(card.querySelectorAll('.bugrow'), function (r) {
+      var rec = r.querySelector('.bugrow__rec').getBoundingClientRect();
+      var nm = r.querySelector('.bugrow__name').textContent.trim().split('YOU')[0];
+      return nm + ' ' + (Math.round((rec.left - base) * 10) / 10) + 'px';
+    });
+    document.getElementById('m-today').textContent = at.join(' ');
+  }
+  measure();
+  [250, 800, 2000].forEach(function (ms) { setTimeout(measure, ms); });
+  addEventListener('resize', measure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+</script>
