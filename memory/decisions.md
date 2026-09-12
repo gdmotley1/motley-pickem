@@ -209,3 +209,30 @@ guard: without the second, the first run announces every week ever published.
 
 "Someone passed you" compares against a high-water mark, not your previous rank, which
 caps it at three a week in a four-person pool without any counting.
+
+## A week counts only once it is finished
+
+A week is finished when all 20 of its games are graded, or when a later week has a graded
+game. Week records, weeks won, the form chart and "N weeks in the books" read finished
+weeks only. Standings, the season record and season points count every graded game.
+
+**Why:** weeks used to count from their first graded game. On 2026-09-12, one game into
+Week 2, the Season tab dived every form line toward zero, called Grant's fewest points in a
+week a 0 when it was Nicole's 147, and credited Nicole with winning Week 2 after one game.
+
+**How to apply:** use `finishedWeeks` in `src/lib/seasonStats.js`. Never treat a week as
+over because its graded count is above zero. `tests/recap_check.mjs` and
+`tests/records_check.mjs` hold both halves.
+
+## The record book is Grant's seventeen, each with his badge
+
+Eight numbers every player has, eight Hall of fame awards and one Hall of shame award,
+chosen off a ballot on 2026-09-12 and laid out by number: headlines, the trophy room, the
+red panel.
+
+**Why:** two earlier books failed, one on invented stats he could not read cold ("literally
+none of these stats makes sense at all") and one on tiny text.
+
+**How to apply:** never add, rename or drop an entry without asking him. A new entry needs
+his art in `inputs/badges/<key>.png`, the key in both `scripts/build_badges.py` and
+`src/lib/seasonRecords.js`, and a rebuild. The gate fails if any of the three drift.

@@ -48,6 +48,10 @@ python scripts/suggest_slate.py --current --out outputs/week01_pool.json
 python scripts/suggest_slate.py --next         # build next week in advance
 python scripts/build_mock_data.py              # refresh the offline demo data
 
+# Grant's badge art, inputs/badges/<key>.png -> src/assets/badges/<key>.webp. The gate
+# runs --check, so re-run this after changing any badge PNG.
+python scripts/build_badges.py
+
 # raw ESPN pull for a date range
 python scripts/fetch_slate.py --start 2026-09-03 --end 2026-09-06
 
