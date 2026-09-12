@@ -1751,14 +1751,25 @@
   color: var(--on-field-2);
 }
 
+/* Every row is its own grid, so no column is shared with the row above it: an `auto`
+   track is sized to its own row's content and nothing else. That put Nicole's record
+   11.9px left of the other three on 2026-09-12, the moment her 13 was the only two-digit
+   score on the board, and a 9-7 sat 5.3px right of a 12-4 for the same reason. So every
+   column after the name is a fixed cell, measured against the widest thing it will ever
+   hold, 35.9px for "210" and 18.0px for "20-0", with a little spare for a phone that
+   rounds differently.
+
+   The bottom 14px of the row belong to the rail: 12px of rail and a 2px seam above it.
+   The colour block stretches over the content box only, so it stays 43px as before. */
 .bugrow {
   position: relative;
   display: grid;
-  grid-template-columns: 46px 1fr auto 26px;
+  grid-template-columns: 46px 1fr 38px 26px;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
+  min-height: 58px;
   padding-right: 10px;
+  padding-bottom: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
@@ -1871,8 +1882,11 @@
   color: var(--accent-deep);
 }
 
-.bug--light .bugrule {
-  background: var(--well);
+/* The rail's well stays dark on the light card. That is the look Grant chose, and it is
+   also what lets the leader's gold cap exist on this cut at all: --lead only reads on
+   --field-deep, and this well is --field-deep. */
+.bug--light .bugrail {
+  background: var(--field-deep);
 }
 
 /* A white ring reads as nothing on a white card, so the disc keeps only the hairline it
@@ -1889,11 +1903,12 @@
 
 /* The fifth column. The Board omitted it until 2026-09-11, on the argument that the game
    cards below ARE the record. Both screens carry it now. It was measured before it was
-   turned on: at 390px the card is 356px inside its padding, the four fixed columns and
-   four gaps take about 174px, and the name keeps the ~180px remaining, which is three
-   times the longest name in the family. Kept opt-in so the cost stays visible here. */
+   turned on. Since 2026-09-12 every column but the name is a fixed cell: at 390px the
+   card is 364px inside its border, the four fixed columns, four gaps and the right padding
+   take 174px, and the name keeps 190px, three times the longest name in the family. Kept
+   opt-in so the cost stays visible here. */
 .bug--rec .bugrow {
-  grid-template-columns: 46px 1fr auto auto 26px;
+  grid-template-columns: 46px 1fr 22px 38px 26px;
   gap: 8px;
 }
 
@@ -1902,6 +1917,7 @@
   font-weight: 700;
   font-stretch: condensed;
   letter-spacing: 0.02em;
+  text-align: right;
   color: var(--on-field-2);
 }
 
@@ -1926,20 +1942,33 @@
   color: var(--on-field-2);
 }
 
-/* Where a real bug draws timeouts. Solid is banked, the pale run behind it is the most
-   you can still finish the week on. Two pixels on purpose: a full-width track put four
-   near-identical bars on the card, because a 210-point week keeps everyone within a few
-   points of each other and 5% of a track is 12px. */
-.bugrule {
+/* The rail. Option E from outputs/bugrow-board.html, chosen by Grant on 2026-09-12 after
+   he said of the two-pixel strip it replaces: "you can hardly see it. It looks bad."
+
+   Twelve pixels, full bleed, in a dark well under every row. Solid is banked, with a glow
+   off its leading edge. The striped run after it is what is still live, out to the most
+   that player can finish on. The leader's rail is capped in gold, and ties stand, so the
+   cap lands on everyone level at the top.
+
+   Picked knowing the cost the board stated: the scale is still 0 to 210, so on a Saturday
+   night four players inside 36 points draw four solid runs inside 17 points of each other.
+   Grant took the broadcast look over a zoomed race track that would have said more. Do
+   not quietly rescale it; that was option D, and D was not the one picked.
+
+   The colour arrives inline as `backgroundColor`, never the `background` shorthand, which
+   resets background-image and silently deletes the stripe. The board shipped exactly that
+   bug for one render before it was caught. */
+.bugrail {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.07);
+  height: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
 }
 
-.bugrule i {
+.bugrail i {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -1948,8 +1977,23 @@
   transition: width 0.5s var(--ease);
 }
 
-.bugrule .is-live {
-  opacity: 0.35;
+.bugrail__live {
+  opacity: 0.6;
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(0, 0, 0, 0.5) 0 3px,
+    transparent 3px 7px
+  );
+}
+
+.bugrow.is-leader .bugrail::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--lead);
 }
 
 .bug__foot {

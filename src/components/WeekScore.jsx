@@ -88,12 +88,12 @@ function Block({ p, size = 24, skeleton }) {
 }
 
 /**
- * One row: colour block, name in condensed caps, score, and the gap to the lead.
+ * One row: colour block, name in condensed caps, record, score, and the gap to the lead.
  *
- * The 2px strip along the bottom is where a real bug draws timeouts, and here it is
- * banked against the most you can still finish on. It is deliberately the only place the
- * old bar survives: a full-width track was four near-identical bars, because everyone is
- * within a few points of everyone else on a 210 scale.
+ * Under it runs the rail: banked in solid colour, then what is still live in stripes, out
+ * to the most you can finish on. It was a 2px strip until 2026-09-12, when Grant said you
+ * could hardly see it and picked option E, the broadcast rail, from
+ * outputs/bugrow-board.html. .bugrail in app.css says what that choice costs.
  */
 function Row({ p, best, total, mine, record, skeleton }) {
   const gap = best - p.points
@@ -111,23 +111,35 @@ function Row({ p, best, total, mine, record, skeleton }) {
           the argument that the Board's game cards underneath ARE the record; Grant wanted
           the two scoreboards identical, and 16-4 next to 195 is the half of a week the
           points alone do not tell you. It fits: the family's longest name is six letters
-          and the name column still has ~180px on a 390px phone. */}
-      {record && !skeleton && (
+          and the name column still has 190px on a 390px phone. */}
+      {/* A skeleton keeps the cell and leaves it empty. The columns are fixed cells now,
+          so dropping it would slide the dash one column left, out from under where the
+          score is about to appear. */}
+      {record && (
         <span className="bugrow__rec num">
-          {p.correct}-{p.played - p.correct}
+          {skeleton ? '' : `${p.correct}-${p.played - p.correct}`}
         </span>
       )}
       <span className="bugrow__pts num">{skeleton ? '—' : p.points}</span>
       <span className="bugrow__gap num">
         {skeleton ? '' : gap === 0 ? '—' : `-${gap}`}
       </span>
-      <span className="bugrule">
-        {!skeleton && p.live > 0 && (
-          <i className="is-live"
-             style={{ width: `${((p.points + p.live) / total) * 100}%`, background: p.color }} />
+      {/* `backgroundColor`, never `background`: the shorthand resets background-image
+          and deletes the stripe that tells a live run from a banked one. */}
+      <span className="bugrail">
+        {/* Drawn on a skeleton too. Before anything is final every ceiling is the whole
+            week, and a full striped rail says exactly that, where the alternative was
+            four empty black wells under a card that is otherwise ready. */}
+        {p.live > 0 && (
+          <i className="bugrail__live"
+             style={{ width: `${((p.points + p.live) / total) * 100}%`,
+                      backgroundColor: p.color }} />
         )}
-        {!skeleton && (
-          <i style={{ width: `${(p.points / total) * 100}%`, background: p.color }} />
+        {/* Nothing at zero, or the glow paints a smudge on the left edge of the well. */}
+        {!skeleton && p.points > 0 && (
+          <i className="bugrail__bank"
+             style={{ width: `${(p.points / total) * 100}%`, backgroundColor: p.color,
+                      boxShadow: `0 0 10px 1px ${p.color}` }} />
         )}
       </span>
     </div>

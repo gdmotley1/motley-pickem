@@ -11,6 +11,10 @@ column and the Week tab took the light cut with one, each with a real argument b
 Grant looked at the two side by side on 2026-09-11 and asked for them to match, so every
 call site now passes `light` and `record`. The guards below walk the call sites rather
 than naming Board and Week, so a third screen cannot quietly reintroduce a second look.
+
+On 2026-09-12 two more joined them, both off Grant's phone on a live Saturday: a record
+column that went ragged the first time one score had more digits than the rest, and a
+two-pixel progress strip he could hardly see, replaced by the broadcast rail he picked.
 """
 from __future__ import annotations
 
@@ -23,6 +27,97 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def read(*parts):
     with open(os.path.join(ROOT, *parts), encoding="utf-8") as f:
         return f.read()
+
+
+def rules(css):
+    """Every (selector, declarations) pair in a stylesheet, comments dropped.
+
+    Walked rather than looked up by name, so a rule on the row added anywhere else in the
+    file is checked as well. Inside @media or @keyframes the selector is the innermost one.
+    """
+    while "/*" in css:
+        start = css.index("/*")
+        css = css[:start] + css[css.index("*/", start) + 2:]
+    found = []
+    for chunk in css.split("}"):
+        if "{" not in chunk:
+            continue
+        head, body = chunk.rsplit("{", 1)
+        found.append((head.split("{")[-1].strip(), body))
+    return found
+
+
+def test_no_row_column_is_sized_by_its_own_content():
+    """Nicole scored first on 2026-09-12 and her record sat 11.9px left of everyone else's.
+
+    Each .bugrow is its own grid, so an `auto` track is sized to that one row's content: a
+    two-digit score beside three one-digit scores drags every column to its left inboard on
+    that row alone. Every track has to be a fixed length or the name's `1fr`."""
+    grids = [
+        (sel, body) for sel, body in rules(read("src", "app.css"))
+        if ".bugrow" in sel and "grid-template-columns" in body
+    ]
+    assert grids, "no rule lays out the scorebug row any more; has it been renamed?"
+
+    # Fixed cells only line up if every row fills the same cells. The skeleton used to
+    # skip the record, which under fixed columns slides its dash 38px left of where the
+    # score appears once the week starts: measured on the real component, 2026-09-12.
+    jsx = read("src", "components", "WeekScore.jsx")
+    at = jsx.index('className="bugrow__rec num"')
+    condition = jsx[jsx.rindex("{record", 0, at):at]
+    assert "skeleton" not in condition, (
+        "the record cell is conditional on the skeleton again; a skeleton row must keep "
+        "the cell, empty, or its dash leaves the score column"
+    )
+
+    for sel, body in grids:
+        value = body.split("grid-template-columns:")[1].split(";")[0]
+        for content_sized in ("auto", "min-content", "max-content", "fit-content"):
+            assert content_sized not in value, (
+                "%s sizes a column by its own row's content (%s). The columns go ragged "
+                "the moment one score has more digits than the rest." % (sel, value.strip())
+            )
+
+
+def test_the_rail_can_be_seen_and_keeps_its_stripe():
+    """Grant on the old 2px strip, 2026-09-12: "you can hardly see it. It looks bad." He
+    picked the broadcast rail. It quietly goes back to looking broken two ways: somebody
+    thins it, or the inline colour moves to the `background` shorthand, which resets
+    background-image and deletes the stripe that tells a live run from a banked one."""
+    css = rules(read("src", "app.css"))
+    rail = [body for sel, body in css if sel == ".bugrail"]
+    assert rail, "the rail is gone"
+    height = int(rail[0].split("height:")[1].split("px")[0])
+    assert height >= 10, "the rail is back down to %dpx" % height
+
+    live = [body for sel, body in css if sel == ".bugrail__live"]
+    assert live and "repeating-linear-gradient" in live[0], (
+        "the live run lost its stripe, so it reads as banked"
+    )
+
+    jsx = read("src", "components", "WeekScore.jsx")
+    rail_jsx = jsx[jsx.index('className="bugrail"'):]
+    rail_jsx = rail_jsx[: rail_jsx.index("</span>")]
+    assert "background:" not in rail_jsx, (
+        "the rail's colour is set with the `background` shorthand, which wipes the "
+        "stripe; use backgroundColor"
+    )
+    assert "backgroundColor: p.color" in rail_jsx, (
+        "the rail no longer takes the player's colour"
+    )
+
+
+def test_gold_on_the_rail_only_sits_on_the_dark_well():
+    """--lead measures 10.8:1 on --field-deep and about 1.5:1 on a light card. The leader's
+    cap on the rail is the one place gold appears on the light cut, and that is only
+    allowed because the light cut's well is --field-deep."""
+    css = rules(read("src", "app.css"))
+    cap = [body for sel, body in css if sel == ".bugrow.is-leader .bugrail::after"]
+    assert cap and "var(--lead)" in cap[0], "the leader's rail lost its gold cap"
+    well = [body for sel, body in css if sel == ".bug--light .bugrail"]
+    assert well and "var(--field-deep)" in well[0], (
+        "the light cut's rail is not on --field-deep, so its gold cap cannot be read"
+    )
 
 
 
