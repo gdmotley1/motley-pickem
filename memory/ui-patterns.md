@@ -218,8 +218,10 @@ every claimed player, so a game card's height never depends on how many people p
 
 ## The Board lists all twenty games, locked ones included
 
-A game that has not kicked off shows greyed with a lock icon and its kickoff time, your
-own pick and points visible, everyone else masked as "hidden".
+A game that has not kicked off shows its kickoff time with a lock, your own pick and
+points visible, everyone else masked as "Locked". Since 2026-09-12 every game is a
+jumbotron tile (see decisions.md) and a pick chip shows the picked school's mark and the
+player's name, never the player's avatar.
 
 **Why:** Grant asked for it, and it is better than the empty state it replaced. The board
 is the whole week at a glance, you can check your own card against it before kickoff, and
@@ -255,6 +257,12 @@ practical ceiling on a phone.
 
 Week carries the settled result plus a recap; Season carries every cumulative number.
 Nothing cumulative belongs on Week, or the two tabs go back to being copies.
+
+**Rebuilt 2026-09-12** (see decisions.md): finished weeks only, the winner's colors, and
+Grant's seven sections. The ranking-efficiency stat described further down is still in
+`weekRecap.js` (`ceiling`, `captured`) but no longer on screen: he could not tell what
+"points left on the table" meant even with it explained. The race chart is standings
+position, not running points; running points drew four lines on top of each other.
 
 **Why the recap is generated and not written:** Grant's words were "worried its gonna be
 innaccurate or ai slop". He was right about the specific case that prompted it. A draft

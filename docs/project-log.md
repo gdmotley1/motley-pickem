@@ -259,3 +259,23 @@ ends at the same x and every name starts at the same x (0px drift), rows come in
 heights (58 for the holder, 48 otherwise), and a note under a name is on every row or
 none, which `tests/records_check.mjs` enforces. The tab is about 1,100px longer than with
 headlines, the price of showing all four of you on every record.
+
+## 2026-09-12, night: the Week tab and the Board, redone
+
+**Week tab.** Grant: "It looks like AI slop. Ranking bars look bad. Hard to follow. Small
+text." Measured live: smallest text 8.5px with 75 runs under 13px, four ranking bars within
+12px of each other (90 to 95%), Nicole's 10-10 wrapping. Five whole-tab looks went to him as
+screenshots after he stopped a 44-minute silent build ("bruh 44 mins?"); he picked 2,
+Winner's colors, then chose sections 1, 2, 3, 6, 7, 8, 9 off a second board
+(https://claude.ai/code/artifact/1e850185-8409-404d-a4f8-de75ca740f5b). Every new number is a
+pure function in `weekRecap.js` with checks on the real Week 1. Then: "always have it lag a
+week", so the tab shows finished weeks only, each painted in its own winner's school color.
+
+**Board.** A first look of four in about 12 minutes, then an artifact of six scoreboard
+directions (https://claude.ai/code/artifact/4a7c0109-62f3-4961-b6e1-dbe00e33ad26) with
+progress screenshots on the way. He picked the jumbotron ("its phenomenal") with one
+change, the picked team's logo on each pick, and saved the 8-bit arcade in
+`docs/ideas.md`. The old game cards went; under-13px declarations 65 to 51 across the night.
+
+**Deploys.** Three, each proved on the served bundle and the four live seats. The Picks tab
+is next, in a new chat.

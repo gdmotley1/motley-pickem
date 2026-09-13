@@ -556,3 +556,23 @@ would satisfy a naive check while three branches stayed broken.
 
 **The shape to watch for:** a comment describing a guard is not a guard, and a test naming
 the right table is not a test of the right thing. Both read as covered.
+
+## A variant rule placed above its base rule in app.css silently loses
+
+The finished week's pager sits inside the red hero as `.wknav--hero`, and its first render
+was a white bar with invisible text. The variant rules had been inserted where the old
+recap styles used to be, about 100 lines ABOVE the base `.wknav` rules. Same specificity,
+so the base rule's `background: var(--card)` won on file order alone. Reading the CSS
+looked fine; only the screenshot showed it.
+
+**How to apply:** scope a variant under its container (`.wf-hero .wknav--hero`) or put it
+after the base rule, and say which in a comment. The same shape bit a test the same night:
+`rank_rule` in tests/test_theme.py searched for `.aprank {` unanchored and matched the new
+`.jb-team .aprank {` first. It is anchored to the start of a line now.
+
+## A string guard trips on the comment that explains what it bans
+
+`test_the_cut_sections_stay_cut` failed on the first run because Week.jsx's own header
+comment quoted the cut stat's name while explaining that it was cut. The guard was right
+and the comment was the problem. Word the comment without the banned string rather than
+loosening the guard to skip comments, which would also let a commented-out block through.
