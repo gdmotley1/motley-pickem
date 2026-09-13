@@ -1,0 +1,73 @@
+/* The page around the phones: the stadium at night, the same room the Board board was shown in.
+   Committed to dark on purpose; every colour below is painted explicitly. */
+:root {
+  --pb-ground: #06070a;
+  --pb-ink: #eef1f5;
+  --pb-ink-2: #b2bac4;
+  --pb-line: #1d222a;
+  --pb-gold: #ffd21f;
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --ui: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+}
+html, body { margin: 0; background: var(--pb-ground); color: var(--pb-ink); font-family: var(--ui); }
+* { box-sizing: border-box; }
+
+.pb-hero { position: relative; overflow: hidden; padding: 76px 24px 58px; text-align: center;
+  background: radial-gradient(70% 420px at 50% -80px, rgba(255, 255, 255, .16), transparent 70%), linear-gradient(180deg, #10141b, var(--pb-ground)); }
+.pb-rig { position: absolute; inset: 0 0 auto; display: flex; justify-content: space-around; pointer-events: none; }
+.pb-rig i { display: block; width: 170px; height: 34px; margin-top: 18px; border-radius: 6px;
+  background: radial-gradient(circle, #fff 2px, transparent 3px) 0 0 / 14px 14px, #20252d;
+  box-shadow: 0 0 60px 20px rgba(255, 255, 255, .12), 0 0 0 3px #2d333c; }
+.pb-kick { position: relative; margin: 26px 0 10px; font: 800 18px 'Big Shoulders Display', sans-serif; letter-spacing: .24em; text-transform: uppercase; color: var(--pb-gold); }
+.pb-hero h1 { position: relative; margin: 0 auto 18px; max-width: 13ch; font: 900 clamp(64px, 11vw, 136px)/.86 'Big Shoulders Display', sans-serif;
+  text-transform: uppercase; letter-spacing: .01em; color: #fff; text-shadow: 0 0 40px rgba(255, 255, 255, .25); text-wrap: balance; }
+.pb-lede { position: relative; max-width: 66ch; margin: 0 auto; font-size: 18px; line-height: 1.6; color: var(--pb-ink-2); text-wrap: pretty; }
+.pb-map { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 980px; margin: 30px auto 0; padding: 0; list-style: none; }
+.pb-map a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px 0 6px; border-radius: 999px;
+  border: 1px solid #2a303a; color: var(--pb-ink); text-decoration: none; font: 800 20px 'Big Shoulders Display', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.pb-map a:hover { border-color: var(--pb-gold); }
+.pb-map a:focus-visible { outline: 3px solid var(--pb-gold); outline-offset: 3px; }
+.pb-map b { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--pb-gold); color: #111; }
+
+.pb-dir { max-width: 1320px; margin: 0 auto; padding: 84px 24px 40px; border-top: 1px solid var(--pb-line); scroll-margin-top: 10px; }
+.pb-copy { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 28px; max-width: 1060px; margin: 0 auto 40px; }
+.pb-num { margin: 0; min-width: 1ch; font: 900 170px/.78 'Big Shoulders Display', sans-serif; color: var(--pb-gold); text-shadow: 0 0 40px rgba(255, 210, 31, .25); }
+.pb-num--today { font-size: 96px; line-height: .9; color: #7d8794; text-shadow: none; }
+.pb-words h2 { margin: 4px 0 12px; font: 900 64px/.9 'Big Shoulders Display', sans-serif; text-transform: uppercase; letter-spacing: .01em; text-wrap: balance; }
+.pb-pitch { max-width: 62ch; margin: 0 0 14px; font-size: 19px; line-height: 1.6; color: var(--pb-ink); text-wrap: pretty; }
+.pb-built { max-width: 70ch; margin: 0 0 12px; font-size: 16px; line-height: 1.55; color: var(--pb-ink-2); }
+.pb-built b { display: block; margin-bottom: 4px; font: 800 15px 'Big Shoulders Display', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--pb-gold); }
+.pb-facts { max-width: 80ch; margin: 0; font: 600 14px/1.55 ui-monospace, Consolas, monospace; color: #8b95a1; }
+.pb-facts.is-bad { color: #ff8a7a; }
+
+.pb-phones { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 44px 40px; }
+.pb-shot { margin: 0; width: 390px; max-width: 100%; }
+.pb-shot figcaption { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 6px 12px; }
+.pb-shot figcaption b { font: 900 28px 'Big Shoulders Display', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #fff; }
+.pb-shot figcaption span { font-size: 14px; font-weight: 600; color: var(--pb-ink-2); }
+.pb-phone { position: relative; width: 390px; max-width: 100%; overflow: hidden; border-radius: 34px; background: #000; isolation: isolate;
+  box-shadow: 0 0 0 10px #15181d, 0 0 0 11px #2a2f37, 0 40px 80px rgba(0, 0, 0, .7); }
+.pb-phone--img img { display: block; width: 100%; height: auto; }
+
+.pb-foot { padding: 60px 24px 90px; border-top: 1px solid var(--pb-line); text-align: center; }
+.pb-foot p { margin: 0 auto; max-width: 46ch; font: 800 30px/1.15 'Big Shoulders Display', sans-serif; text-transform: uppercase; letter-spacing: .02em; text-wrap: balance; }
+
+/* Shared little pieces inside phones. */
+.pk-disc { display: grid; place-items: center; flex: none; border-radius: 50%; }
+.pk-disc i, .pk-mark { display: block; flex: none; background: center / contain no-repeat; }
+:where(.pb-phone) :where(button) { margin: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
+.pb-phone :where(h2, h3, p, ol, ul, figure) { margin: 0; padding: 0; }
+.pb-phone :where(ol, ul) { list-style: none; }
+
+@media (max-width: 760px) {
+  .pb-copy { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .pb-num { font-size: 110px; }
+  .pb-words h2 { font-size: 50px; }
+}
+@media (max-width: 430px) {
+  .pb-dir { padding-left: 12px; padding-right: 12px; }
+  .pb-phone { zoom: .88; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
