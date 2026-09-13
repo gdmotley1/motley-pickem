@@ -73,8 +73,10 @@ All in the repo's `memory/ui-patterns.md` and `memory/decisions.md`:
 - **Real screen in a harness, no dev server**: `outputs/harness/board_live.*` and
   `board_stub.js` (stubbed RPCs, scenario switch on the URL hash), built with
   `outputs/harness/vite.harness.config.mjs`, shot with `outputs/harness/tools/shot.ps1`,
-  measured with `tools/dump.ps1` reading `<pre id="measure">`. There is an older
-  `outputs/harness/picks.html` + `picks.jsx` worth checking first.
+  measured with `tools/dump.ps1` reading `<pre id="measure">`. An older
+  `outputs/harness/picks.html` + `picks.jsx` exists, but it was written for the dev server
+  (it fetches `/motley-pickem/data/week01.json` with a top-level await) and lets ESPN calls
+  through; copy the `board_live` pattern instead of reviving it.
 
 ## Commands
 
