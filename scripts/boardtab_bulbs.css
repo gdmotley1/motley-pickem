@@ -1,0 +1,212 @@
+/* ==================================================== 1: the scoreboard ==== */
+/* Painted steel, amber bulbs. Every number on the tab is lit in bulbs, in fixed digit
+   modules, so a column of points lines up the way a real board's does. Names and
+   sentences are painted: Archivo's condensed cut, which the app already loads. */
+.sb {
+  --sb-steel: #13211a;
+  --sb-steel-hi: #1a2c23;
+  --sb-plate: #16261e;
+  --sb-edge: #0a120e;
+  --sb-well: #040705;
+  --sb-paint: #f4f1e6;
+  --sb-paint-2: #b7c2ba;
+  --sb-amber: #ffb62e;
+  --sb-off: #1d2820;
+  --sb-red: #ff7462;
+  background: linear-gradient(180deg, #0e1813, var(--sb-steel) 220px);
+  color: var(--sb-paint);
+  font-family: var(--display);
+}
+
+.sb .wb-off { fill: var(--sb-off); }
+.sb .wb-on { fill: var(--sb-amber); }
+.sb .wb { display: block; flex: none; }
+
+/* --- header and pager: the board's crown ----------------------------------- */
+.sb-hdr {
+  background: #0a110d;
+  border-bottom: 1px solid #000;
+  box-shadow: inset 0 -3px 0 #0a110d, 0 1px 0 rgba(255, 182, 46, .35);
+}
+.sb-hdr .wt-hdr__title { font-stretch: 80%; font-weight: 800; letter-spacing: .02em; text-transform: uppercase; font-size: 21px; }
+.sb-hdr .wt-hdr__week { color: var(--sb-paint-2); }
+.sb-hdr .wt-hdr__me { background: rgba(244, 241, 230, .1); }
+
+.sb-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--sb-steel);
+  border-bottom: 1px solid var(--sb-edge);
+}
+.sb-arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 4px;
+  background: var(--sb-well);
+  color: var(--sb-paint);
+  box-shadow: inset 0 0 0 1px #26352c;
+}
+.sb-mid { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.sb-mid b { display: inline-flex; align-items: center; gap: 4px; font-size: 20px; font-weight: 800; font-stretch: 80%; letter-spacing: .04em; text-transform: uppercase; }
+.sb-mid > span { font-size: 14px; font-weight: 700; font-stretch: 80%; letter-spacing: .14em; text-transform: uppercase; color: var(--sb-amber); }
+.sb-back {
+  padding: 11px 12px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  font-stretch: 85%;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--sb-well);
+  background: var(--sb-amber);
+}
+
+.sb-page { display: grid; gap: 12px; padding: 14px 10px 22px; }
+
+/* --- the main board --------------------------------------------------------- */
+.sb-board,
+.sb-panel {
+  position: relative;
+  border-radius: 4px;
+  border: 1px solid var(--sb-edge);
+  background:
+    radial-gradient(circle at 9px 9px, #3a4a40 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 9px) 9px, #3a4a40 1.6px, transparent 2.4px),
+    radial-gradient(circle at 9px calc(100% - 9px), #3a4a40 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #3a4a40 1.6px, transparent 2.4px),
+    linear-gradient(180deg, var(--sb-steel-hi), var(--sb-plate));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 3px 10px rgba(0, 0, 0, .45);
+}
+.sb-board { padding: 12px 12px 8px; }
+.sb-panel { padding: 14px 14px 6px; }
+
+.sb-crown {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  font-size: 18px;
+  font-weight: 800;
+  font-stretch: 78%;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.sb-final { display: inline-flex; align-items: center; gap: 8px; color: var(--sb-amber); }
+.sb-final i,
+.sb-lamp {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff3c9, var(--sb-amber) 55%, #b87400);
+  box-shadow: 0 0 10px 2px rgba(255, 182, 46, .75);
+}
+
+.sb-msg {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 16px 10px 15px;
+  border-radius: 3px;
+  background: var(--sb-well);
+  box-shadow: inset 0 0 0 1px #202b24, inset 0 6px 16px rgba(0, 0, 0, .8);
+}
+
+.sb-score { padding: 10px 2px 0; }
+.sb-score__hd,
+.sb-row {
+  display: grid;
+  grid-template-columns: 12px 28px minmax(0, 1fr) 47px 47px 66px;
+  align-items: center;
+  column-gap: 7px;
+}
+.sb-score__hd { grid-template-columns: minmax(0, 1fr) 47px 47px 66px; padding-bottom: 5px; }
+.sb-score__hd span { text-align: center; font-size: 14px; font-weight: 800; font-stretch: 78%; letter-spacing: .12em; text-transform: uppercase; color: var(--sb-paint-2); }
+.sb-row { min-height: 50px; border-top: 1px solid rgba(0, 0, 0, .45); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04); }
+.sb-row .sb-lamp { visibility: hidden; justify-self: center; width: 10px; height: 10px; }
+.sb-row.is-lead .sb-lamp { visibility: visible; }
+.sb-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 20px; font-weight: 800; font-stretch: 80%; letter-spacing: .04em; text-transform: uppercase; }
+.sb-name em { margin-left: 7px; font-style: normal; font-size: 13px; font-weight: 800; letter-spacing: .12em; color: var(--sb-amber); vertical-align: 2px; }
+.sb-row:not(.is-lead) .sb-name { color: var(--sb-paint-2); }
+
+.sb-well {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 4px;
+  border-radius: 3px;
+  background: var(--sb-well);
+  box-shadow: inset 0 0 0 1px #202b24, inset 0 3px 8px rgba(0, 0, 0, .8);
+}
+
+/* --- panels ------------------------------------------------------------------ */
+.sb-title { margin: 0 0 4px; font-family: var(--display); font-size: 19px; font-weight: 800; font-stretch: 78%; letter-spacing: .1em; text-transform: uppercase; color: var(--sb-paint); }
+.sb-help { margin: 0 0 6px; font-size: 15px; font-weight: 500; font-stretch: 92%; line-height: 1.35; color: var(--sb-paint-2); text-wrap: balance; }
+
+.sb-game { padding: 12px 0 12px; border-top: 1px solid rgba(0, 0, 0, .45); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04); }
+.sb-title + .sb-game { border-top: 0; box-shadow: none; }
+.sb-line { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.sb-team { display: inline-flex; align-items: center; gap: 7px; }
+.sb-team b { min-width: 46px; font-size: 20px; font-weight: 800; font-stretch: 80%; letter-spacing: .04em; }
+.sb-team.is-loser b { color: var(--sb-paint-2); }
+.sb-team.is-loser .wb-on { fill: #c98f25; }
+.wt-mark { display: block; flex: none; background: center / contain no-repeat; }
+
+.sb-if { margin: 10px 0 0; font-size: 17px; font-weight: 500; font-stretch: 92%; line-height: 1.35; color: var(--sb-paint); }
+.sb-if b { font-weight: 800; }
+.sb-if .sb-n { color: var(--sb-amber); font-variant-numeric: tabular-nums; }
+
+.sb-stake { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 9px; }
+.sb-k { font-size: 15px; font-weight: 700; font-stretch: 85%; color: var(--sb-paint-2); }
+.sb-none { font-size: 16px; font-weight: 600; font-stretch: 92%; color: var(--sb-paint-2); }
+.sb-chips { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.sb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border-radius: 999px; background: rgba(255, 182, 46, .14); box-shadow: inset 0 0 0 1px rgba(255, 182, 46, .35); }
+.sb-chip b { font-size: 17px; font-weight: 800; font-stretch: 85%; color: var(--sb-amber); font-variant-numeric: tabular-nums; }
+.sb-chip.is-lost { background: rgba(255, 116, 98, .12); box-shadow: inset 0 0 0 1px rgba(255, 116, 98, .35); }
+.sb-chip.is-lost b { color: var(--sb-red); }
+.sb-plate { padding: 2px 8px; border-radius: 3px; background: var(--sb-amber); color: #120c00; font-size: 17px; font-weight: 800; font-stretch: 85%; font-variant-numeric: tabular-nums; }
+
+.sb-lrow,
+.sb-nrow {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 11px;
+  min-height: 58px;
+  border-top: 1px solid rgba(0, 0, 0, .45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+.sb-nrow { grid-template-columns: minmax(0, 1fr) auto; }
+.sb-who { display: flex; flex-direction: column; min-width: 0; }
+.sb-who .sb-name { font-size: 19px; color: var(--sb-paint); }
+.sb-note { margin-top: 1px; font-size: 15px; font-weight: 500; font-stretch: 92%; color: var(--sb-paint-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-lrow.is-lead .sb-name { color: var(--sb-amber); }
+.sb-lrow:not(.is-lead) .wb-on { fill: #e2a02a; }
+
+/* --- tab bar: the same steel, the lit tab is the amber one -------------------- */
+.sb-tabs { background: #0a110d; border-top: 1px solid rgba(255, 182, 46, .35); }
+.sb-tabs .wt-tab { color: var(--sb-paint-2); font-family: var(--ui); }
+.sb-tabs .wt-tab.is-on { color: #120c00; background: var(--sb-amber); }
+
+/* ---- Board additions: live picks, locked picks, and the clock in bulbs ---- */
+.sb .sb-page { padding-top: 14px; }
+.sb-chip.is-ahead { background: rgba(255, 182, 46, .14); box-shadow: inset 0 0 0 1px rgba(126, 226, 168, .55); }
+.sb-chip.is-ahead b { color: #b9f5cf; }
+.sb-chip.is-behind { background: rgba(255, 116, 98, .08); box-shadow: inset 0 0 0 1px rgba(255, 182, 46, .45); }
+.sb-chip.is-behind b { color: var(--sb-amber); }
+.sb-chip.is-hidden { background: rgba(244, 241, 230, .06); box-shadow: inset 0 0 0 1px rgba(244, 241, 230, .18); }
+.sb-chip.is-hidden b { color: var(--sb-paint-2); }
+.sb-chip em { font-style: normal; font-size: 15px; font-weight: 800; font-stretch: 85%; color: var(--sb-paint-2); }
+.sb-clock { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.sb-clock .sb-well { padding: 6px 8px; }
+.sb-clock span { font-size: 15px; font-weight: 700; font-stretch: 85%; letter-spacing: .12em; text-transform: uppercase; color: var(--sb-paint-2); }
+.sb-final.is-live { color: #ff9a8a; }
+.sb-final.is-live i { background: radial-gradient(circle at 35% 35%, #ffd9d2, #ff5a47 55%, #a31a0e); box-shadow: 0 0 10px 2px rgba(255, 90, 71, .8); animation: sb-flick 1.3s steps(1) infinite; }
+@keyframes sb-flick { 50% { filter: brightness(.45); } }
+/* Four picks as a two-by-two grid, so a fourth chip never sits alone on its own line. */
+.sb .sb-stake .sb-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; }
+.sb .sb-stake .sb-chip { justify-self: start; }

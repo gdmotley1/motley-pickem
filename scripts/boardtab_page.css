@@ -1,0 +1,61 @@
+/* The page around the phones: a stadium at night. Committed to dark on purpose. */
+:root {
+  --bb-ground: #06070a;
+  --bb-ink: #eef1f5;
+  --bb-ink-2: #b2bac4;
+  --bb-line: #1d222a;
+  --bb-yellow: #ffd21f;
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --ui: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+}
+html, body { margin: 0; background: var(--bb-ground); color: var(--bb-ink); font-family: var(--ui); }
+* { box-sizing: border-box; }
+
+.bb-hero { position: relative; overflow: hidden; padding: 72px 24px 56px; text-align: center;
+  background: radial-gradient(70% 420px at 50% -80px, rgba(255, 255, 255, .16), transparent 70%), linear-gradient(180deg, #10141b, var(--bb-ground)); }
+.bb-lights { position: absolute; inset: 0 0 auto; display: flex; justify-content: space-around; pointer-events: none; }
+.bb-lights i { display: block; width: 170px; height: 34px; margin-top: 18px; border-radius: 6px;
+  background: radial-gradient(circle, #fff 2px, transparent 3px) 0 0 / 14px 14px, #20252d;
+  box-shadow: 0 0 60px 20px rgba(255, 255, 255, .12), 0 0 0 3px #2d333c; }
+.bb-kick { position: relative; margin: 26px 0 10px; font: 800 18px 'Big Shoulders Display', sans-serif; letter-spacing: .24em; text-transform: uppercase; color: var(--bb-yellow); }
+.bb-hero h1 { position: relative; margin: 0 auto 18px; max-width: 12ch; font: 900 clamp(64px, 11vw, 132px)/.86 'Big Shoulders Display', sans-serif;
+  text-transform: uppercase; letter-spacing: .01em; color: #fff; text-shadow: 0 0 40px rgba(255, 255, 255, .25); text-wrap: balance; }
+.bb-lede { position: relative; max-width: 62ch; margin: 0 auto; font-size: 18px; line-height: 1.6; color: var(--bb-ink-2); }
+.bb-map { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 900px; margin: 30px auto 0; padding: 0; list-style: none; }
+.bb-map a { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 16px 0 6px; border-radius: 999px;
+  border: 1px solid #2a303a; color: var(--bb-ink); text-decoration: none; font: 800 20px 'Big Shoulders Display', sans-serif; letter-spacing: .06em; text-transform: uppercase; }
+.bb-map a:hover { border-color: var(--bb-yellow); }
+.bb-map a:focus-visible { outline: 3px solid var(--bb-yellow); outline-offset: 3px; }
+.bb-map b { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--bb-yellow); color: #111; }
+
+.bb-dir { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 56px; max-width: 1180px; margin: 0 auto; padding: 90px 24px 40px; border-top: 1px solid var(--bb-line); scroll-margin-top: 10px; }
+.bb-copy { position: sticky; top: 40px; align-self: start; }
+.bb-num { margin: 0; font: 900 160px/.8 'Big Shoulders Display', sans-serif; color: var(--bb-yellow); text-shadow: 0 0 40px rgba(255, 210, 31, .25); }
+.bb-copy h2 { margin: 10px 0 16px; font: 900 64px/.9 'Big Shoulders Display', sans-serif; text-transform: uppercase; letter-spacing: .01em; }
+.bb-pitch { max-width: 44ch; margin: 0 0 18px; font-size: 19px; line-height: 1.6; color: var(--bb-ink); }
+.bb-built { max-width: 50ch; margin: 0 0 14px; font-size: 16px; line-height: 1.55; color: var(--bb-ink-2); }
+.bb-built b { display: block; margin-bottom: 4px; font: 800 15px 'Big Shoulders Display', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--bb-yellow); }
+.bb-facts { margin: 0; font: 600 14px/1.5 ui-monospace, Consolas, monospace; color: #8b95a1; }
+.bb-facts.is-bad { color: #ff8a7a; }
+
+.bb-stage { display: flex; justify-content: center; }
+.bb-phone { width: 390px; max-width: 100%; overflow: hidden; border-radius: 34px; background: #000;
+  box-shadow: 0 0 0 10px #15181d, 0 0 0 11px #2a2f37, 0 40px 80px rgba(0, 0, 0, .7); }
+
+.bb-foot { padding: 60px 24px 90px; border-top: 1px solid var(--bb-line); text-align: center; }
+.bb-foot p { margin: 0 auto; max-width: 50ch; font: 800 30px/1.15 'Big Shoulders Display', sans-serif; text-transform: uppercase; letter-spacing: .02em; }
+
+/* shared little pieces used inside phones */
+.bk-disc { display: grid; place-items: center; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(19, 26, 34, .12); }
+.bk-disc i { display: block; background: center / contain no-repeat; }
+.bk-mark { display: block; flex: none; background: center / contain no-repeat; }
+
+@media (max-width: 960px) {
+  .bb-dir { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-top: 60px; }
+  .bb-copy { position: static; }
+  .bb-num { font-size: 110px; }
+  .bb-copy h2 { font-size: 52px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

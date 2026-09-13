@@ -1,0 +1,64 @@
+/* ============================================ 6: split-flap ================= */
+.fl {
+  --fl-ink: #f3efe2;
+  --fl-ink-2: #a9a59a;
+  background: linear-gradient(180deg, #161618, #0d0d0e);
+  color: var(--fl-ink);
+  font-family: 'Barlow Condensed', var(--display);
+  padding-bottom: 16px;
+}
+.fl-hdr { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; }
+.fl-brand { font-size: 24px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.fl-me { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px 5px 6px; border-radius: 999px; background: rgba(255, 255, 255, .08); font: 600 14px var(--ui); }
+
+.fl-board { margin: 0 8px; padding: 14px 10px 12px; border-radius: 8px;
+  background:
+    radial-gradient(circle at 10px 10px, #4a4a4f 2px, transparent 3px), radial-gradient(circle at calc(100% - 10px) 10px, #4a4a4f 2px, transparent 3px),
+    radial-gradient(circle at 10px calc(100% - 10px), #4a4a4f 2px, transparent 3px), radial-gradient(circle at calc(100% - 10px) calc(100% - 10px), #4a4a4f 2px, transparent 3px),
+    #050505;
+  box-shadow: inset 0 0 0 2px #1f1f22, 0 18px 36px rgba(0, 0, 0, .6); }
+
+/* The flap: two halves of a card on a hinge. */
+.fl-row { display: inline-flex; gap: 2px; perspective: 400px; }
+.fl-c { position: relative; display: inline-grid; place-items: center; width: var(--w); height: var(--h); border-radius: 3px;
+  background: linear-gradient(180deg, #343438 0 49.5%, #26262a 50.5% 100%); color: var(--fl-ink);
+  font-size: var(--fs); font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 2px 2px rgba(0, 0, 0, .7);
+  transform-origin: 50% 50%; animation: fl-flip .46s cubic-bezier(.3, .6, .4, 1) var(--d) 1; }
+.fl-c::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, .85); box-shadow: 0 1px 0 rgba(255, 255, 255, .06); }
+/* Readable at both ends and only edge-on for a frame in the middle, so a paused animation never strands a blank tile. */
+@keyframes fl-flip { 0% { transform: rotateX(0); } 48% { transform: rotateX(88deg); } 52% { transform: rotateX(-88deg); } 100% { transform: rotateX(0); } }
+.fl-s { --w: 17px; --h: 27px; --fs: 20px; }
+.fl-m { --w: 24px; --h: 36px; --fs: 28px; }
+.fl-l { --w: 31px; --h: 46px; --fs: 38px; }
+
+.fl-row.is-white .fl-c { background: linear-gradient(180deg, #f3efe2 0 49.5%, #e2ddce 50.5%); color: #111; }
+.fl-row.is-red .fl-c { background: linear-gradient(180deg, #d9342b 0 49.5%, #bd2a22 50.5%); color: #fff; }
+.fl-row.is-green .fl-c { background: linear-gradient(180deg, #1f9d55 0 49.5%, #188246 50.5%); color: #fff; }
+.fl-row.is-amber .fl-c { background: linear-gradient(180deg, #f0a51d 0 49.5%, #d68f12 50.5%); color: #1a1000; }
+.fl-row.is-blue .fl-c { background: linear-gradient(180deg, #2f6fd1 0 49.5%, #265db2 50.5%); color: #fff; }
+.fl-row.is-grey .fl-c { background: linear-gradient(180deg, #4a4a50 0 49.5%, #3c3c42 50.5%); color: #cfcbbf; }
+.fl-status.is-live .fl-c { animation: fl-flip .46s cubic-bezier(.3, .6, .4, 1) var(--d) 1, fl-again .46s cubic-bezier(.3, .6, .4, 1) 5s infinite; }
+@keyframes fl-again { 0%, 100% { transform: rotateX(0); } 48% { transform: rotateX(88deg); } 52% { transform: rotateX(-88deg); } }
+
+.fl-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.fl-sub { font-size: 19px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--fl-ink-2); }
+.fl-cols { display: flex; justify-content: space-between; padding: 0 2px 6px; border-bottom: 1px solid #262629; font-size: 16px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--fl-ink-2); }
+.fl-cols--games { margin-top: 18px; }
+
+.fl-srow { display: grid; grid-template-columns: 10px auto 30px minmax(0, 1fr) auto; align-items: center; column-gap: 8px; padding: 9px 0; border-bottom: 1px solid #1b1b1e; }
+.fl-light { width: 10px; height: 10px; border-radius: 50%; background: #2a2a2d; }
+.fl-srow.is-lead .fl-light { background: radial-gradient(circle at 35% 35%, #fff2c2, #f0a51d 60%, #9a6508); box-shadow: 0 0 10px rgba(240, 165, 29, .9); }
+.fl-who { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fl-note { font-size: 16px; font-weight: 600; letter-spacing: .04em; color: var(--fl-ink-2); }
+
+.fl-game { padding: 12px 0; border-bottom: 1px solid #1b1b1e; }
+.fl-game__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.fl-teams { display: grid; gap: 5px; }
+.fl-team { display: flex; align-items: center; gap: 7px; }
+.fl-team .fl-row + .fl-row { margin-left: 6px; }
+.fl-team.is-dim { opacity: .45; }
+.fl-status { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.fl-picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 10px; margin-top: 10px; }
+.fl-pick { display: flex; align-items: center; gap: 5px; }
+.fl-pick .fl-row + .fl-row { margin-left: 4px; }

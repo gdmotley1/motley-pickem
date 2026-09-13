@@ -47,6 +47,7 @@ GLYPHS = {
     "+": [".....", "..#..", "..#..", "#####", "..#..", "..#..", "....."],
     "-": [".....", ".....", ".....", "#####", ".....", ".....", "....."],
     ".": ["..", "..", "..", "..", "..", "##", "##"],
+    ":": ["..", "##", "##", "..", "##", "##", ".."],
 }
 
 PITCH = 10      # user units between bulb centres
@@ -57,7 +58,7 @@ SPACE = 3       # columns for a space: no module, no bulbs
 
 
 def code(ch):
-    return {"+": "plus", "-": "dash", ".": "dot"}.get(ch, ch)
+    return {"+": "plus", "-": "dash", ".": "dot", ":": "colon"}.get(ch, ch)
 
 
 def defs():

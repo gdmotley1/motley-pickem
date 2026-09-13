@@ -1,0 +1,106 @@
+/* ============================================ 2: 8-bit arcade ============== */
+.ar {
+  --ar-ink: #fcfcfc;
+  --ar-blue: #0038ec;
+  --ar-deep: #001a8c;
+  --ar-gold: #f8b800;
+  --ar-red: #f83800;
+  --ar-green: #58f898;
+  --ar-grey: #a4a4a4;
+  background: #050505;
+  padding: 10px;
+  font-family: 'Press Start 2P', monospace;
+  color: var(--ar-ink);
+}
+
+.ar-crt {
+  position: relative;
+  overflow: hidden;
+  padding: 12px 10px 18px;
+  border-radius: 22px;
+  background: radial-gradient(120% 80% at 50% 30%, #0a1f7a 0%, #020a3a 70%, #01041c 100%);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, .85), inset 0 0 0 3px #111, 0 0 0 6px #1c1c1c, 0 0 30px rgba(40, 90, 255, .25);
+}
+/* Scanlines and the phosphor glow, over everything, never catching a tap. */
+.ar-crt::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgba(0, 0, 0, .28) 0 1px, transparent 1px 3px);
+  mix-blend-mode: multiply;
+}
+.ar-crt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(90% 60% at 50% 0%, rgba(255, 255, 255, .08), transparent 60%);
+}
+
+.ar-hdr { display: flex; justify-content: space-between; align-items: center; padding: 4px 4px 12px; font-size: 13px; color: var(--ar-grey); }
+.ar-hdr__me { color: var(--ar-gold); }
+
+.ar-title { display: flex; flex-direction: column; align-items: center; padding: 6px 0 14px; text-align: center; }
+.ar-sprite { display: block; }
+.ar-title h2 { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0 10px; font-size: 38px; line-height: 1; letter-spacing: -.02em; }
+.ar-title h2 span:first-child { color: var(--ar-gold); text-shadow: 4px 4px 0 var(--ar-red), 8px 8px 0 #000; }
+.ar-title h2 span:last-child { font-size: 30px; color: #fff; text-shadow: 4px 4px 0 var(--ar-blue), 8px 8px 0 #000; }
+.ar-title p { font-size: 13px; color: var(--ar-green); }
+.ar-blink { animation: ar-blink 1s steps(1) infinite; }
+@keyframes ar-blink { 50% { color: transparent; text-shadow: none; } }
+
+/* The window: a white pixel frame inside a blue one, the menus of every cartridge. */
+.ar-win {
+  position: relative;
+  margin: 0 0 12px;
+  padding: 14px 12px 12px;
+  background: #000;
+  box-shadow: 0 0 0 4px #fcfcfc, 0 0 0 8px var(--ar-blue), 8px 12px 0 8px rgba(0, 0, 0, .55);
+  margin-left: 8px;
+  margin-right: 8px;
+}
+.ar-h { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 12px; font-size: 16px; color: var(--ar-gold); }
+.ar-h span { font-size: 13px; color: var(--ar-grey); }
+
+.ar-p { display: grid; grid-template-columns: 38px 32px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 8px; align-items: center; padding: 10px 0; border-top: 4px dotted #1f2a66; }
+.ar-p:first-of-type { border-top: 0; padding-top: 2px; }
+.ar-p__n { font-size: 14px; color: var(--ar-grey); }
+.ar-p.is-lead .ar-p__n { color: var(--ar-gold); }
+.ar-px { display: block; background: center / contain no-repeat; image-rendering: pixelated; }
+.ar-p__name { font-size: 16px; }
+.ar-p.is-lead .ar-p__name { color: var(--ar-gold); }
+.ar-p__pts { font-size: 22px; }
+.ar-bar { grid-column: 1 / 4; display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; height: 14px; }
+.ar-bar i { background: #1f2a66; }
+.ar-bar i.on { background: var(--ar-green); box-shadow: inset 0 -3px 0 #1a9a55; }
+.ar-p.is-lead .ar-bar i.on { background: var(--ar-gold); box-shadow: inset 0 -3px 0 #b86a00; }
+.ar-p__max { font-size: 13px; color: var(--ar-grey); justify-self: end; }
+
+.ar-game__hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.ar-tag { padding: 5px 7px 4px; font-size: 13px; }
+.ar-tag.is-final { background: var(--ar-ink); color: #000; }
+.ar-tag.is-live { background: var(--ar-red); color: #fff; animation: ar-pulse 1s steps(1) infinite; }
+@keyframes ar-pulse { 50% { background: #a41e00; } }
+.ar-tag.is-soon { background: var(--ar-deep); color: var(--ar-gold); }
+.ar-line { font-size: 13px; color: var(--ar-grey); }
+.ar-t { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; align-items: center; min-height: 46px; }
+.ar-t__name { overflow: hidden; white-space: nowrap; text-overflow: clip; font-size: 14px; }
+.ar-t__pts { font-size: 26px; }
+.ar-t.is-lead .ar-t__name, .ar-t.is-lead .ar-t__pts { color: var(--ar-gold); }
+.ar-game.is-final .ar-t:not(.is-lead) { opacity: .55; }
+.ar-picks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.ar-k { display: flex; flex-direction: column; gap: 6px; padding: 8px 7px; background: #0b1446; box-shadow: inset 0 0 0 2px #1f2a66; }
+.ar-k b { font-size: 13px; font-weight: 400; color: var(--ar-grey); }
+.ar-k span { font-size: 14px; }
+.ar-k.is-won { box-shadow: inset 0 0 0 2px var(--ar-green); }
+.ar-k.is-won span { color: var(--ar-green); }
+.ar-k.is-lost { box-shadow: inset 0 0 0 2px var(--ar-red); }
+.ar-k.is-lost span { color: #ff8a70; }
+.ar-k.is-ahead span { color: #b8f8d8; }
+.ar-k.is-ahead { box-shadow: inset 0 0 0 2px #2a8a5a; }
+.ar-k.is-behind span { color: var(--ar-gold); }
+.ar-k.is-hidden span { color: #4a5490; }
+
+.ar-start { margin: 18px 0 8px; text-align: center; font-size: 16px; color: var(--ar-ink); }
+.ar-copy { margin: 0; text-align: center; font-size: 13px; color: var(--ar-grey); }
