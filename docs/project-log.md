@@ -302,3 +302,16 @@ index-CDTfU-Tz.js are byte-identical to dist and carry the new rules, and the li
 screen, loaded read-only, shows all four seats on the new bundle. That push also carried the
 two handoff commits and the night-of-2026-09-12 notes that were committed but not pushed.
 
+## 2026-09-13, later: the Week tab's top
+
+Grant: "i like the week tab except for the top portion. come up with new designs for the top
+while keeping the rest below it". Four tops as one screenshot, each stacked on the real rest of
+the tab cropped from the live harness shot (`scripts/weektop_first_look.py`): Jumbotron final,
+Final score, Trophy, the banner. He picked 1, "but take out the over james by 7". Built as the
+pager and a gold-ringed WINNER panel on the Board's wall, name and points in LED, the school
+mark bottom right so a six letter name clears it. Measured in the harness on #now, #later
+(Parker) and #back: the top is 371px under the header, smallest text 13px, nothing spills,
+and each section's rule still wears the winner's color.
+Then "remove back to week 2 button pls then ship deploy": the Back to Week N button under the
+pager went, with its styles; the right arrow and the jump list already do that job.
+

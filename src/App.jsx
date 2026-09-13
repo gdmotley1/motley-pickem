@@ -223,17 +223,17 @@ export default function App() {
   const mode = tab === 'season' ? 'book' : undefined
 
   /* Winner's colors. Not a mode: the tokens stay Slate, and only a FINISHED week on the
-     Week tab paints the header in the winner's school color. While a week is live the tab
-     shows the Board's scoreboard, so the chrome stays exactly as the Board has it. */
+     Week tab hands its winner's school color down the page, where every section's rule and
+     the leader's row wear it. */
   const skin = tab === 'week' && weekSkin ? weekSkin : null
 
-  /* The jumbotron. The Board picked it on 2026-09-12 and Picks followed on 2026-09-13, so
-     the two tabs a family member lives in on a Saturday are one stadium: same black
-     header, same amber tab. */
-  const jumbo = tab === 'board' || tab === 'picks'
+  /* The jumbotron. The Board picked it on 2026-09-12, Picks followed on 2026-09-13, and the
+     finished week's top the same day, so every tab with a result on it is one stadium: same
+     black header, same amber tab. */
+  const jumbo = tab === 'board' || tab === 'picks' || !!skin
 
   return (
-    <div className="app" data-mode={mode} data-skin={skin ? 'winner' : jumbo ? 'jumbo' : undefined}
+    <div className="app" data-mode={mode} data-skin={jumbo ? 'jumbo' : undefined}
          style={skin ? { '--wf-field': skin.field, '--wf-ink': skin.ink } : undefined}>
       <header className="apphdr">
         <div>

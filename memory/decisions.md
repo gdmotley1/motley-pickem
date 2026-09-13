@@ -235,10 +235,16 @@ you all agreed, went it alone, by the numbers. Shipped the same night.
 within 12px) and the text tiny (8.5px). He did not understand "points left on the table"
 even explained, so the ceiling stat is gone from the screen; `ceiling` stays in the lib.
 
+**Its top became the jumbotron final on 2026-09-13** ("lets do 1 but take out the over james
+by 7"): the pager and a WINNER panel on the Board's LED wall, the winner's name and points
+only, under the black jumbotron header. The seven sections below were kept exactly as they
+were and still wear the winner's school color, which App sets on `.app` from `onSkin`.
+
 **How to apply:** the Week tab shows FINISHED weeks only and opens on the newest one
 ("always have it lag a week", Grant, 2026-09-12); the week being played is the Board's.
-`recapWeeks` in `weekNav.js` decides what finished means. Each week repaints in its own
-winner's school color (`data-skin="winner"`, set by App from Week's `onSkin`). New recap
+`recapWeeks` in `weekNav.js` decides what finished means. Each week repaints its sections in
+its own winner's school color (`--wf-field`, set by App from Week's `onSkin`); the header is
+the jumbotron's (`data-skin="jumbo"`), and the top never names the runner-up. New recap
 numbers go in `weekRecap.js` with checks in `tests/recap_check.mjs`;
 `tests/test_week_final.py` holds the section order, the cuts and the lag.
 

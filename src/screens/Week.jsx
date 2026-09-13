@@ -6,8 +6,9 @@ import { headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
 import { weekScore } from '../lib/weekScore.js'
 import { weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
-import { schoolField } from '../lib/schoolField.js'
+import { schoolField, schoolPanel } from '../lib/schoolField.js'
 import { onDark } from '../lib/onDark.js'
+import Led from '../components/Led.jsx'
 import Mark from '../components/Mark.jsx'
 
 /**
@@ -19,10 +20,11 @@ import Mark from '../components/Mark.jsx'
  * only; see recapWeeks in src/lib/weekNav.js for what finished means.
  *
  * The look is the one he picked the same night from two boards: option 2, "Winner's
- * colors", the FINAL graphic an athletic department posts, painted in that week's winner's
- * school colors (the header too, through `onSkin`), so stepping from one week to another
- * repaints it. Under it, the sections he chose by number, in his order: what decided it,
- * upsets, how it unfolded, your week, when you all agreed, went it alone, by the numbers.
+ * colors", with that week's winner's school color carried down every section through
+ * `onSkin`, so stepping from one week to another repaints it. Its top became the
+ * jumbotron final on 2026-09-13 (see Hero). Under it, the sections he chose by number, in
+ * his order: what decided it, upsets, how it unfolded, your week, when you all agreed,
+ * went it alone, by the numbers.
  *
  * Nothing here characterises anybody. Every line is a count over the picks or a what-if
  * that weekRecap actually recomputed; see the note at the top of src/lib/weekRecap.js.
@@ -132,8 +134,8 @@ export default function Week({ me, onSkin }) {
 
   return (
     <div className="wf">
-      <Hero recap={recap} label={nav.current.label} colors={colors || [schoolField(undefined)]} teamOf={teamOf}
-            pager={<Pager nav={nav} onGo={setViewId} />} />
+      <Hero recap={recap} label={nav.current.label} finals={graded.games.length} slateSize={slate.length}
+            teamOf={teamOf} pager={<Pager nav={nav} onGo={setViewId} />} />
       <FinalTable score={score} me={me} teamOf={teamOf} />
       <Decided recap={recap} byId={byId} rows={graded.rows} />
       <Upsets recap={recap} byId={byId} rows={graded.rows} />
@@ -155,49 +157,56 @@ const sideOf = (g, abbr) => (g.home_abbr === abbr ? g.home_id : g.away_id)
 
 /* ------------------------------------------------------------------ the hero */
 
-function nameSize(name) {
-  const n = name.length
-  return n <= 6 ? 118 : n <= 8 ? 90 : 68
-}
+/* LED lettering is condensed, so a name gets the biggest size its length allows. */
+const ledNameSize = (chars) => (chars <= 6 ? 96 : chars <= 8 ? 72 : chars <= 11 ? 56 : 44)
 
-function Hero({ recap, label, colors, teamOf, pager }) {
+/**
+ * The top of a finished week: the jumbotron final.
+ *
+ * Direction 1 of four Grant was shown on 2026-09-13, with his one change: "take out the
+ * over james by 7". The result is lit on the Board's LED wall, so the Board, Picks and
+ * this top are one stadium, and the winner's panel is in their school's colors. A shared
+ * week splits the panel between both schools and names both.
+ */
+function Hero({ recap, label, finals, slateSize, teamOf, pager }) {
   const leaders = recap.leaders
   const shared = leaders.length > 1
-  const first = colors[0]
-  const runner = recap.players.find((p) => p.rank !== 1)
-  const team = teamOf(leaders[0].team_id)
-  const field = shared && colors[1]
-    ? `linear-gradient(160deg, ${colors[0].field} 0 50%, ${colors[1].field} 50% 100%)`
-    : first.field
-  const names = shared ? leaders.map((p) => p.name).join(' & ') : leaders[0].name
+  const lead = leaders[0]
+  const team = teamOf(lead.team_id)
+  const panel = (p) => schoolPanel(teamOf(p.team_id), p.color)
+  const names = shared ? leaders.map((p) => p.name).join(' & ') : lead.name
+  const size = shared
+    ? Math.min(64, ledNameSize(Math.max(...leaders.map((p) => p.name.length))))
+    : ledNameSize(names.length)
   return (
-    <section
-      className={`wf-hero${shared ? ' is-shared' : ''}`}
-      style={{
-        '--wf-hero': field,
-        '--wf-hero-ink': first.ink,
-        '--wf-mark-invert': first.ink === '#ffffff' ? 1 : 0,
-        '--wf-name': `${shared ? 60 : nameSize(names)}px`,
-      }}
-    >
-      {team && !shared && (
-        <i
-          className="wf-hero__mark"
-          style={{ backgroundImage: `url(${import.meta.env.BASE_URL}logos/${team.id}.png)` }}
-          aria-hidden="true"
-        />
-      )}
+    <section className="jb wf-top" aria-label={`${label} final`}>
       {pager}
-      <p className="wf-kick">
-        <span>{label}</span>
-        <span className="wf-kick__final">Final</span>
-      </p>
-      <h2 className="wf-name">{names}</h2>
-      <p className="wf-wins">{shared ? 'share the week' : 'wins the week'}</p>
-      <p className="wf-score">
-        <strong className="num">{leaders[0].points}</strong>
-        <span>{shared ? `${leaders.length} tied at the top` : `by ${recap.margin} over ${runner?.name}`}</span>
-      </p>
+      <div className="jb-wall wf-top__wall">
+        <div className="jb-strip">
+          <span>{label}</span>
+          <span className="wf-top__final">Final</span>
+          <span className="num">
+            {finals}/{slateSize}
+          </span>
+        </div>
+        <div
+          className={`wf-top__panel${shared ? ' is-shared' : ''}`}
+          style={{
+            '--jb-team': panel(lead),
+            '--wf-top-team2': shared ? panel(leaders[1]) : undefined,
+            '--wf-top-name': `${size}px`,
+          }}
+        >
+          {team && !shared && <Mark id={team.id} abbr={team.abbr} size={76} className="wf-top__mark" />}
+          <span className="wf-top__lamp">{shared ? 'Co-winners' : 'Winner'}</span>
+          <h2 className="wf-top__name">
+            <Led>{names}</Led>
+          </h2>
+          <p className="wf-top__pts">
+            <Led>{lead.points}</Led>
+          </p>
+        </div>
+      </div>
     </section>
   )
 }
@@ -595,9 +604,12 @@ function InNumbers({ recap }) {
  * list of every finished week.
  *
  * Option C from the board Grant chose on 2026-09-10, moved into the winner's color field
- * on 2026-09-12. The arrows only ever step between finished weeks, so the week being
- * played is never one tap away. An edge is a null in `nav`, so a disabled arrow is a fact
- * from weekNav rather than a condition restated here.
+ * on 2026-09-12 and onto the jumbotron on 2026-09-13. The arrows only ever step between
+ * finished weeks, so the week being played is never one tap away. An edge is a null in
+ * `nav`, so a disabled arrow is a fact from weekNav rather than a condition restated here.
+ *
+ * There is no "Back to Week N" button under it any more. Grant had it taken out on
+ * 2026-09-13: the right arrow and the jump list already get you there.
  */
 function Pager({ nav, onGo }) {
   const [open, setOpen] = useState(false)
@@ -643,12 +655,6 @@ function Pager({ nav, onGo }) {
           <Chevron dir="right" size={17} />
         </button>
       </div>
-
-      {!nav.isLatest && (
-        <button className="wknav__back wknav__back--hero" onClick={() => onGo(nav.latest.id)}>
-          Back to {nav.latest.label}
-        </button>
-      )}
 
       <Sheet open={open} onClose={() => setOpen(false)} label="Choose a week">
         <div className="screen">

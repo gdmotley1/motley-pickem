@@ -589,3 +589,16 @@ every text-size guard passed because 14 is over the floor. Only the screenshot s
 full class name, not just the block: two components can share a block prefix. It is now
 `.tpick__label`, `tests/test_picks_jumbo.py` holds the name, and the harness measures the
 label itself (`teamLabelFont`).
+
+## An h2 takes the Slate display face from theme.css, not the face of the wall it sits on
+
+The Week tab's jumbotron top first rendered the winner's LED name in wide Archivo, so "GRANT"
+broke into "GRAN" and "T". The panel inherits Big Shoulders from `.jb`, but theme.css sets a
+font-family on every h1, h2 and h3, and a rule on the element beats inheritance. The LED
+points, in a `p`, were fine. `.jb-title` and `.jb-empty h2` on the Board already name the
+face for the same reason.
+
+The harness hid it for one run in the other direction: `outputs/harness/week_live.html`
+loaded only Archivo and Inter, so even the header fell back. A harness page must use
+index.html's font link verbatim, or its screenshots are of a different app.
+

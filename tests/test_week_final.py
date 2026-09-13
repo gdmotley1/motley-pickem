@@ -86,3 +86,33 @@ def test_the_tab_only_ever_shows_a_finished_week():
     assert "export function recapWeeks" in nav
     app = read("src", "App.jsx")
     assert "<Week me={me} onSkin={setWeekSkin} />" in app, "App is handing the Week tab the current week again"
+
+
+def test_the_top_is_the_jumbotron_final_without_the_runner_up():
+    """Grant, 2026-09-13: "lets do 1 but take out the over james by 7". The top of a finished
+    week is the Board's LED wall, and it names the winner and their points only."""
+    body = read("src", "screens", "Week.jsx")
+    hero = body[body.index("function Hero("):]
+    hero = hero[: hero.index(chr(10) + "function ", 10)]
+    assert 'className="jb wf-top"' in hero, "the top is no longer on the jumbotron"
+    assert "<Led>{names}</Led>" in hero and "<Led>{lead.points}</Led>" in hero
+    for gone in ("margin", " over ", "runner", "wins the week"):
+        assert gone not in hero, "%r is back in the top; Grant took the runner-up line out" % gone
+
+
+def test_the_winners_colors_still_reach_the_sections_under_the_top():
+    """The header went black with the jumbotron, but every section's rule and the leader's row
+    still wear the winner's school color, so App keeps setting it."""
+    app = read("src", "App.jsx")
+    assert "style={skin ? { '--wf-field': skin.field, '--wf-ink': skin.ink } : undefined}" in app
+    css = read("src", "app.css")
+    assert "background: var(--wf-field);" in css, "no section wears the winner's color any more"
+
+
+def test_there_is_no_back_to_the_latest_week_button():
+    """Grant, 2026-09-13: "remove back to week 2 button". The arrows and the jump list are the
+    way between weeks."""
+    body = read("src", "screens", "Week.jsx")
+    assert "wknav__back" not in body and "Back to {" not in body, "the Back to Week button is back"
+    assert ".wknav__back" not in read("src", "app.css"), "its styles are back without it"
+

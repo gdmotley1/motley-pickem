@@ -3609,8 +3609,8 @@
 
 /* ================================================ the finished week ==== */
 /* "Winner's colors", option 2 of the board Grant picked from on 2026-09-12, with the
-   sections he chose off the second board. Only a FINISHED week draws this: while games
-   are on, the tab shows the Board's scorebug on Slate, per his one-scoreboard call.
+   sections he chose off the second board and, since 2026-09-13, the jumbotron final on top.
+   Only a FINISHED week draws this: the week being played is the Board's.
 
    The ground is charcoal so that the one loud color on the page, the winner's school,
    only ever means who won. The type is Archivo's italic at condensed widths, the same
@@ -3618,53 +3618,11 @@
 
    NOTHING HERE IS UNDER 13PX; tests/test_text_floor.py counts. */
 
-.app[data-skin='winner'] {
+/* The winner's colors, which App sets on .app from the Week screen's onSkin: every section's
+   rule and the leader's row wear them. Slate until the finished week reports its colors. */
+.app {
   --wf-field: var(--field);
   --wf-ink: var(--on-field);
-  background: #131214;
-}
-
-.app[data-skin='winner'] .app__page {
-  background: #131214;
-}
-
-.app[data-skin='winner'] .apphdr {
-  background: var(--wf-field);
-  color: var(--wf-ink);
-}
-
-.app[data-skin='winner'] .apphdr__title {
-  font-size: 22px;
-  font-weight: 900;
-  font-style: italic;
-  font-stretch: 75%;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  color: var(--wf-ink);
-}
-
-.app[data-skin='winner'] .apphdr__week {
-  color: var(--wf-ink);
-  opacity: 0.82;
-}
-
-.app[data-skin='winner'] .apphdr__me {
-  background: rgba(0, 0, 0, 0.22);
-  color: var(--wf-ink);
-}
-
-.app[data-skin='winner'] .tabbar {
-  background: rgba(13, 12, 14, 0.94);
-  border-top-color: #242226;
-}
-
-.app[data-skin='winner'] .tabbar__btn {
-  color: #c4bfc6;
-}
-
-.app[data-skin='winner'] .tabbar__btn.is-on {
-  background: var(--wf-field);
-  color: var(--wf-ink);
 }
 
 .wf {
@@ -3681,154 +3639,142 @@
   font-family: var(--display);
 }
 
-/* --- the hero ----------------------------------------------------------------- */
-.wf-hero {
-  --wf-hero: var(--field);
-  --wf-hero-ink: #ffffff;
-  --wf-mark-invert: 1;
-  --wf-name: 118px;
-  position: relative;
-  overflow: hidden;
-  padding: 2px 18px 58px;
-  background: linear-gradient(160deg, transparent 0 58%, rgba(0, 0, 0, 0.22) 58% 100%), var(--wf-hero);
-  color: var(--wf-hero-ink);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 40px), 0 100%);
+/* --- the top: the jumbotron final ------------------------------------------------ */
+/* Direction 1 of four Grant was shown on 2026-09-13, minus the line naming the runner-up
+   ("take out the over james by 7"). The Board's own wall and LED lettering (.jb, .jb-wall,
+   .jb-strip, .jb-led), so the result sits on the same wall as the Board and Picks, and the
+   header over it is the jumbotron's. Scoped under .wf-top: the base .wknav rules sit further
+   down this file and would otherwise win on order alone (memory/traps.md). */
+.jb.wf-top {
+  padding: 0 0 12px;
 }
 
-.wf-hero > * {
-  position: relative;
-}
-
-.wf-hero .wf-hero__mark {
-  position: absolute;
-  right: -92px;
-  top: 118px;
-  width: 330px;
-  height: 330px;
-  background: center / contain no-repeat;
-  filter: brightness(0) invert(var(--wf-mark-invert));
-  opacity: 0.16;
-  transform: rotate(-12deg);
-  pointer-events: none;
-}
-
-/* Scoped under .wf-hero: the base .wknav rules sit further down this file and would
-   otherwise win on order alone. That shipped for one render as a white bar in the hero. */
-.wf-hero .wknav--hero {
-  padding: 8px 0 4px;
+.wf-top .wknav--hero {
+  padding: 10px 12px 2px;
   background: transparent;
   border-bottom: 0;
 }
 
-.wf-hero .wknav--hero .wknav__arrow {
+.wf-top .wknav--hero .wknav__arrow {
   width: 44px;
   height: 44px;
-  background: transparent;
-  color: var(--wf-hero-ink);
-  box-shadow: inset 0 0 0 2px currentColor;
+  border-radius: 4px;
+  background: #0d1015;
+  box-shadow: inset 0 0 0 1px #2c3440;
+  color: var(--jb-amber);
 }
 
-.wf-hero .wknav--hero .wknav__arrow:active {
-  background: rgba(0, 0, 0, 0.2);
+.wf-top .wknav--hero .wknav__arrow:active {
+  background: #1d222b;
 }
 
-.wf-hero .wknav--hero .wknav__mid:active {
-  background: rgba(0, 0, 0, 0.18);
+.wf-top .wknav--hero .wknav__mid:active {
+  background: rgba(255, 255, 255, 0.06);
 }
 
-.wf-hero .wknav--hero .wknav__mid b {
-  gap: 5px;
-  font-size: 20px;
+.wf-top .wknav--hero .wknav__mid b {
+  gap: 6px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 24px;
   font-weight: 900;
-  font-style: italic;
-  font-stretch: 75%;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--wf-hero-ink);
+  color: var(--jb-white);
 }
 
-.wf-hero .wknav--hero .wknav__mid b svg {
-  color: var(--wf-hero-ink);
+.wf-top .wknav--hero .wknav__mid b svg {
+  color: var(--jb-amber);
 }
 
-.wf-hero .wknav__back--hero {
-  display: block;
-  width: max-content;
-  margin: 4px auto 0;
-  padding: 0 18px;
-  min-height: 36px;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: rgba(0, 0, 0, 0.24);
-  color: var(--wf-hero-ink);
-  font-size: 15px;
+
+.wf-top__wall {
+  margin-top: 10px;
 }
 
-.wf-kick {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 22px;
+.wf-top__final {
+  padding: 2px 12px;
+  border-radius: 3px;
+  background: #e9eef5;
+  box-shadow: 0 0 12px rgba(233, 238, 245, 0.45);
+  color: #07080b;
+}
+
+/* The winner's panel, lit in their school's colors and ringed in gold. */
+.wf-top__panel {
+  --wf-top-name: 96px;
+  --wf-top-team2: #2a2f37;
+  position: relative;
+  overflow: hidden;
+  margin-top: 8px;
+  padding: 14px 14px 16px;
+  border-radius: 4px;
+  background: linear-gradient(100deg, color-mix(in srgb, var(--jb-team) 90%, #000), color-mix(in srgb, var(--jb-team) 32%, #000) 60%, #06070a);
+  box-shadow: inset 0 0 0 2px rgba(255, 214, 90, 0.85), 0 0 26px rgba(255, 196, 60, 0.3);
+}
+
+.wf-top__panel.is-shared {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--jb-team) 85%, #000) 0 50%, color-mix(in srgb, var(--wf-top-team2) 85%, #000) 50% 100%);
+}
+
+.wf-top__panel > * {
+  position: relative;
+}
+
+/* Bottom right, beside the points: up top it sat under the name, and a six letter name
+   like Parker ran its last letters over the mark. */
+.wf-top__panel .wf-top__mark {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  filter: drop-shadow(0 0 16px rgba(0, 0, 0, 0.6));
+}
+
+.wf-top__lamp {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 3px;
+  background: #ffd65a;
+  box-shadow: 0 0 14px rgba(255, 214, 90, 0.8);
   font-size: 18px;
   font-weight: 900;
-  font-style: italic;
-  font-stretch: 75%;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: #1a1300;
 }
 
-.wf-kick__final {
-  padding: 3px 12px 2px 10px;
-  background: #131214;
-  color: #ffffff;
-  transform: skewX(-12deg);
+/* A name never breaks mid-word: its size comes down with its length instead. Two
+   co-winners may wrap at the ampersand. The face is named here because the global heading
+   rule sets the Slate display face on every h2, which beats inheriting the wall's. */
+.wf-top__name {
+  margin: 10px 0 0;
+  font-family: 'Big Shoulders Display', var(--display);
+  white-space: nowrap;
 }
 
-.wf-name {
-  margin: 6px 0 0 -4px;
-  font-size: var(--wf-name);
-  font-weight: 900;
-  font-style: italic;
-  font-stretch: 62%;
-  line-height: 0.8;
-  letter-spacing: -0.01em;
+.wf-top__panel.is-shared .wf-top__name {
+  white-space: normal;
+}
+
+.wf-top__name .jb-led,
+.wf-top__pts .jb-led {
+  --jb-glow: rgba(255, 220, 110, 0.95);
+  --jb-glow2: rgba(255, 190, 60, 0.5);
+}
+
+.wf-top__name .jb-led > span {
+  font-size: var(--wf-top-name);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--wf-hero-ink);
-  overflow-wrap: anywhere;
+  color: #ffe08a;
 }
 
-.wf-wins {
-  margin-top: 8px;
-  font-size: 28px;
-  font-weight: 900;
-  font-style: italic;
-  font-stretch: 70%;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+.wf-top__pts {
+  margin: 8px 0 0;
 }
 
-.wf-score {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin-top: 12px;
-}
-
-.wf-score strong {
-  font-size: 80px;
-  font-weight: 900;
-  font-style: italic;
-  font-stretch: 70%;
-  line-height: 0.8;
-}
-
-.wf-score span {
-  font-size: 22px;
-  font-weight: 800;
-  font-style: italic;
-  font-stretch: 75%;
-  text-transform: uppercase;
-  opacity: 0.9;
+.wf-top__pts .jb-led > span {
+  font-size: 60px;
+  color: #ffe08a;
 }
 
 /* --- sections -------------------------------------------------------------------- */
@@ -4523,23 +4469,6 @@
   font-size: 13px;
   color: var(--ink-3);
   margin-top: 1px;
-}
-
-/* Only ever on screen when you have wandered off the current week. */
-.wknav__back {
-  display: block;
-  width: 100%;
-  padding: 7px 12px;
-  background: var(--accent-wash);
-  color: var(--accent-deep);
-  font-size: 14px;
-  font-weight: 700;
-  border-bottom: 1px solid var(--line);
-}
-
-.wknav__back:active {
-  background: var(--pick-soft);
-  color: #fff;
 }
 
 /* the jump list, inside the sheet */
