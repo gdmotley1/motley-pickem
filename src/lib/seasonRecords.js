@@ -3,10 +3,12 @@
  *
  * WHAT GRANT CHOSE, AND HOW
  *
- * Every entry here came off a ballot he filled in on 2026-09-12, and the layouts off a
- * numbered board the same evening: 6, headlines for everyone's numbers; 7, the trophy room
- * for the Hall of fame; 10, the red panel for the Hall of shame. Each key is also the file
- * name of his badge art, so a record added here without art fails tests/records_check.mjs.
+ * Every entry here came off a ballot he filled in on 2026-09-12, and the layouts off
+ * numbered boards the same evening: 7, the trophy room for the Hall of fame; 10, the red
+ * panel for the Hall of shame; and for everyone's numbers first headlines, then, once they
+ * were live and read as "clunky and hard to read, like, what the record actually is", 4,
+ * ranked ladders. Each key is also the file name of his badge art, so a record added here
+ * without art fails tests/records_check.mjs.
  *
  * The version before this had twelve records drawn as tiny squares, and the one before
  * that had seventeen invented statistics ("literally none of these stats makes sense at
@@ -72,11 +74,6 @@ const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 const DASH = '–'
 
-export function joinNames(names) {
-  if (names.length <= 1) return names[0] || ''
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
-}
-
 /* ------------------------------------------------------------------ shaping ---- */
 
 function shapeWeeks(rows) {
@@ -138,53 +135,39 @@ function rank(rows, { lower = false, bad = false } = {}) {
   })
 }
 
-/* How the rest of the family reads under a headline. A week in brackets is dropped when
-   it is the same week the headline already names: "James 179 (Week 1) · Parker 164
-   (Week 1)" said Week 1 four times on the board Grant picked from. */
-const REST = {
-  best_week: '{v} ({d})',
-  best_record: '{v} ({d})',
-  low_week: '{v} ({d})',
-  streak: '{v}',
-  worst_miss: '{v} {d}',
-  my_upset: '{v} {d}',
-  weeks_won: '{v}',
-  season_record: '{v}',
-}
+/* What a row says instead of a number when the record does not apply to that person. */
 const NONE = { worst_miss: 'no misses yet' }
 
+/* The one line a ladder row may carry under its name, by what kind of detail it is.
+   Grant, looking at the first ladders: "make everything uniform ... no weird text or
+   spaces. take the of 1 out of week". So a card's rows all follow one rule:
+     WEEKLY  the week it happened: every row shows its week, or, when every row's week is
+             the same week, none of them do
+     TEAM    the team it was on, which is the record itself: every row shows it
+     the rest ("in a row", "of 1", season record) print the number and nothing else */
+const WEEKLY = new Set(['best_week', 'best_record', 'low_week'])
+const TEAM = new Set(['worst_miss', 'my_upset'])
+
 /**
- * One record as a headline: who holds it, the number, and everyone else in one line.
- * Null when nobody leads it, which the screen draws as waiting.
+ * One record as a ladder: every seat, best first. Grant picked the ladder (option 4) on
+ * 2026-09-12 after the headline version read as "clunky and hard to read, like, what the
+ * record actually is".
+ *
+ *   lead   holds the record, so the row is drawn big (gold, or red on a bad-news record)
+ *   note   the line under the name, or '' (see WEEKLY and TEAM)
+ *   empty  the words under the name for someone the record does not apply to, whose
+ *          number column then shows a dash like everyone else's shows a number
  */
-export function headline(key, rows) {
-  const leaders = rows.filter((r) => r.mark)
-  if (!leaders.length) return null
-  const lead = leaders[0]
-  const sameDetail = leaders.every((r) => r.detail === lead.detail)
-
-  const groups = []
-  for (const r of rows) {
-    if (r.mark) continue
-    const k = `${r.value == null}|${r.display}|${r.detail}`
-    const last = groups[groups.length - 1]
-    if (last && last.k === k) last.names.push(r.name)
-    else groups.push({ k, names: [r.name], r })
-  }
-  const rest = groups.map(({ names, r }) => {
-    const who = joinNames(names)
-    if (r.value == null) return `${who} ${r.detail || NONE[key] || 'none yet'}`
-    let form = REST[key] || '{v}'
-    if (sameDetail && r.detail === lead.detail) form = form.replace(' ({d})', '')
-    return `${who} ${form.replace('{v}', r.display).replace('{d}', r.detail)}`.trim()
+export function rungs(key, rows) {
+  const valued = rows.filter((r) => r.value != null)
+  const sameWeek = valued.every((r) => r.detail === (valued[0] && valued[0].detail))
+  return rows.map((r) => {
+    const empty = r.value == null ? r.detail || NONE[key] || 'none yet' : ''
+    let note = ''
+    if (!empty && TEAM.has(key)) note = r.detail
+    if (!empty && WEEKLY.has(key) && !sameWeek) note = r.detail
+    return { ...r, lead: !!r.mark, note, empty }
   })
-
-  return {
-    leaders,
-    value: lead.display,
-    detail: sameDetail ? lead.detail : '',
-    rest: rest.join(' · '),
-  }
 }
 
 /* ------------------------------------------------------------------- the book ---- */
@@ -304,8 +287,7 @@ export function seasonRecords(seasonRows, pickRows, roster) {
       label: d.label,
       bad: !!d.bad,
       open,
-      rows,
-      headline: open ? null : headline(d.key, rows),
+      rows: rungs(d.key, rows),
     }
   })
 

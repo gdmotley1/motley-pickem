@@ -12,7 +12,8 @@ import { badgeUrl } from '../lib/badges.js'
  *
  * Top to bottom, as Grant picked it by number on 2026-09-12: standings, the form chart
  * (only once two weeks are finished), the Hall of fame as the trophy room (7), the Hall of
- * shame as the red panel (10), and everyone's numbers as headlines (6).
+ * shame as the red panel (10), and everyone's numbers as ranked ladders (4, off a second
+ * board the same night, replacing headlines he found hard to read).
  */
 export default function Season() {
   const [rows, setRows] = useState(null)
@@ -265,56 +266,57 @@ function HallOfShame({ awards }) {
 }
 
 /**
- * Everyone's numbers, as headlines: who holds each record in big type, everyone else in
- * one line underneath. A record nobody can hold yet says when it starts.
+ * Everyone's numbers, as ranked ladders: each record's name as a heading, then all four of
+ * you first to last, the holder's row drawn biggest. A record nobody can hold yet says
+ * when it starts instead.
  */
 function Numbers({ records }) {
   if (!records.length) return null
   return (
     <section aria-labelledby="numbers-title">
       <div className="book-head">
-        <p className="book-kick">The record book</p>
         <h3 id="numbers-title">Everyone&rsquo;s numbers</h3>
       </div>
-      <div className="heads">
+      <div className="ladders">
         {records.map((r) => (
-          <Headline key={r.key} r={r} />
+          <Ladder key={r.key} r={r} />
         ))}
       </div>
     </section>
   )
 }
 
-function Headline({ r }) {
-  const h = r.headline
-  if (!h) {
-    return (
-      <div className="head is-open">
-        <Medal id={r.key} size={54} open />
-        <div className="head__body">
-          <p className="head__k">{r.label}</p>
-          <p className="head__wait">{r.open || 'Nobody yet'}</p>
-        </div>
-      </div>
-    )
-  }
+function Ladder({ r }) {
   return (
-    <div className={`head${r.bad ? ' is-bad' : ''}`}>
-      <Medal id={r.key} size={54} />
-      <div className="head__body">
-        <p className="head__k">{r.label}</p>
-        <p className="head__lead">
-          <span className="head__faces">
-            {h.leaders.map((x) => (
-              <Avatar key={x.id} name={x.name} color={x.color} teamId={x.team_id} size={28} />
-            ))}
-          </span>
-          <b>{h.leaders.map((x) => x.name).join(' & ')}</b>
-          <span className="head__v num">{h.value}</span>
-          {h.detail && <em>{h.detail}</em>}
-        </p>
-        {h.rest && <p className="head__rest">{h.rest}</p>}
-      </div>
-    </div>
+    <section className={`ladder${r.bad ? ' is-bad' : ''}`} aria-label={r.label}>
+      <header className="ladder__hd">
+        <Medal id={r.key} size={38} open={!!r.open} />
+        <h4>{r.label}</h4>
+      </header>
+      {r.open ? (
+        <p className="ladder__wait">{r.open}</p>
+      ) : (
+        <ol className="ladder__list">
+          {/* Every row is the same four columns: rank, logo, name with at most one line
+              under it, and the number alone in its own right-hand column, so the numbers
+              line up down the card whatever a row has to say. */}
+          {r.rows.map((row) => (
+            <li key={row.id}
+                className={`rung${row.lead ? ' is-lead' : ''}${row.empty ? ' is-none' : ''}`}>
+              <span className="rung__rank num">{row.rank || '–'}</span>
+              <Avatar name={row.name} color={row.color} teamId={row.team_id}
+                      size={row.lead ? 34 : 28} />
+              <span className="rung__who">
+                <span className="rung__name">{row.name}</span>
+                {(row.note || row.empty) && (
+                  <span className="rung__note">{row.note || row.empty}</span>
+                )}
+              </span>
+              <b className="rung__val num">{row.empty ? '–' : row.display}</b>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   )
 }

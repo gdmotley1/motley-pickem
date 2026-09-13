@@ -227,8 +227,9 @@ over because its graded count is above zero. `tests/recap_check.mjs` and
 ## The record book is Grant's seventeen, each with his badge
 
 Eight numbers every player has, eight Hall of fame awards and one Hall of shame award,
-chosen off a ballot on 2026-09-12 and laid out by number: headlines, the trophy room, the
-red panel.
+chosen off a ballot on 2026-09-12 and laid out by number: the trophy room, the red panel,
+and everyone's numbers as ranked ladders, uniform down every card (one number column, one
+row height, a note under a name on every row or none).
 
 **Why:** two earlier books failed, one on invented stats he could not read cold ("literally
 none of these stats makes sense at all") and one on tiny text.

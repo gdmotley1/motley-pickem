@@ -1,8 +1,9 @@
 """The gate for the record book.
 
 Grant chose the seventeen entries off a ballot on 2026-09-12 and the layouts by number the
-same evening: headlines for everyone's numbers (6), the trophy room for the Hall of fame
-(7), the red panel for the Hall of shame (10). The badges are his art, from ChatGPT.
+same evening: the trophy room for the Hall of fame (7), the red panel for the Hall of shame
+(10), and ranked ladders for everyone's numbers (4, which replaced headlines once he saw
+them live). The badges are his art, from ChatGPT.
 
 The arithmetic runs under node in tests/records_check.mjs, against a three-player season
 small enough to check on paper, including the half-played-week bug. What is asserted here

@@ -247,3 +247,15 @@ narrower than about 500px and reported 518 for both.
 **Open:** 65 declarations under 13px remain on other screens (the Board's scorebug rows,
 chips, Setup, sign-in). `tests/test_text_floor.py` holds them as a ceiling that only goes
 down, so no new tiny text can land while they wait.
+
+**Everyone's numbers, redone the same night.** Live, the headlines were "a little clunky
+and hard to read, like, what the record actually is": the record's name was 13px spaced
+capitals under a 21px name and a 25px number, and the rest of the family ran together in
+one sentence. A second board of six (`scripts/build_numbers_board.py`, fed by the app's
+own record code through `scripts/numbers_model.mjs`) put the live version on top for
+comparison. Grant picked 4, ranked ladders, then asked for it "uniform ... no weird text or
+spaces. take the of 1 out of week". Measured on the real screen: every number in a card
+ends at the same x and every name starts at the same x (0px drift), rows come in two
+heights (58 for the holder, 48 otherwise), and a note under a name is on every row or
+none, which `tests/records_check.mjs` enforces. The tab is about 1,100px longer than with
+headlines, the price of showing all four of you on every record.

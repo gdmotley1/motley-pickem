@@ -99,7 +99,8 @@ const award = (list, k) => {
   return a
 }
 const who = (a) => a.holders.map((h) => (h.count > 1 ? `${h.name} x${h.count}` : h.name)).join(' & ')
-const lead = (b, k) => num(b, k).headline
+/* Who holds a record, as the ladder draws it: the rows marked lead, in ranked order. */
+const leads = (b, k) => num(b, k).rows.filter((r) => r.lead).map((r) => r.name)
 
 assert.equal(book.weeks, 3)
 assert.equal(book.hasPicks, true)
@@ -112,9 +113,11 @@ assert.equal(book.shame.length, 1)
 assert.equal(cell(book, 'best_week', 'Nicole').display, '210')
 assert.equal(cell(book, 'best_week', 'Nicole').detail, 'Week 3')
 assert.equal(cell(book, 'best_week', 'James').display, '140')
-assert.deepEqual(lead(book, 'best_week').leaders.map((r) => r.name), ['Nicole'])
-/* Different weeks, so every bracket stays. */
-assert.equal(lead(book, 'best_week').rest, 'Grant 150 (Week 1) · James 140 (Week 2)')
+assert.deepEqual(leads(book, 'best_week'), ['Nicole'])
+/* Everyone's best came in a different week, so every row keeps its week beside the number. */
+assert.equal(cell(book, 'best_week', 'Nicole').note, 'Week 3')
+assert.equal(cell(book, 'best_week', 'Grant').note, 'Week 1')
+assert.equal(cell(book, 'best_week', 'James').note, 'Week 2')
 
 assert.equal(cell(book, 'best_record', 'Nicole').display, '20-0')
 assert.equal(cell(book, 'best_record', 'Grant').display, '16-4')
@@ -127,13 +130,15 @@ assert.equal(cell(book, 'low_week', 'Grant').display, '90')
 assert.equal(cell(book, 'low_week', 'Grant').mark, 'worst')
 assert.equal(num(book, 'low_week').rows[0].name, 'Grant', 'lowest must sort first')
 assert.equal(num(book, 'low_week').bad, true)
-assert.equal(lead(book, 'low_week').rest, 'James 100 (Week 3) · Nicole 120 (Week 1)')
+assert.deepEqual(leads(book, 'low_week'), ['Grant'], 'the holder of a bad-news record still leads its ladder')
+assert.equal(cell(book, 'low_week', 'James').note, 'Week 3')
 
 /* Grant won all four in kickoff order; James won only game 2; Nicole won 1 and 2 then lost. */
 assert.equal(cell(book, 'streak', 'Grant').display, '4')
 assert.equal(cell(book, 'streak', 'James').display, '1')
 assert.equal(cell(book, 'streak', 'Nicole').display, '2')
-assert.equal(lead(book, 'streak').rest, 'Nicole 2 · James 1')
+/* The card is called Longest winning streak, so no row says "in a row" under it. */
+for (const name of ['Grant', 'Nicole', 'James']) assert.equal(cell(book, 'streak', name).note, '')
 
 /* Worst miss is the most confidence on a loser, told as stake and team: "4 on H3". Grant
    never lost, so he has no value at all and must not sit at the bottom on a zero. */
@@ -143,7 +148,12 @@ assert.equal(cell(book, 'worst_miss', 'James').detail, 'on H3')
 assert.equal(cell(book, 'worst_miss', 'Grant').value, null, 'a player who never lost has no worst miss')
 assert.equal(cell(book, 'worst_miss', 'Grant').mark, null)
 assert.equal(cell(book, 'worst_miss', 'Nicole').mark, 'worst')
-assert.equal(lead(book, 'worst_miss').rest, 'James 3 on H3 · Grant no misses yet')
+/* A team is the record itself, not a repeated unit, so it shows on every row even when it
+   is the same team as the leader's. And a player it does not apply to says so in words. */
+assert.equal(cell(book, 'worst_miss', 'James').note, 'on H3')
+assert.equal(cell(book, 'worst_miss', 'Grant').empty, 'no misses yet')
+assert.equal(cell(book, 'worst_miss', 'Grant').note, '')
+assert.equal(cell(book, 'worst_miss', 'Grant').lead, false)
 
 /* Underdog winners: game 1 (+10), game 3 (+21), game 4 (+7). Grant took all three, Nicole
    took game 1, James took none and shows "none yet" rather than a zero. */
@@ -151,14 +161,16 @@ assert.equal(cell(book, 'my_upset', 'Grant').display, '+21')
 assert.equal(cell(book, 'my_upset', 'Grant').detail, 'A3')
 assert.equal(cell(book, 'my_upset', 'Nicole').display, '+10')
 assert.equal(cell(book, 'my_upset', 'James').value, null)
-assert.equal(lead(book, 'my_upset').rest, 'Nicole +10 A1 · James none yet')
+assert.equal(cell(book, 'my_upset', 'Nicole').note, 'A1')
+assert.equal(cell(book, 'my_upset', 'James').empty, 'none yet')
 
 /* Week 2 tied on 140 and ties stand, so it counts for both James and Nicole. */
 assert.equal(cell(book, 'weeks_won', 'Nicole').display, '2')
 assert.equal(cell(book, 'weeks_won', 'Nicole').detail, 'of 3')
 assert.equal(cell(book, 'weeks_won', 'Grant').display, '1')
 assert.equal(cell(book, 'weeks_won', 'James').display, '1')
-assert.equal(lead(book, 'weeks_won').rest, 'Grant and James 1', 'equal numbers read as one group')
+/* Grant: "take the of 1 out of week". The number stands alone on every row. */
+for (const name of ['Nicole', 'Grant', 'James']) assert.equal(cell(book, 'weeks_won', name).note, '')
 
 assert.equal(cell(book, 'season_record', 'Nicole').display, '49-11')
 assert.equal(cell(book, 'season_record', 'James').display, '41-19')
@@ -225,8 +237,8 @@ assert.equal(later.weeks, 4)
 assert.equal(cell(later, 'weeks_won', 'Grant').display, '2')
 assert.equal(cell(later, 'weeks_won', 'Grant').detail, 'of 4')
 assert.equal(cell(later, 'low_week', 'James').display, '0')
-assert.deepEqual(lead(later, 'low_week').leaders.map((r) => r.name), ['James', 'Nicole'],
-  'a shared worst week names both')
+assert.deepEqual(leads(later, 'low_week'), ['James', 'Nicole'], 'a shared worst week leads with both')
+assert.equal(cell(later, 'low_week', 'Grant').note, '', 'the same Week 4 is not repeated below them')
 assert.equal(who(award(later.fame, 'win_by_20')), 'Grant x2 & Nicole')
 
 /* ---------------------------------------------- ties, nothing yet, no picks ---- */
@@ -236,10 +248,11 @@ const FLAT = ROSTER.map((p) => week(1, p.id, 100, 10))
 const flat = seasonRecords(FLAT, null, ROSTER)
 
 assert.equal(flat.hasPicks, false)
-assert.equal(lead(flat, 'best_week').leaders.length, 3, 'a three-way tie is three leaders')
-assert.equal(lead(flat, 'best_week').rest, '', 'and nobody left over')
+assert.equal(leads(flat, 'best_week').length, 3, 'a three-way tie is three leaders')
+/* Every best week was Week 1, so no row says Week 1: all rows carry the line or none do. */
+assert.ok(num(flat, 'best_week').rows.every((r) => r.note === ''), 'the same week on every row is not repeated')
+assert.ok(num(flat, 'best_week').rows.every((r) => r.rank === 1), 'and they share first place')
 assert.equal(num(flat, 'low_week').open, 'Starts once Week 2 is final')
-assert.equal(num(flat, 'low_week').headline, null)
 assert.equal(award(flat.fame, 'season_points').holders.length, 3)
 /* A three-way tie means nobody won by anything. That is unclaimed, not a tie on zero. */
 assert.equal(award(flat.fame, 'margin').claimed, false)
@@ -293,7 +306,24 @@ for (const b of [book, partial, later, flat]) {
     for (const row of r.rows) {
       if (row.mark) assert.notEqual(row.value, null, `${r.key} is held by somebody it does not apply to`)
       assert.ok(row.display !== '' && row.display != null, `${r.key} leaves ${row.name} with nothing to show`)
+      assert.equal(row.lead, !!row.mark, `${r.key}: the ladder's big row must be exactly the holder`)
+      assert.ok(!/^of \d|in a row/.test(row.note), `${r.key} puts "${row.note}" under ${row.name}; units never show`)
+      if (row.value == null) {
+        assert.ok(row.empty, `${r.key} gives ${row.name} no number and no words either`)
+        assert.equal(row.note, '', `${r.key} puts a note beside a number ${row.name} does not have`)
+      } else {
+        assert.equal(row.empty, '', `${r.key} says "${row.empty}" beside ${row.name}'s real number`)
+      }
     }
+  }
+  /* Uniform within a card: the line under the name is on every row that has a number, or on
+     none of them. A card where one row explains itself and the next does not is the
+     "weird text" Grant asked to be rid of. */
+  for (const r of b.numbers) {
+    const valued = r.rows.filter((row) => row.value != null)
+    const withNote = valued.filter((row) => row.note).length
+    assert.ok(withNote === 0 || withNote === valued.length,
+      `${r.key}: ${withNote} of ${valued.length} rows carry a note; all or none`)
   }
   for (const a of [...b.fame, ...b.shame]) {
     assert.equal(a.claimed, a.holders.length > 0)

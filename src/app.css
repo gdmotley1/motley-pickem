@@ -232,6 +232,8 @@
   font-size: 13.5px;
   line-height: 1.5;
   margin-top: 5px;
+  /* No single word stranded on a second line. */
+  text-wrap: balance;
 }
 
 .chip {
@@ -3715,7 +3717,8 @@
 /* ==================================================== the record book ==== */
 /* Three parts, each picked by Grant by number on 2026-09-12 off a board of twelve:
    the trophy room for the Hall of fame (7), the red panel for the Hall of shame (10), and
-   headlines for everyone's numbers (6). The badges are his, made in ChatGPT.
+   ranked ladders for everyone's numbers (4, which replaced headlines the same night).
+   The badges are his, made in ChatGPT.
 
    NOTHING HERE IS UNDER 13PX. He asked for that outright after the previous book's 8.5px
    labels, and tests/test_records.py walks every font-size in this block. */
@@ -3761,19 +3764,16 @@
   color: var(--ink);
 }
 
-.hold__faces,
-.head__faces {
+.hold__faces {
   display: inline-flex;
   flex: none;
 }
 
-.hold__faces .avatar,
-.head__faces .avatar {
+.hold__faces .avatar {
   box-shadow: 0 0 0 2px var(--card);
 }
 
-.hold__faces .avatar + .avatar,
-.head__faces .avatar + .avatar {
+.hold__faces .avatar + .avatar {
   margin-left: -7px;
 }
 
@@ -3797,7 +3797,7 @@
 .fame {
   position: relative;
   margin-top: 14px;
-  padding: 64px 12px 42px;
+  padding: 64px 12px 28px;
   text-align: center;
   background:
     radial-gradient(60% 170px at 50% 122px, rgba(255, 214, 120, 0.22), transparent 72%),
@@ -3988,110 +3988,181 @@
   color: var(--ink-2);
 }
 
-/* --------------------------------------------------- 6: everyone's numbers --- */
+/* ---------------------------------------- 4: everyone's numbers, ranked ladders --- */
+/* Grant picked these over the live headlines on 2026-09-12 ("clunky and hard to read,
+   like, what the record actually is"), then asked for them "uniform ... no weird text or
+   spaces". So every card is the same card, and every row the same four columns: rank,
+   logo, name with at most one short line under it, and the number alone in a right-hand
+   column that lines up down the card. A row keeps its height whether or not it carries
+   that line, and the holder's row is the only one drawn bigger. */
 .book-head {
-  padding: 30px 16px 12px;
+  padding: 26px 16px 14px;
+  text-align: center;
 }
 
 .book-head h3 {
-  margin: 4px 0 0;
+  margin: 0;
   font-family: var(--display);
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 800;
   line-height: 1.05;
   color: var(--ink);
 }
 
-.heads {
+.ladders {
+  display: grid;
+  gap: 10px;
   margin: 0 10px;
-  overflow: hidden;
+}
+
+.ladder {
+  padding: 10px 14px 6px;
   border-radius: 16px;
   border: 1px solid var(--stitch);
-  background: linear-gradient(180deg, var(--wool-600), var(--wool-700));
-  box-shadow: 0 6px 18px rgba(3, 7, 14, 0.5);
+  background: linear-gradient(170deg, var(--wool-500), var(--wool-700));
+  box-shadow: 0 5px 14px rgba(3, 7, 14, 0.45);
 }
 
-.head {
-  display: grid;
-  grid-template-columns: 54px minmax(0, 1fr);
-  align-items: start;
-  gap: 14px;
-  padding: 14px 14px 13px;
-}
-
-.head + .head {
-  border-top: 1px solid var(--stitch);
-}
-
-.head__body {
-  min-width: 0;
-}
-
-.head__k {
-  margin: 2px 0 7px;
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 800;
-  font-stretch: condensed;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  line-height: 1.2;
-  color: var(--accent);
-}
-
-.head.is-bad .head__k {
-  color: var(--bad);
-}
-
-.head__lead {
+.ladder__hd {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 4px 9px;
-  margin: 0;
+  gap: 10px;
+  min-height: 46px;
+  padding-bottom: 4px;
 }
 
-.head__lead b {
+.ladder__hd h4 {
+  margin: 0;
   font-family: var(--display);
-  font-size: 21px;
+  font-size: 19px;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--ink);
 }
 
-.head__v {
-  font-family: var(--display);
-  font-size: 25px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--lead);
-  text-shadow: 0 0 18px rgba(246, 228, 180, 0.3);
+/* A card whose record has not started still shows its badge in grey, but without the
+   up-for-grabs socket ring: the ring sits 5px outside the badge and knocked this one
+   badge out of line with every other card's. */
+.ladder__hd .medal.is-open {
+  outline: none;
 }
 
-.head.is-bad .head__v {
-  color: var(--bad);
-  text-shadow: none;
-}
-
-.head__lead em {
-  font-family: var(--ui);
-  font-size: 15px;
-  font-weight: 600;
-  font-style: normal;
-  color: var(--ink-2);
-}
-
-.head__rest {
-  margin: 7px 0 0;
-  font-family: var(--ui);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--ink-2);
-}
-
-.head__wait {
+.ladder__list {
   margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The logo column is as wide as the leader's logo, so every name starts at the same x. */
+.rung {
+  display: grid;
+  grid-template-columns: 24px 34px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 48px;
+  border-top: 1px solid rgba(42, 59, 87, 0.6);
+}
+
+.rung.is-lead {
+  min-height: 58px;
+}
+
+.rung > .avatar {
+  justify-self: center;
+}
+
+.rung__rank {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--wool-800);
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-2);
+}
+
+.rung.is-lead .rung__rank {
+  background: linear-gradient(180deg, #fbecc4, #e0ac4b);
+  color: #1b1403;
+  box-shadow: 0 0 10px rgba(224, 172, 75, 0.55);
+}
+
+.ladder.is-bad .rung.is-lead .rung__rank {
+  background: var(--bad);
+  color: #1b0503;
+  box-shadow: none;
+}
+
+.rung__who {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.rung__name,
+.rung__note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rung__name {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink-2);
+}
+
+.rung.is-lead .rung__name {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.rung__note {
+  margin-top: 1px;
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink-3);
+}
+
+.rung__val {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 800;
+  font-stretch: 87.5%;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.rung.is-lead .rung__val {
+  font-size: 30px;
+  color: var(--lead);
+}
+
+.ladder.is-bad .rung.is-lead .rung__val {
+  color: var(--bad);
+}
+
+.rung.is-none .rung__name,
+.rung.is-none .rung__val {
+  color: var(--ink-3);
+}
+
+/* A record nobody can hold yet: one quiet line where the rows will go. */
+.ladder__wait {
+  margin: 0;
+  padding: 14px 0 10px;
+  border-top: 1px solid rgba(42, 59, 87, 0.6);
   font-family: var(--ui);
   font-size: 15px;
   font-weight: 600;
