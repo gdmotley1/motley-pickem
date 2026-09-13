@@ -8,6 +8,7 @@ import { weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
 import { schoolField } from '../lib/schoolField.js'
 import { onDark } from '../lib/onDark.js'
+import Mark from '../components/Mark.jsx'
 
 /**
  * The recap of a finished week. Never the week being played.
@@ -149,34 +150,6 @@ const list = (xs) =>
   xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`
 
 const ordinal = (n) => `${n}${{ 1: 'st', 2: 'nd', 3: 'rd' }[n] || 'th'}`
-
-/**
- * A school's mark on the dark ground. Tries the drawing made for a dark background first,
- * which every FBS school has, then the plain one, then the abbreviation.
- */
-function Mark({ id, abbr, size = 34 }) {
-  const [step, setStep] = useState(0)
-  const base = `${import.meta.env.BASE_URL}logos/`
-  if (!id || step > 1) {
-    return (
-      <span className="wf-mark wf-mark--text" style={{ width: size, height: size }} aria-hidden="true">
-        {(abbr || '?').slice(0, 4)}
-      </span>
-    )
-  }
-  return (
-    <img
-      className="wf-mark"
-      src={`${base}${id}${step === 0 ? '-dark' : ''}.png`}
-      width={size}
-      height={size}
-      alt=""
-      loading="lazy"
-      decoding="async"
-      onError={() => setStep((s) => s + 1)}
-    />
-  )
-}
 
 const sideOf = (g, abbr) => (g.home_abbr === abbr ? g.home_id : g.away_id)
 

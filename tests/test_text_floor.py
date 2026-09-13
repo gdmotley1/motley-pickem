@@ -18,8 +18,9 @@ PINNED = ("eyebrow", "apphdr__title", "apphdr__week", "apphdr__me", "tabbar__btn
           "srow__ptslabel")
 
 # Declarations under FLOOR left in src/app.css. 65 after 2026-09-12; 55 once the Week tab
-# recap was rebuilt that night and its 9.5px labels went. Lower it as they get fixed.
-CEILING = 55
+# recap was rebuilt that night and its 9.5px labels went; 51 when the Board became the
+# jumbotron. Lower it as they get fixed.
+CEILING = 51
 
 
 def css():

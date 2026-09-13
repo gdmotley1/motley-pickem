@@ -162,7 +162,9 @@ def call_sites():
         for chunk in body.split("<WeekScore")[1:]:
             assert "/>" in chunk, "%s has a <WeekScore> that never closes" % fname
             found.append((fname, chunk.split("/>")[0]))
-    assert found, "no screen renders the scorebug at all any more"
+    # Empty since 2026-09-12: the Week tab shows finished weeks only and the Board became the
+    # jumbotron, so no screen draws the scorebug card. Its pinned strip, ScoreBug, is still
+    # the Board's. An empty walk is the expected answer now, not a broken one.
     return found
 
 
@@ -185,18 +187,11 @@ def test_every_call_site_takes_the_same_cut():
             )
 
 
-def test_the_scorebug_lives_on_the_board_only():
-    """One on the Board, none on the Week tab, which only ever shows a finished week in the
-    winner's colors (tests/test_week_final.py). Named here rather than in the walk above,
-    because the walk cannot know how many each screen is supposed to have."""
-    sites = [f for f, _ in call_sites()]
-    assert sites.count("Week.jsx") == 0, (
-        "the Week tab shows finished weeks only since 2026-09-12; found %d scorebugs on it"
-        % sites.count("Week.jsx")
-    )
-    assert sites.count("Board.jsx") == 1, (
-        "expected exactly one scorebug on the Board; found %d" % sites.count("Board.jsx")
-    )
+def test_no_screen_draws_the_old_scorebug_card():
+    """The Week tab shows finished weeks only and the Board is the jumbotron, both since
+    2026-09-12, and both read weekScore directly. A <WeekScore> card turning up on any
+    screen again means two looks for one scoreboard. Walked, so a new screen counts too."""
+    assert call_sites() == [], "a screen is drawing the old scorebug card again: %s" % [f for f, _ in call_sites()]
 
 
 def test_the_light_cut_exists_and_flips_the_chrome():

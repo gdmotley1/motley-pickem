@@ -228,7 +228,7 @@ export default function App() {
   const skin = tab === 'week' && weekSkin ? weekSkin : null
 
   return (
-    <div className="app" data-mode={mode} data-skin={skin ? 'winner' : undefined}
+    <div className="app" data-mode={mode} data-skin={skin ? 'winner' : tab === 'board' ? 'jumbo' : undefined}
          style={skin ? { '--wf-field': skin.field, '--wf-ink': skin.ink } : undefined}>
       <header className="apphdr">
         <div>

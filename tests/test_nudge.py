@@ -48,8 +48,8 @@ def test_the_board_actually_renders_it():
         "is for"
     )
     # Above the score: whatever the week has become, what you can still do comes first.
-    assert body.index("<PickNudge") < body.index("<WeekScore"), (
-        "the nudge must sit above the scorebug"
+    assert body.index("<PickNudge") < body.index("<Leaderboard"), (
+        "the nudge must sit above the leaderboard"
     )
 
 

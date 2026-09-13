@@ -1,18 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
-import TeamLogo from '../components/TeamLogo.jsx'
 import PickNudge from '../components/PickNudge.jsx'
-import { Avatar, Empty, IconClock, IconLock, Rank, Screen, Spinner } from '../components/ui.jsx'
-import { WeekScore, ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
+import Mark from '../components/Mark.jsx'
+import { Avatar, IconLock, Rank, Spinner } from '../components/ui.jsx'
+import { ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
 import { withLive } from '../lib/espn.js'
 import { weekScore } from '../lib/weekScore.js'
 import { useLiveScores } from '../lib/useLiveScores.js'
 import { rankOf, useRanks } from '../lib/useRanks.js'
 import { kickoffLabel } from '../lib/format.js'
+import { useTeams } from '../lib/teams.js'
+import { schoolPanel } from '../lib/schoolField.js'
 
 /**
- * Everyone's picks, revealed game by game as each one kicks off.
+ * Everyone's picks, revealed game by game as each one kicks off, on the jumbotron.
+ *
+ * The look is direction 1 of the six Grant was shown on 2026-09-12 ("its phenomenal"): a
+ * stadium LED wall, with a glowing leaderboard, every game as a tile lit in the schools'
+ * colors, big numbers made of LED dots, and a crawl of the finals along the bottom. His one
+ * change: each pick shows the logo of the team picked, not the player's own avatar.
  *
  * The server decides what is visible: get_board only returns rows for games where
  * kickoff has passed. Nothing here filters for secrecy, so there is no way for the
@@ -23,6 +30,7 @@ export default function Board({ me, weekId, week, onNavigate }) {
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
   const [error, setError] = useState(null)
+  const teams = useTeams()
 
   useEffect(() => {
     let alive = true
@@ -58,7 +66,6 @@ export default function Board({ me, weekId, week, onNavigate }) {
       if (!m.has(r.game_id)) m.set(r.game_id, [])
       m.get(r.game_id).push(r)
     }
-    for (const list of m.values()) list.sort((a, b) => b.confidence - a.confidence)
     return m
   }, [rows])
 
@@ -67,15 +74,13 @@ export default function Board({ me, weekId, week, onNavigate }) {
     [games, rows, roster],
   )
 
-  /* Nothing to show before the first kickoff: an empty scorebug says less than the
-     "unlock as they kick off" line already above them. */
+  /* Nothing to rank before the first kickoff: four players level on zero says less than
+     the game tiles underneath, which already show your own picks. */
   const showScore = !!score && games.some((g) => g.locked)
 
-  /* The pinned strip takes over the moment the card itself has scrolled away, so the
-     score is never more than a glance away twelve games down the board. Watching the card
-     beats watching the scroll offset: no listener, and nothing to keep in step with the
-     card's height. The header is sticky and covers the top of the page, so the top of the
-     viewport is not the top of what can be read, and the margin below takes it off. */
+  /* The pinned strip takes over the moment the leaderboard has scrolled away, so the score
+     is never more than a glance away twelve games down. The header is sticky and covers
+     the top of the page, so the margin below takes it off. */
   const headerH = useHeaderOffset()
   const cardRef = useRef(null)
   const [pinned, setPinned] = useState(false)
@@ -92,171 +97,106 @@ export default function Board({ me, weekId, week, onNavigate }) {
   if (error) return <p className="err">{error}</p>
   if (!games || !rows || !roster) return <Spinner />
 
-  /* This is the screen the app opens on now, so a week with nothing published has to say
-     so. get_slate joins on weeks.published and returns no rows until Dad hits Publish,
-     which otherwise reads as "All 0 games are open." above an empty page. */
+  const label = week?.label || 'This week'
+  const teamOf = (id) => teams?.find((t) => t.id === id)
+
+  /* This is the screen the app opens on, so a week with nothing published has to say so.
+     get_slate joins on weeks.published and returns no rows until Dad hits Publish. */
   if (!games.length)
     return (
-      <Screen eyebrow={week?.label || 'This week'} title="No slate yet">
-        <Empty icon={<IconClock />} title="Nothing published">
-          Your commissioner has not published this week&apos;s twenty games.
-        </Empty>
-      </Screen>
+      <div className="jb">
+        <div className="jb-wall">
+          <div className="jb-strip"><span>{label}</span></div>
+          <section className="jb-empty">
+            <h2>No slate yet</h2>
+            <p>Your commissioner has not published this week&apos;s twenty games.</p>
+          </section>
+        </div>
+      </div>
     )
 
-  const open = games.filter((g) => g.locked)
-  const upcoming = games.filter((g) => !g.locked)
+  const finals = games.filter((g) => g.winner_abbr)
 
   return (
-    <Screen
-      eyebrow={week?.label || 'This week'}
-      title="The Board"
-      sub={
-        upcoming.length === 0
-          ? `All ${games.length} games are open.`
-          : `${open.length} of ${games.length} open. The rest unlock as they kick off.`
-      }
-    >
+    <div className="jb">
       {/* Above the score on purpose. Whatever this week has already become, the thing
           you can still do about it comes first. */}
       <PickNudge games={games} onGo={() => onNavigate?.('picks')} />
 
-      {showScore && (
-        <>
-          <WeekScore
-            score={score}
-            cardRef={cardRef}
-            me={me}
-            label={week?.label || 'This week'}
-            record
-            light
-          />
-          <ScoreBug score={score} pinned={pinned} top={headerH} />
-        </>
-      )}
+      <div className="jb-wall">
+        <div className="jb-strip">
+          <span>{label}</span>
+          {score.playing > 0 && (
+            <span className="jb-onair">
+              <i />
+              {score.playing} live
+            </span>
+          )}
+          <span className="num">
+            {score.graded}/{score.slateSize} final
+          </span>
+        </div>
 
-      {/* Every game is listed, not just the ones that have started. An unplayed game
-          shows locked with your own pick visible, so you can check your card against
-          the board without waiting for kickoff. */}
-      <div style={{ paddingTop: 4 }}>
-        {games.map((g) =>
-          g.locked ? (
-            <BoardGame
+        {showScore && <Leaderboard score={score} me={me} teamOf={teamOf} cardRef={cardRef} />}
+
+        {/* Every game is listed, not just the ones that have started. An unplayed game
+            shows your own pick, so you can check your card against the board before
+            kickoff. */}
+        <section className="jb-games" aria-label="Games">
+          {games.map((g) => (
+            <GameTile
               key={g.game_id}
               game={g}
               picks={byGame.get(g.game_id) || []}
               roster={roster}
               me={me}
               ranks={ranks}
+              teamOf={teamOf}
             />
-          ) : (
-            <LockedGame key={g.game_id} game={g} roster={roster} me={me} ranks={ranks} />
-          ),
-        )}
+          ))}
+        </section>
       </div>
-    </Screen>
+
+      {finals.length > 0 && <Crawl games={finals} />}
+      {showScore && <ScoreBug score={score} pinned={pinned} top={headerH} />}
+    </div>
   )
 }
 
-/**
- * The points column.
- *
- * Sign and number stay glued together and the whole run is right-aligned, so the units
- * digits line up and a plus simply hangs to the left of its number. Giving the sign a
- * fixed cell of its own did line the digits up perfectly, but it left a 9px hole between
- * "+" and a single digit, and "+ 6" reads as two things rather than one.
- *
- * What actually made this column ragged was never the alignment: it was the box moving.
- * See .bpick__pts and .bpick in app.css.
- */
-function Pts({ sign = '', children }) {
+/** A number drawn in LED dots: the glyphs are cut by a mask, the glow lights the dots. */
+function Led({ children, className = '' }) {
   return (
-    <span className="bpick__pts num">
-      {sign}
-      {children}
+    <span className={`jb-led ${className}`}>
+      <span className="num">{children}</span>
     </span>
   )
 }
 
-/**
- * The line and the total, as they stood before kickoff.
- *
- * Both are read off the stored game row and never from the live ESPN poll, so the
- * numbers are the ones the game was priced at rather than anything that moved during
- * it. ESPN stops publishing odds the moment a game goes final, so either half can be
- * missing on an older game and there is no way to recover it: the row renders what it
- * has and disappears entirely when it has neither.
- */
-function Odds({ game }) {
-  const spread = game.spread_line === null || game.spread_line === undefined
-    ? null
-    : api.spreadLabel(game)
-  const total = api.totalLabel(game)
-  if (!spread && !total) return null
+function Leaderboard({ score, me, teamOf, cardRef }) {
   return (
-    <p className="bgame__odds num">
-      {spread}
-      {spread && total ? <span className="bgame__oddsep">·</span> : null}
-      {total}
-    </p>
-  )
-}
-
-/** A game that has not kicked off: your pick is shown, everyone else's is hidden. */
-function LockedGame({ game, roster, me, ranks }) {
-  return (
-    <div className="bgame bgame--locked">
-      <div className="bgame__head">
-        <div className="bgame__score">
-          <span className="bgame__side">
-            <TeamLogo teamId={game.away_id} abbr={game.away_abbr} size={22} />
-            <Rank n={rankOf(ranks, game.away_id)} />
-            {game.away_abbr}
+    <section className="jb-panel" ref={cardRef} aria-label="Leaderboard">
+      <h2 className="jb-title">Leaderboard</h2>
+      {score.players.map((p) => (
+        <div
+          key={p.id}
+          className={`jb-row${p.rank === 1 && score.best > 0 ? ' is-lead' : ''}`}
+          style={{ '--jb-team': schoolPanel(teamOf(p.team_id), p.color) }}
+        >
+          <span className="jb-rank num">{p.rank}</span>
+          <Avatar name={p.name} color={p.color} teamId={p.team_id} size={40} />
+          <span className="jb-who">
+            <b>
+              {p.name}
+              {p.id === me?.id && <i className="jb-you">You</i>}
+            </b>
+            <span className="num">
+              {p.correct}-{p.played - p.correct} · {p.live} in play
+            </span>
           </span>
-          <span className="bgame__sep">{game.neutral_site ? 'vs' : '@'}</span>
-          <span className="bgame__side">
-            <TeamLogo teamId={game.home_id} abbr={game.home_abbr} size={22} />
-            <Rank n={rankOf(ranks, game.home_id)} />
-            {game.home_abbr}
-          </span>
+          <Led className="jb-pts">{p.points}</Led>
         </div>
-        <span className="chip">
-          <IconLock />
-          {kickoffLabel(game.kickoff)}
-        </span>
-      </div>
-
-      <Odds game={game} />
-
-      <div className="bpicks">
-        {roster.map((player) => {
-          const mine = player.id === me.id
-          return (
-            <div className={`bpick${mine ? '' : ' bpick--hidden'}`} key={player.id}>
-              <Avatar name={player.name} color={player.color} teamId={player.team_id} size={22} />
-              <span className="bpick__who">
-                {player.name}
-                {mine ? ' (you)' : ''}
-              </span>
-              {mine ? (
-                <>
-                  <span className="bpick__team">{game.my_pick || 'no pick yet'}</span>
-                  <Pts>{game.my_confidence ?? '—'}</Pts>
-                </>
-              ) : (
-                <>
-                  <span className="bpick__team bpick__masked">
-                    <IconLock />
-                    hidden
-                  </span>
-                  <Pts>–</Pts>
-                </>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
+      ))}
+    </section>
   )
 }
 
@@ -274,86 +214,150 @@ function graded(pick, winner) {
   return { ...pick, correct, points: correct ? pick.confidence : 0 }
 }
 
-function BoardGame({ game, picks, roster, me, ranks }) {
+/** The side a pick is on, by abbreviation, so its chip can carry that school's mark. */
+const idFor = (game, abbr) => (abbr === game.home_abbr ? game.home_id : abbr === game.away_abbr ? game.away_id : null)
+
+function Odds({ game }) {
+  const spread = game.spread_line == null ? null : api.spreadLabel(game)
+  const total = api.totalLabel(game)
+  if (!spread && !total) return <span className="jb-line" />
+  return (
+    <span className="jb-line num">
+      {spread}
+      {spread && total ? ' · ' : ''}
+      {total}
+    </span>
+  )
+}
+
+function GameTile({ game, picks, roster, me, ranks, teamOf }) {
   const done = !!game.winner_abbr
-  const homeWon = done && game.winner_abbr === game.home_abbr
-  const awayWon = done && game.winner_abbr === game.away_abbr
+  const started = !!game.locked
+  const scored = game.home_score != null && game.away_score != null
+  const state = done ? 'final' : started ? 'live' : 'soon'
+  /* Who is ahead right now: the winner once it is final, the team in front while it is on,
+     nobody at a tie or before kickoff. */
+  const leader = done
+    ? game.winner_abbr
+    : started && scored && game.home_score !== game.away_score
+      ? game.home_score > game.away_score ? game.home_abbr : game.away_abbr
+      : null
+
+  const team = (side) => {
+    const abbr = game[`${side}_abbr`]
+    const id = game[`${side}_id`]
+    const t = teamOf(id)
+    const lead = leader === abbr
+    return (
+      <div
+        className={`jb-team${lead ? ' is-lead' : ''}${done && !lead ? ' is-loser' : ''}`}
+        style={{ '--jb-team': schoolPanel(t, '#2a2f37') }}
+      >
+        <Mark id={id} abbr={abbr} size={38} />
+        <span className="jb-school">
+          <Rank n={rankOf(ranks, id)} />
+          {t?.school || game[`${side}_school`] || abbr}
+        </span>
+        <span className="jb-arrow" aria-hidden="true" />
+        {scored && started ? <Led className="jb-score">{game[`${side}_score`]}</Led> : <span />}
+      </div>
+    )
+  }
 
   return (
-    <div className="bgame">
-      <div className="bgame__head">
-        <div className="bgame__score">
-          <span className={`bgame__side${done && !awayWon ? ' is-loser' : ''}`}>
-            <TeamLogo teamId={game.away_id} abbr={game.away_abbr} size={22} />
-            <Rank n={rankOf(ranks, game.away_id)} />
-            {game.away_abbr}
-            {game.away_score != null && (
-              <span className="bgame__pts num">{game.away_score}</span>
-            )}
+    <article className={`jb-game is-${state}`}>
+      <header className="jb-game__hd">
+        {state === 'final' && <span className="jb-pill is-final">Final</span>}
+        {state === 'live' && (
+          <span className="jb-pill is-live">
+            <i />
+            {game.status_detail || 'Live'}
           </span>
-          <span className="bgame__sep">{game.neutral_site ? 'vs' : '@'}</span>
-          <span className={`bgame__side${done && !homeWon ? ' is-loser' : ''}`}>
-            <TeamLogo teamId={game.home_id} abbr={game.home_abbr} size={22} />
-            <Rank n={rankOf(ranks, game.home_id)} />
-            {game.home_abbr}
-            {game.home_score != null && (
-              <span className="bgame__pts num">{game.home_score}</span>
-            )}
+        )}
+        {state === 'soon' && (
+          <span className="jb-pill is-soon">
+            <IconLock />
+            {kickoffLabel(game.kickoff)}
           </span>
-        </div>
-        <span className={`chip${done ? '' : ' chip--live'}`}>
-          {done ? 'Final' : game.status_detail || 'Live'}
-        </span>
-      </div>
+        )}
+        <Odds game={game} />
+      </header>
+      {team('away')}
+      {team('home')}
 
-      <Odds game={game} />
-
-      {/* Every claimed player gets a row whether or not they picked, so each game card
-          is exactly the same height and a missing pick is visible rather than absent. */}
-      <div className="bpicks">
+      {/* Every claimed player gets a chip whether or not they picked, so each tile is the
+          same height and a missing pick is visible rather than absent. The chip carries
+          the logo of the team picked, per Grant: the player's own avatar is also a school
+          logo, and next to "GT" it read as the pick. */}
+      <div className="jb-picks">
         {roster.map((player) => {
-          const p = graded(
-            picks.find((x) => x.player_id === player.id),
-            game.winner_abbr,
-          )
-          const mine = player.id === me.id
-          if (!p)
+          const mine = player.id === me?.id
+          if (!started) {
+            if (!mine) return <Chip key={player.id} name={player.name} state="hidden" />
             return (
-              <div className="bpick bpick--none" key={player.id}>
-                <Avatar name={player.name} color={player.color} teamId={player.team_id} size={22} />
-                <span className="bpick__who">
-                  {player.name}
-                  {mine ? ' (you)' : ''}
-                </span>
-                <span className="bpick__team">no pick</span>
-                <Pts>—</Pts>
-              </div>
+              <Chip key={player.id} name={player.name} state="open" abbr={game.my_pick}
+                    teamId={idFor(game, game.my_pick)} value={game.my_confidence ?? '–'} />
             )
+          }
+          const p = graded(picks.find((x) => x.player_id === player.id), game.winner_abbr)
+          if (!p) return <Chip key={player.id} name={player.name} state="none" />
+          const result = done
+            ? p.correct ? 'won' : 'lost'
+            : leader ? (p.pick_abbr === leader ? 'ahead' : 'behind') : 'open'
           return (
-            <div
-              key={player.id}
-              className={`bpick${p.correct === true ? ' is-right' : ''}${
-                p.correct === false ? ' is-wrong' : ''
-              }`}
-            >
-              <Avatar name={p.player_name} color={p.player_color} teamId={p.player_team} size={22} />
-              <span className="bpick__who">
-                {p.player_name}
-                {mine ? ' (you)' : ''}
-              </span>
-              <span className="bpick__team">{p.pick_abbr}</span>
-              {p.auto && <span className="bpick__auto">auto</span>}
-              {/* A win banks the confidence, so it gets the plus. Everything else shows
-                  the wager itself: a loss used to collapse to +0, which hid the only
-                  interesting thing about it, since 18 on the upset of the week and 3 on
-                  a game nobody watched read the same. A game still to be graded shows
-                  the same number in default ink, and the red wash tells the two apart. */}
-              <Pts sign={p.correct ? '+' : ''}>
-                {p.correct ? p.points : p.confidence}
-              </Pts>
-            </div>
+            <Chip key={player.id} name={player.name} state={result} abbr={p.pick_abbr} auto={p.auto}
+                  teamId={idFor(game, p.pick_abbr)} value={result === 'won' ? `+${p.points}` : p.confidence} />
           )
         })}
+      </div>
+    </article>
+  )
+}
+
+/**
+ * One player's pick on one game: the picked school's mark, whose pick it is, and the
+ * points. A win shows what it banked; everything else shows the wager, never a minus.
+ */
+function Chip({ name, state, abbr, teamId, value, auto }) {
+  if (state === 'hidden')
+    return (
+      <span className="jb-pick is-hidden">
+        <span className="jb-lock"><IconLock /></span>
+        <span className="jb-pick__who">{name}</span>
+        <b>Locked</b>
+      </span>
+    )
+  if (state === 'none' || (state === 'open' && !abbr))
+    return (
+      <span className="jb-pick is-none">
+        <span className="jb-lock">–</span>
+        <span className="jb-pick__who">{name}</span>
+        <b>No pick</b>
+      </span>
+    )
+  return (
+    <span className={`jb-pick is-${state}`}>
+      <Mark id={teamId} abbr={abbr} size={26} />
+      <span className="jb-pick__who">
+        {name}
+        {auto && <i className="jb-auto">auto</i>}
+      </span>
+      <b className="num">{value}</b>
+    </span>
+  )
+}
+
+/** The finals so far, crawling along the bottom of the wall. */
+function Crawl({ games }) {
+  const run = games.map((g) => `${g.away_abbr} ${g.away_score ?? ''}  ${g.home_abbr} ${g.home_score ?? ''}`).join('   ◆   ')
+  return (
+    <div className="jb-crawl" aria-label="Final scores">
+      <span className="jb-crawl__k">Final</span>
+      <div className="jb-crawl__win">
+        <div className="jb-crawl__run">
+          <span>{run}</span>
+          <span aria-hidden="true">{run}</span>
+        </div>
       </div>
     </div>
   )

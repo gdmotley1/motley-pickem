@@ -242,6 +242,20 @@ winner's school color (`data-skin="winner"`, set by App from Week's `onSkin`). N
 numbers go in `weekRecap.js` with checks in `tests/recap_check.mjs`;
 `tests/test_week_final.py` holds the section order, the cuts and the lag.
 
+## The Board is the jumbotron, and a pick shows the team picked
+
+Picked 2026-09-12 off a board of six scoreboard directions ("lets do 1 its phenomenal"): a
+stadium LED wall with a glowing leaderboard, every game as a tile in the schools' colors,
+LED-dot numbers and a crawl of the finals. His one change: a pick chip carries the logo of
+the team picked, not the player's avatar, which is a school logo too and read as the pick.
+
+**Why:** he asked for a "real college football scoreboard" look that feels like a "million
+dollar job". The 8-bit arcade direction is saved in `docs/ideas.md` for a theme week.
+
+**How to apply:** the skin is `data-skin="jumbo"` on the Board tab only. Chips name the
+player beside the picked school's mark. The leaderboard reads `weekScore`, as everything
+does; `tests/test_board_jumbo.py` holds the chip logo rule and the hidden unplayed picks.
+
 ## The record book is Grant's seventeen, each with his badge
 
 Eight numbers every player has, eight Hall of fame awards and one Hall of shame award,

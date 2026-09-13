@@ -238,7 +238,8 @@ def test_no_input_renders_below_the_size_that_makes_ios_zoom():
 
 
 def rank_rule(css):
-    m = re.search(r"\.aprank\s*\{([^}]*)\}", re.sub(r"/\*.*?\*/", "", css, flags=re.S))
+    # Anchored to the start of a line: the base rule, not a scoped one like `.jb-team .aprank`.
+    m = re.search(r"(?m)^\.aprank\s*\{([^}]*)\}", re.sub(r"/\*.*?\*/", "", css, flags=re.S))
     assert m, ".aprank rule not found"
     return m.group(1)
 
@@ -270,9 +271,9 @@ def test_there_is_only_one_rank_style():
 
 
 def test_the_board_does_not_double_its_gap():
-    """.bgame__side is a flex row with its own gap, so the rank must not add a margin."""
+    """The jumbotron's team name is a flex row with its own gap, so the rank must not add a margin."""
     css = re.sub(r"/\*.*?\*/", "", read(APP_CSS), flags=re.S)
-    m = re.search(r"\.bgame__side\s+\.aprank\s*\{([^}]*)\}", css)
+    m = re.search(r"\.jb-team\s+\.aprank\s*\{([^}]*)\}", css)
     assert m and re.search(r"margin-right:\s*0", m.group(1)), (
         "without this the rank sits 9px from the abbreviation and 6px from the logo"
     )

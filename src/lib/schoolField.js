@@ -33,3 +33,20 @@ export function schoolField(team, fallback = '#28313d') {
   const field = options.length ? options.reduce((a, b) => (saturation(b) > saturation(a) ? b : a)) : valid(fallback) ? fallback : '#28313d'
   return { field, ink: luminance(field) > 0.36 ? '#111111' : '#ffffff' }
 }
+
+/**
+ * A school's field color, pulled toward black until white lettering reads on it.
+ *
+ * For the Board's jumbotron, where every team row is lit in its school's color under white
+ * type. Colorado's field is a pale grey and Kennesaw State's a gold, and both washed the
+ * school name out on the first render until they were darkened this way.
+ */
+export function schoolPanel(team, fallback = '#28313d', ceiling = 0.2) {
+  const { field } = schoolField(team, fallback)
+  const [r, g, b] = rgb(field).map((c) => c * 255)
+  let f = 1
+  const hex = (k) =>
+    `#${[r, g, b].map((c) => Math.round(c * k).toString(16).padStart(2, '0')).join('')}`
+  while (luminance(hex(f)) > ceiling && f > 0.05) f -= 0.04
+  return hex(f)
+}
