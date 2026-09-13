@@ -297,3 +297,8 @@ smallest text 13px, nothing sideways. Twenty games take about 3,480px, up from 3
 Under-13px declarations in app.css 51 to 39. One trap on the way: a class name the team
 picker already owned (see memory/traps.md).
 
+Deployed the same night on "push and deploy": the served index-Dzbb43Sl.css and
+index-CDTfU-Tz.js are byte-identical to dist and carry the new rules, and the live sign-in
+screen, loaded read-only, shows all four seats on the new bundle. That push also carried the
+two handoff commits and the night-of-2026-09-12 notes that were committed but not pushed.
+
