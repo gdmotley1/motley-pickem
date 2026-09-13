@@ -2,25 +2,39 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
-import TeamLogo from '../components/TeamLogo.jsx'
+import Led from '../components/Led.jsx'
+import Mark from '../components/Mark.jsx'
 import {
-  Back,
-  Empty,
+  Chevron,
   IconClock,
   IconGrip,
   IconLock,
   Portal,
   Rank,
-  Screen,
   Sheet,
   Spinner,
   Toast,
 } from '../components/ui.jsx'
 import Matchup from '../components/Matchup.jsx'
-import { fetchRankings } from '../lib/matchup.js'
-import { kickoffLabel, tvLabel } from '../lib/format.js'
+import { dayKey, kickoffLabel, tvLabel, weekdayLabel } from '../lib/format.js'
+import { schoolPanel } from '../lib/schoolField.js'
+import { useTeams } from '../lib/teams.js'
+import { rankOf, useRanks } from '../lib/useRanks.js'
+
+/**
+ * Your card for the week, on the jumbotron.
+ *
+ * The look is direction 1 of the six Grant was shown on 2026-09-13 ("lets do 1, build it"):
+ * the Board's LED wall carried onto Picks, so the two tabs are one stadium. Every team is a
+ * lit panel in its school's colors, a pick lights gold, points are LED numbers on the
+ * Board's leaderboard rows, and locking in gets the marquee and a crawl.
+ *
+ * What did not change is everything that already worked: a list for winners, tap to lift
+ * and place for points, the spread sort on arrival, the loud Matchup pill.
+ */
 
 const DRAFT_KEY = 'pickem.draft.v1'
+const PANEL = '#2a2f37' // a school with no colors in the library, lit the Board's grey
 
 export default function Picks({ me, weekId, week, onNavigate }) {
   const [games, setGames] = useState(null)
@@ -205,38 +219,46 @@ export default function Picks({ me, weekId, week, onNavigate }) {
   if (!games) return <Spinner />
   if (!games.length)
     return (
-      <Screen eyebrow={week?.label || "This week"} title="No slate yet">
-        <Empty icon={<IconClock />} title="Nothing published">
-          Your commissioner has not published this week&apos;s twenty games.
-        </Empty>
-      </Screen>
+      <div className="jb picks">
+        <div className="jb-wall">
+          <div className="jb-strip">
+            <span>{week?.label || 'This week'}</span>
+          </div>
+          <section className="jb-empty">
+            <h2>No slate yet</h2>
+            <p>Your commissioner has not published this week&apos;s twenty games.</p>
+          </section>
+        </div>
+      </div>
     )
 
-  if (phase === 'done')
+  /* Locked in, whether you just pressed the button or came back to a card you sent days
+     ago. They were two screens, a confirmation and a read-only ranking, saying the same
+     thing in two layouts; on the jumbotron both are the marquee, and only the one you just
+     earned plays the lock dropping shut. */
+  if (phase === 'done' || phase === 'locked')
     return (
-      <Done
-        onSeeBoard={() => onNavigate?.('board')}
+      <LockedIn
+        me={me}
+        fresh={phase === 'done'}
         games={games}
         winners={winners}
         order={order}
         locked={locked}
         availableValues={availableValues}
         onEdit={reopen}
+        onSeeBoard={() => onNavigate?.('board')}
       />
     )
 
-  if (phase === 'rank' || phase === 'locked')
+  if (phase === 'rank')
     return (
       <RankPhase
-        readOnly={phase === 'locked'}
-        onChange={reopen}
-        onSeeBoard={() => onNavigate?.('board')}
         setToast={setToast}
         editable={editable}
         locked={locked}
         winners={winners}
         order={order}
-        setOrder={setOrder}
         availableValues={availableValues}
         onReset={resetOrder}
         onMove={moveTo}
@@ -262,6 +284,34 @@ export default function Picks({ me, weekId, week, onNavigate }) {
   )
 }
 
+/** The school behind an id, once the team library has landed. */
+function useTeamOf() {
+  const teams = useTeams()
+  return useCallback((id) => teams?.find((t) => t.id === id), [teams])
+}
+
+/** The slate split by local kickoff day, in slate order: [{ key, label, games }]. */
+function byDay(list) {
+  const out = []
+  const at = new Map()
+  for (const g of list) {
+    const key = dayKey(g.kickoff)
+    if (!at.has(key)) {
+      at.set(key, out.length)
+      out.push({ key, label: weekdayLabel(g.kickoff), games: [] })
+    }
+    out[at.get(key)].games.push(g)
+  }
+  return out
+}
+
+const Check = () => (
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
+    <path d="m5 12.5 4.2 4.2L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round"
+          strokeLinejoin="round" />
+  </svg>
+)
+
 /* ================================================================== choose */
 
 /**
@@ -270,6 +320,10 @@ export default function Picks({ me, weekId, week, onNavigate }) {
  * The first build was a one-card-at-a-time swipeable stack. It photographed well and was
  * wrong in the hand: most of the viewport sat empty, you could not see what was coming,
  * and twenty separate screens is slower than one scroll.
+ *
+ * On the jumbotron the list is grouped under each kickoff day, the way the week is
+ * actually played, and the games that have already kicked off sit last under their own
+ * heading.
  */
 function ChoosePhase({
   games, locked, winners, chosenCount, allChosen, onChoose, onDone, onSeeBoard,
@@ -281,39 +335,28 @@ function ChoosePhase({
      implying there is work to do. */
   const closed = total === 0
   const [preview, setPreview] = useState(null)
-
-  /**
-   * AP ranks for every team on the board, from one cached ESPN call.
-   *
-   * Not from Postgres: get_slate has never returned a rank, so the #6 that TeamPick has
-   * always been written to render was dead in the real app and only ever showed up in
-   * the offline demo. The poll also moves weekly and independently of the sync job, so
-   * the phone asking ESPN is fresher than a stored column would be. A failure here is
-   * silent by design; a missing rank is not worth an error message.
-   */
-  const [ranks, setRanks] = useState(null)
-  useEffect(() => {
-    let alive = true
-    fetchRankings()
-      .then((r) => alive && setRanks(r))
-      .catch(() => {})
-    return () => {
-      alive = false
-    }
-  }, [])
+  /* AP ranks from one cached ESPN call, shared with the Board and the matchup sheet. A
+     failure is silent by design; a missing rank is not worth an error message. */
+  const ranks = useRanks()
+  const teamOf = useTeamOf()
 
   return (
-    <div>
+    <div className="jb picks">
       {!closed && (
-        <div className="choose__top">
-          <div className="progress" aria-label={`${chosenCount} of ${total} picked`}>
-            <div
-              className="progress__fill"
-              style={{ width: `${total ? (chosenCount / total) * 100 : 0}%` }}
-            />
-          </div>
-          <span className="choose__count num">
-            {chosenCount}/{total}
+        <div className="choose__top" aria-label={`${chosenCount} of ${total} picked`}>
+          <span className="choose__count">
+            <Led>{chosenCount}</Led>
+            <span className="choose__of" aria-hidden="true">
+              of {total}
+              <br />
+              picked
+            </span>
+          </span>
+          {/* One lamp per game still to pick, lit as the count climbs. */}
+          <span className="choose__meter" style={{ '--choose-lamps': total }} aria-hidden="true">
+            {games.map((g, i) => (
+              <i key={g.game_id} className={i < chosenCount ? 'is-on' : undefined} />
+            ))}
           </span>
         </div>
       )}
@@ -329,39 +372,49 @@ function ChoosePhase({
         </p>
       )}
 
-      <ul className="games">
-        {games.map((g) => (
-          <li key={g.game_id}>
-            <GameRow
-              game={g}
-              picked={winners[g.game_id]}
-              onChoose={onChoose}
-              ranks={ranks}
-              onPreview={setPreview}
-            />
-          </li>
+      <div className="jb-wall games">
+        {byDay(games).map((day) => (
+          <section className="games__day" key={day.key} aria-label={day.label}>
+            <h3 className="games__dayname">{day.label}</h3>
+            {day.games.map((g) => (
+              <GameRow
+                key={g.game_id}
+                game={g}
+                picked={winners[g.game_id]}
+                onChoose={onChoose}
+                ranks={ranks}
+                teamOf={teamOf}
+                onPreview={setPreview}
+              />
+            ))}
+          </section>
         ))}
-        {locked.map((g) => (
-          <li key={g.game_id}>
-            <GameRow
-              game={g}
-              picked={g.my_pick}
-              onChoose={() => {}}
-              isLocked
-              ranks={ranks}
-              onPreview={setPreview}
-            />
-          </li>
-        ))}
-      </ul>
+        {locked.length > 0 && (
+          <section className="games__day" aria-label="Kicked off">
+            <h3 className="games__dayname">Kicked off</h3>
+            {locked.map((g) => (
+              <GameRow
+                key={g.game_id}
+                game={g}
+                picked={g.my_pick}
+                onChoose={() => {}}
+                isLocked
+                ranks={ranks}
+                teamOf={teamOf}
+                onPreview={setPreview}
+              />
+            ))}
+          </section>
+        )}
+      </div>
 
       <div className="stickycta">
         {closed ? (
-          <button className="btn" onClick={onSeeBoard}>
+          <button className="btn btn--led" onClick={onSeeBoard}>
             See the Board
           </button>
         ) : (
-          <button className="btn" onClick={onDone} disabled={!allChosen}>
+          <button className="btn btn--led" onClick={onDone} disabled={!allChosen}>
             {allChosen ? `Rank my ${total} picks` : `${total - chosenCount} still to pick`}
           </button>
         )}
@@ -383,80 +436,91 @@ function ChoosePhase({
   )
 }
 
-function GameRow({ game, picked, onChoose, isLocked = false, ranks, onPreview }) {
+function GameRow({ game, picked, onChoose, isLocked = false, ranks, teamOf, onPreview }) {
   return (
-    <div className={`grow${picked ? ' is-done' : ''}${isLocked ? ' is-locked' : ''}`}>
+    <article className={`grow${picked ? ' is-done' : ''}${isLocked ? ' is-locked' : ''}`}>
       <div className="grow__meta">
-        <span>{kickoffLabel(game.kickoff)}</span>
-        <span className="grow__dot">·</span>
-        <span className="grow__spread num">{api.spreadLabel(game)}</span>
-        {isLocked && <span className="chip chip--bad">locked</span>}
+        <span className="grow__when">
+          {isLocked && <IconLock size={14} />}
+          {kickoffLabel(game.kickoff)}
+        </span>
         {game.tv && <span className="grow__tv">{tvLabel(game.tv)}</span>}
-        {/* The way in to the matchup sheet. It used to be a quiet outlined pill reading
-            "PREVIEW", deliberately the least prominent thing on the card, and it was
-            quiet enough that nobody tapped it. The 22px pill still gets its real 44px
-            tap target from a pseudo-element rather than by growing the row. */}
+        <span className="grow__spread num">{api.spreadLabel(game)}</span>
+        {/* The way in to the matchup sheet, and the loudest thing on the tile. It was a
+            quiet outlined "PREVIEW" pill once and nobody tapped it. The 32px pill gets its
+            44px tap target from a pseudo-element rather than by growing the line. */}
         <button
           className="grow__preview"
           onClick={() => onPreview(game)}
           aria-label={`Matchup preview: ${game.away_abbr} at ${game.home_abbr}`}
         >
           <span className="grow__shine" aria-hidden="true" />
-          Matchup &rsaquo;
+          Matchup
+          <b aria-hidden="true">&rsaquo;</b>
         </button>
       </div>
 
+      {/* Away on top, home below, the way a scoreboard stacks them. */}
       <div className="grow__teams">
         <TeamPick
           game={game}
           side="away"
           selected={picked === game.away_abbr}
+          dimmed={!!picked && picked !== game.away_abbr}
           disabled={isLocked}
           onClick={() => onChoose(game, game.away_abbr)}
           ranks={ranks}
+          teamOf={teamOf}
         />
-        <span className="grow__at">{game.neutral_site ? 'vs' : '@'}</span>
         <TeamPick
           game={game}
           side="home"
           selected={picked === game.home_abbr}
+          dimmed={!!picked && picked !== game.home_abbr}
           disabled={isLocked}
           onClick={() => onChoose(game, game.home_abbr)}
           ranks={ranks}
+          teamOf={teamOf}
         />
       </div>
-    </div>
+    </article>
   )
 }
 
-function TeamPick({ game, side, selected, disabled, onClick, ranks }) {
+function TeamPick({ game, side, selected, dimmed, disabled, onClick, ranks, teamOf }) {
   const abbr = game[`${side}_abbr`]
-  const school = game[`${side}_school`] || abbr
+  const id = game[`${side}_id`]
+  const team = teamOf(id)
+  const school = team?.school || game[`${side}_school`] || abbr
   // The live AP poll first. game[side_rank] only ever exists in the offline demo data,
   // because get_slate has never returned a rank column.
-  const rank = ranks?.get(String(game[`${side}_id`])) ?? game[`${side}_rank`]
-  const record = game[`${side}_record`]
+  const rank = rankOf(ranks, id) ?? game[`${side}_rank`]
 
   return (
     <button
-      className={`tpick${selected ? ' is-picked' : ''}`}
+      className={`tpick${selected ? ' is-picked' : ''}${dimmed ? ' is-other' : ''}`}
+      style={{ '--jb-team': schoolPanel(team, PANEL) }}
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}
       aria-label={`Pick ${school}`}
     >
-      <TeamLogo teamId={game[`${side}_id`]} abbr={abbr} size={38} />
+      <Mark id={id} abbr={abbr} size={36} />
       <span className="tpick__name">
         <Rank n={rank} />
-        {school}
+        <span className="tpick__label">{school}</span>
       </span>
-      {record ? <span className="tpick__rec num">{record}</span> : null}
-      {selected && (
+      {selected ? (
         <motion.span
-          className="tpick__ring"
-          layoutId={`ring-${game.game_id}`}
+          className="tpick__lamp"
+          layoutId={`lamp-${game.game_id}`}
           transition={{ type: 'spring', damping: 26, stiffness: 400 }}
-        />
+        >
+          <Check />
+          Pick
+        </motion.span>
+      ) : (
+        <span className="tpick__slot" aria-hidden="true" />
       )}
     </button>
   )
@@ -482,10 +546,7 @@ function RankPhase({
   winners,
   order,
   availableValues,
-  readOnly,
   onReset,
-  onChange,
-  onSeeBoard,
   onMove,
   onBack,
   onSubmit,
@@ -495,6 +556,7 @@ function RankPhase({
   setToast,
 }) {
   const [lifted, setLifted] = useState(null)
+  const teamOf = useTeamOf()
   const byId = useMemo(
     () => Object.fromEntries(editable.map((g) => [g.game_id, g])),
     [editable],
@@ -504,6 +566,10 @@ function RankPhase({
   const bottom = availableValues[availableValues.length - 1]
   const liftedGame = lifted ? byId[lifted] : null
   const liftedPick = lifted ? winners[lifted] : null
+  const sideOf = (game, abbr) => (abbr === game.home_abbr ? 'home' : 'away')
+  /* The lift bar names the school, "Moving Notre Dame", where the row itself says ND. */
+  const liftedName =
+    (liftedGame && teamOf(liftedGame[`${sideOf(liftedGame, liftedPick)}_id`])?.school) || liftedPick
 
   function onRowTap(id, index) {
     if (!lifted) {
@@ -520,114 +586,82 @@ function RankPhase({
   }
 
   return (
-    <div>
+    <div className="jb picks">
       <div className="rank__head">
-        {readOnly ? (
-          <span className="rank__sealed">
-            <IconLock />
-            Locked in
-          </span>
-        ) : (
-          <Back onClick={onBack} label="Winners" />
-        )}
-        <button className="pill pill--quiet" onClick={readOnly ? onChange : onReset}>
-          {readOnly ? 'Change' : 'Reset to spread'}
+        <button className="rank__chip" onClick={onBack}>
+          <Chevron />
+          Winners
+        </button>
+        <button className="rank__chip" onClick={onReset}>
+          Reset to spread
         </button>
       </div>
 
       <div className="rank__intro">
-        <h2 className="h2">{readOnly ? 'Your picks are in' : 'Most sure at the top'}</h2>
-        {readOnly ? (
-          <p className="sub">
-            Saved and locked. Tap <strong>Change</strong> to edit anything that has not
-            kicked off yet.
-          </p>
-        ) : (
-          <p className="sub">
-            Already sorted by the spread, so the top game is worth <strong>{top}</strong>{' '}
-            and the bottom <strong>{bottom}</strong>. Tap a game to move it.
-          </p>
-        )}
+        <h2 className="rank__title">Most sure at the top</h2>
+        <p className="rank__sub">
+          Already sorted by the spread, so the top game is worth <b>{top}</b> and the bottom{' '}
+          <b>{bottom}</b>. Tap a game to move it.
+        </p>
       </div>
 
-      {locked.length > 0 && (
-        <div className="rank__list" style={{ marginBottom: 8 }}>
-          {locked.map((g) => (
-            <div className="rankrow rankrow--locked" key={g.game_id}>
-              <span className="rankrow__pts num">{g.my_confidence ?? '—'}</span>
-              <TeamLogo
-                teamId={g.my_pick === g.home_abbr ? g.home_id : g.away_id}
-                abbr={g.my_pick}
-                size={26}
-              />
-              {/* "No pick" has nothing to be over. Until apply_auto_picks() runs, up
-                  to five minutes after kickoff, a locked game can genuinely have no
-                  pick, and this read "no pick over MIZ". */}
-              <span className="rankrow__team">
-                {g.my_pick || 'No pick'}
-                {g.my_pick && (
-                  <span className="rankrow__opp">
-                    over {g.my_pick === g.home_abbr ? g.away_abbr : g.home_abbr}
+      <div className="jb-wall rank__wall">
+        {locked.length > 0 && (
+          <div className="rank__list rank__list--locked">
+            {locked.map((g) => {
+              const side = g.my_pick ? sideOf(g, g.my_pick) : 'home'
+              return (
+                <div
+                  className="rankrow rankrow--locked"
+                  key={g.game_id}
+                  style={{ '--jb-team': schoolPanel(teamOf(g[`${side}_id`]), PANEL) }}
+                >
+                  <Led className="rankrow__pts">{g.my_confidence ?? '–'}</Led>
+                  <Mark id={g.my_pick ? g[`${side}_id`] : null} abbr={g.my_pick || '–'} size={30} />
+                  {/* "No pick" has nothing to be over. Until apply_auto_picks() runs, up
+                      to five minutes after kickoff, a locked game can genuinely have no
+                      pick, and this read "no pick over MIZ". */}
+                  <span className="rankrow__team">
+                    {g.my_pick || 'No pick'}
+                    {g.my_pick && (
+                      <span className="rankrow__opp">
+                        over {g.my_pick === g.home_abbr ? g.away_abbr : g.home_abbr}
+                      </span>
+                    )}
+                    {!g.my_pick && (
+                      <span className="rankrow__opp">
+                        {g.away_abbr} at {g.home_abbr}
+                      </span>
+                    )}
                   </span>
-                )}
-                {!g.my_pick && (
-                  <span className="rankrow__opp">
-                    {g.away_abbr} at {g.home_abbr}
+                  <span className="rankrow__cue">
+                    <IconLock size={15} />
+                    Locked
                   </span>
-                )}
-              </span>
-              <span className="rankrow__spread num">{api.spreadLabel(g)}</span>
-              <span className="rankrow__lock">locked</span>
-            </div>
-          ))}
-        </div>
-      )}
+                </div>
+              )
+            })}
+          </div>
+        )}
 
-      <ul className={`rank__list${lifted ? ' is-moving' : ''}`}>
-        {order.map((id, i) => {
-          const game = byId[id]
-          if (!game) return null
-          const pick = winners[id]
-          const opp = pick === game.home_abbr ? game.away_abbr : game.home_abbr
-          const logoId = pick === game.home_abbr ? game.home_id : game.away_id
-          const isLifted = lifted === id
-          const isTarget = !!lifted && !isLifted
+        <ul className={`rank__list${lifted ? ' is-moving' : ''}`}>
+          {order.map((id, i) => {
+            const game = byId[id]
+            if (!game) return null
+            const pick = winners[id]
+            const opp = pick === game.home_abbr ? game.away_abbr : game.home_abbr
+            const logoId = pick === game.home_abbr ? game.home_id : game.away_id
+            const isLifted = lifted === id
+            const isTarget = !!lifted && !isLifted
 
-          const body = (
-            <>
-              <span className="rankrow__pts num">{availableValues[i]}</span>
-              <TeamLogo teamId={logoId} abbr={pick} size={26} />
-              <span className="rankrow__team">
-                {pick}
-                <span className="rankrow__opp">over {opp}</span>
-              </span>
-              <span className="rankrow__spread num">{api.spreadLabel(game)}</span>
-              <span className="rankrow__cue">
-                {readOnly ? (
-                  <IconLock size={15} />
-                ) : isLifted ? (
-                  'moving'
-                ) : isTarget ? (
-                  'here'
-                ) : (
-                  <IconGrip />
-                )}
-              </span>
-            </>
-          )
-
-          return (
-            <motion.li
-              key={id}
-              layout
-              transition={{ type: 'spring', damping: 30, stiffness: 420 }}
-              className={`rankrow${readOnly ? ' rankrow--sealed' : ''}${
-                isLifted ? ' is-lifted' : ''
-              }${isTarget ? ' is-target' : ''}`}
-            >
-              {readOnly ? (
-                <div className="rankrow__hit">{body}</div>
-              ) : (
+            return (
+              <motion.li
+                key={id}
+                layout
+                transition={{ type: 'spring', damping: 30, stiffness: 420 }}
+                className={`rankrow${isLifted ? ' is-lifted' : ''}${isTarget ? ' is-target' : ''}`}
+                style={{ '--jb-team': schoolPanel(teamOf(logoId), PANEL) }}
+              >
                 <button
                   className="rankrow__hit"
                   onClick={() => onRowTap(id, i)}
@@ -639,30 +673,32 @@ function RankPhase({
                         : `Move ${pick}, currently ${availableValues[i]} points. ${api.spreadLabel(game)}`
                   }
                 >
-                  {body}
+                  <Led className="rankrow__pts">{availableValues[i]}</Led>
+                  <Mark id={logoId} abbr={pick} size={30} />
+                  <span className="rankrow__team">
+                    {pick}
+                    <span className="rankrow__opp num">
+                      over {opp} · {api.spreadLabel(game)}
+                    </span>
+                  </span>
+                  <span className="rankrow__cue">
+                    {isLifted ? 'Moving' : isTarget ? 'Here' : <IconGrip />}
+                  </span>
                 </button>
-              )}
-            </motion.li>
-          )
-        })}
-      </ul>
+              </motion.li>
+            )
+          })}
+        </ul>
+      </div>
 
       {error && <p className="err">{error}</p>}
 
-      {readOnly ? (
+      {!lifted && (
         <div className="stickycta">
-          <button className="btn" onClick={onSeeBoard}>
-            See the big board
+          <button className="btn btn--led" onClick={onSubmit} disabled={saving}>
+            {saving ? 'Saving…' : 'Lock in my picks'}
           </button>
         </div>
-      ) : (
-        !lifted && (
-          <div className="stickycta">
-            <button className="btn" onClick={onSubmit} disabled={saving}>
-              {saving ? 'Saving…' : 'Lock in my picks'}
-            </button>
-          </div>
-        )
       )}
 
       {/* Fixed, not sticky: with twenty rows a sticky bar sits at the end of the list and
@@ -670,9 +706,9 @@ function RankPhase({
       {lifted && (
         <Portal>
           <div className="liftbar">
-          <span className="liftbar__text">
-            Moving <strong>{liftedPick}</strong>. Tap a row to give it those points.
-          </span>
+            <span className="liftbar__text">
+              Moving <strong>{liftedName}</strong>. Tap a row to give it those points.
+            </span>
             <button className="liftbar__cancel" onClick={() => setLifted(null)}>
               Cancel
             </button>
@@ -685,48 +721,45 @@ function RankPhase({
   )
 }
 
-/* ==================================================================== done */
+/* ============================================================== locked in */
 
 /**
  * The shackle drops into the body, so submitting reads as closing something rather
- * than sending it.
+ * than sending it. Only when you have just done it: coming back to a card you sent on
+ * Tuesday shows the lock already shut.
  *
  * Nothing here animates opacity, and nothing starts invisible. A backgrounded tab
  * stops driving animation frames, and an opacity-from-zero version of this stranded
  * an empty green circle on screen with no padlock in it. Frozen mid-spring, a
  * transform-only lock is still a lock, just with the shackle slightly raised.
  */
-function LockMark() {
+function LockMark({ animate }) {
   return (
     <motion.div
       className="done__mark"
-      initial={{ scale: 0.55 }}
+      initial={animate ? { scale: 0.55 } : false}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', damping: 14, stiffness: 260 }}
     >
-      <svg viewBox="0 0 24 24" width="36" height="36" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" aria-hidden="true">
         <motion.path
           d="M8 12.6V7.6a4 4 0 0 1 8 0v5"
           stroke="currentColor"
           strokeWidth="2.3"
           strokeLinecap="round"
-          initial={{ y: -4.5 }}
+          initial={animate ? { y: -4.5 } : false}
           animate={{ y: 0 }}
           transition={{ delay: 0.22, type: 'spring', damping: 9, stiffness: 700 }}
         />
         <rect x="4.4" y="11.4" width="15.2" height="9.8" rx="2.4" fill="currentColor" />
-        <path
-          d="M12 15.2v2.4"
-          stroke="var(--field)"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-        />
+        <path d="M12 15.2v2.4" stroke="#030406" strokeWidth="1.9" strokeLinecap="round" />
       </svg>
     </motion.div>
   )
 }
 
-function Done({ games, winners, order, locked, availableValues, onEdit, onSeeBoard }) {
+function LockedIn({ me, fresh, games, winners, order, locked, availableValues, onEdit, onSeeBoard }) {
+  const teamOf = useTeamOf()
   const byId = Object.fromEntries(games.map((g) => [g.game_id, g]))
   const rows = [
     ...locked.map((g) => ({
@@ -740,46 +773,92 @@ function Done({ games, winners, order, locked, availableValues, onEdit, onSeeBoa
       points: availableValues[i],
     })),
   ]
-    .filter((r) => r.pick)
+    .filter((r) => r.pick && byId[r.id])
     .sort((a, b) => (b.points ?? 0) - (a.points ?? 0))
 
-  return (
-    <div className="done">
-      <LockMark />
-      <h2 className="h1">You&apos;re in</h2>
-      <p className="sub">
-        Picks are saved. Change any game right up until it kicks off.
-      </p>
+  /* The crawl only counts things anyone can check against the card above it. A game
+     with no line has no favourite, so it is neither. */
+  const favorites = rows.filter((r) => byId[r.id].favorite_abbr === r.pick).length
+  const underdogs = rows.filter((r) => byId[r.id].favorite_abbr && byId[r.id].favorite_abbr !== r.pick).length
+  const top = rows[0]
+  const crawl = [
+    me?.name ? `${me.name} is locked in` : 'Locked in',
+    `${favorites} favorite${favorites === 1 ? '' : 's'}`,
+    `${underdogs} underdog${underdogs === 1 ? '' : 's'}`,
+    top && top.points != null ? `${top.points} on ${top.pick}` : null,
+    'Changes allowed until each kickoff',
+  ]
+    .filter(Boolean)
+    .join('   ◆   ')
 
-      <div className="done__cta">
-        <button className="btn btn--outline" onClick={onEdit}>
-          Change something
-        </button>
-        <button className="btn" onClick={onSeeBoard}>
-          See the big board
-        </button>
-      </div>
+  return (
+    <div className="jb picks done">
+      <section className="done__marquee" aria-label="Picks are in">
+        <span className="done__bulbs" aria-hidden="true" />
+        <div className="done__screen">
+          <LockMark animate={fresh} />
+          <h2 className="done__headline">
+            <Led>Picks</Led>
+            <Led>are in</Led>
+          </h2>
+          <p className="done__sub">Saved. Change any game right up until it kicks off.</p>
+          <div className="done__cta">
+            <button className="btn btn--led" onClick={onSeeBoard}>
+              See the big board
+            </button>
+            <button className="btn btn--led btn--led-ghost" onClick={onEdit}>
+              Change something
+            </button>
+          </div>
+        </div>
+      </section>
 
       {rows.length > 0 && (
-        <ul className="done__list">
-          {rows.map((r) => {
-            const g = byId[r.id]
-            if (!g) return null
-            const opp = r.pick === g.home_abbr ? g.away_abbr : g.home_abbr
-            const logoId = r.pick === g.home_abbr ? g.home_id : g.away_id
-            return (
-              <li className="done__row" key={r.id}>
-                <span className="done__pts num">{r.points}</span>
-                <TeamLogo teamId={logoId} abbr={r.pick} size={22} />
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  {r.pick} <span style={{ color: 'var(--ink-3)' }}>over {opp}</span>
-                </span>
-                {g.locked && <span className="chip chip--bad">locked</span>}
-              </li>
-            )
-          })}
-        </ul>
+        <div className="jb-wall">
+          <h3 className="games__dayname">Your card</h3>
+          <ul className="done__list">
+            {rows.map((r) => {
+              const g = byId[r.id]
+              const opp = r.pick === g.home_abbr ? g.away_abbr : g.home_abbr
+              const logoId = r.pick === g.home_abbr ? g.home_id : g.away_id
+              return (
+                <li
+                  className="done__row"
+                  key={r.id}
+                  style={{ '--jb-team': schoolPanel(teamOf(logoId), PANEL) }}
+                >
+                  <Led className="done__pts">{r.points ?? '–'}</Led>
+                  <Mark id={logoId} abbr={r.pick} size={26} />
+                  <span className="done__who">
+                    <b>{r.pick}</b>
+                    <span>over {opp}</span>
+                  </span>
+                  <span className="done__when">
+                    {g.locked ? (
+                      <>
+                        <IconLock size={14} />
+                        Locked
+                      </>
+                    ) : (
+                      kickoffLabel(g.kickoff)
+                    )}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
       )}
+
+      <div className="jb-crawl done__crawl" aria-label="Your card">
+        <span className="jb-crawl__k">Locked</span>
+        <div className="jb-crawl__win">
+          <div className="jb-crawl__run">
+            <span>{crawl}</span>
+            <span aria-hidden="true">{crawl}</span>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

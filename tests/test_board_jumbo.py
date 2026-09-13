@@ -45,9 +45,12 @@ def test_an_unplayed_pick_stays_hidden():
     assert "if (!mine) return <Chip key={player.id} name={player.name} state=\"hidden\" />" in body
 
 
-def test_the_board_wears_its_skin_only_on_its_own_tab():
+def test_the_skin_is_worn_by_the_board_and_picks_only():
+    """Picks joined the Board on 2026-09-13 so the two are one stadium. Week and Season have
+    their own looks, and a third tab quietly opting in must fail here."""
     app = read("src", "App.jsx")
-    assert "tab === 'board' ? 'jumbo' : undefined" in app
+    assert "const jumbo = tab === 'board' || tab === 'picks'" in app
+    assert "jumbo ? 'jumbo' : undefined" in app
 
 
 def test_the_lettering_it_is_set_in_is_loaded():

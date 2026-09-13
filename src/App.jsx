@@ -227,8 +227,13 @@ export default function App() {
      shows the Board's scoreboard, so the chrome stays exactly as the Board has it. */
   const skin = tab === 'week' && weekSkin ? weekSkin : null
 
+  /* The jumbotron. The Board picked it on 2026-09-12 and Picks followed on 2026-09-13, so
+     the two tabs a family member lives in on a Saturday are one stadium: same black
+     header, same amber tab. */
+  const jumbo = tab === 'board' || tab === 'picks'
+
   return (
-    <div className="app" data-mode={mode} data-skin={skin ? 'winner' : tab === 'board' ? 'jumbo' : undefined}
+    <div className="app" data-mode={mode} data-skin={skin ? 'winner' : jumbo ? 'jumbo' : undefined}
          style={skin ? { '--wf-field': skin.field, '--wf-ink': skin.ink } : undefined}>
       <header className="apphdr">
         <div>

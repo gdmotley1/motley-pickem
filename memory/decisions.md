@@ -256,6 +256,24 @@ dollar job". The 8-bit arcade direction is saved in `docs/ideas.md` for a theme 
 player beside the picked school's mark. The leaderboard reads `weekScore`, as everything
 does; `tests/test_board_jumbo.py` holds the chip logo rule and the hidden unplayed picks.
 
+## The Picks tab is the jumbotron too: one stadium with the Board
+
+Picked 2026-09-13 off a board of six ("lets do 1, build it"): the Board's LED wall carried
+onto Picks. Each school is a full-width lit panel, away over home, grouped under its kickoff
+day; a pick lights a gold lamp and darkens the other side; points are LED numbers on the
+Board's leaderboard rows; the confirmation and the read-only ranking are one Locked in
+screen, a marquee with a crawl.
+
+**Why:** Grant asked for a direction that matched the Board "so Picks and Board feel like
+one stadium" and took it over five genuinely different looks
+(https://claude.ai/code/artifact/e7dffb78-ccd0-42f6-bee7-aade8a65f6e3).
+
+**How to apply:** `const jumbo` in App.jsx puts `data-skin="jumbo"` on both tabs. The LED is
+one component, `src/components/Led.jsx`, and Picks reuses `.jb`, `.jb-wall`, `.jb-empty` and
+`.jb-crawl`. Picks kept its old class names so the old guards still pin the same things
+(`tests/test_preview_cta.py`, `tests/test_qa.py`); the new rules are in
+`tests/test_picks_jumbo.py`. The Matchup sheet it opens is still the light Slate sheet.
+
 ## The record book is Grant's seventeen, each with his badge
 
 Eight numbers every player has, eight Hall of fame awards and one Hall of shame award,

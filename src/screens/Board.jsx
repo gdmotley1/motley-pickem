@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import PickNudge from '../components/PickNudge.jsx'
+import Led from '../components/Led.jsx'
 import Mark from '../components/Mark.jsx'
 import { Avatar, IconLock, Rank, Spinner } from '../components/ui.jsx'
 import { ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
@@ -160,15 +161,6 @@ export default function Board({ me, weekId, week, onNavigate }) {
       {finals.length > 0 && <Crawl games={finals} />}
       {showScore && <ScoreBug score={score} pinned={pinned} top={headerH} />}
     </div>
-  )
-}
-
-/** A number drawn in LED dots: the glyphs are cut by a mask, the glow lights the dots. */
-function Led({ children, className = '' }) {
-  return (
-    <span className={`jb-led ${className}`}>
-      <span className="num">{children}</span>
-    </span>
   )
 }
 

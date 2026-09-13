@@ -24,6 +24,13 @@ export function dayLabel(iso) {
   return d.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
 }
 
+/** "Saturday": the heading over a day's games on the Picks tab, local like the rest. */
+export function weekdayLabel(iso) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString([], { weekday: 'long' })
+}
+
 /** Sort/group key for dayLabel: the local calendar date, as "2026-09-05". */
 export function dayKey(iso) {
   const d = new Date(iso)

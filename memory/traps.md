@@ -576,3 +576,16 @@ after the base rule, and say which in a comment. The same shape bit a test the s
 comment quoted the cut stat's name while explaining that it was cut. The guard was right
 and the comment was the problem. Word the comment without the banned string rather than
 loosening the guard to skip comments, which would also let a commented-out block through.
+
+## A BEM element name can already belong to another component
+
+The first render of the jumbotron Picks tab drew every school at 14px instead of 26. The
+span holding the name was `.tpick__school`, and the team picker in the account sheet
+(`TeamPicker.jsx`) already styles `.tpick__school` at 14px, 700, further down app.css. The
+harness measured the row's font as 26px, because it read the parent `.tpick__name`, and
+every text-size guard passed because 14 is over the floor. Only the screenshot showed it.
+
+**How to apply:** before naming a new element, grep app.css AND every component for the
+full class name, not just the block: two components can share a block prefix. It is now
+`.tpick__label`, `tests/test_picks_jumbo.py` holds the name, and the harness measures the
+label itself (`teamLabelFont`).

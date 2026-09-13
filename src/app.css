@@ -324,27 +324,6 @@
   background: var(--well);
 }
 
-.pill {
-  padding: 9px 15px;
-  min-height: 38px;
-  border-radius: var(--r-pill);
-  background: var(--field);
-  color: var(--on-field);
-  font-size: 13px;
-  font-weight: 700;
-  flex: none;
-}
-.pill:active {
-  transform: scale(0.96);
-}
-.pill:disabled {
-  opacity: 0.4;
-}
-.pill--quiet {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink-2);
-}
 
 .empty {
   text-align: center;
@@ -742,165 +721,262 @@
   }
 }
 
-/* ============================================================= choose phase */
+/* ================================================== picks: the jumbotron === */
+/* Direction 1 of the six Grant was shown on 2026-09-13 ("lets do 1, build it"): the Board's
+   LED wall carried onto the Picks tab, so the two tabs are one stadium. The skin is the
+   Board's own (.jb, .jb-wall, .jb-led, .jb-empty, .jb-crawl, and data-skin="jumbo" on
+   .app for the header and tab bar). Everything in this section is the part only Picks has.
 
+   The class names are the ones Picks always had, so the rules pinned on them still pin
+   the same things: the Matchup pill's 44px target and its shimmer, the TV chip that
+   yields, the lift bar that rises without fading.
+
+   NOTHING HERE IS UNDER 13PX; tests/test_picks_jumbo.py counts. */
+
+/* Shared with Setup's publish button, which is why it sits outside the picks rules. */
+.stickycta {
+  position: sticky;
+  bottom: calc(78px + var(--safe-bottom));
+  padding: 14px 14px 6px;
+  margin-top: 8px;
+}
+
+.stickycta .btn {
+  box-shadow: var(--sh-3);
+}
+
+.jb.picks {
+  padding-top: 0;
+}
+
+/* ------------------------------------------------------------ winners */
+
+/* The count in LED and a bank of lamps, one per game still to pick. */
 .choose__top {
   position: sticky;
   top: 0;
   z-index: 20;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--page-a);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
-}
-
-.progress {
-  flex: 1;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--well);
-  overflow: hidden;
-}
-
-.progress__fill {
-  height: 100%;
-  border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--pick), var(--pick-soft));
-  transition: width 0.36s var(--ease);
+  gap: 14px;
+  padding: 10px 16px;
+  background: rgba(3, 4, 6, 0.94);
+  box-shadow: 0 1px 0 #1c212a;
 }
 
 .choose__count {
-  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.choose__count .jb-led {
+  --jb-glow: rgba(255, 220, 110, 0.95);
+  --jb-glow2: rgba(255, 190, 60, 0.5);
+}
+
+.choose__count .jb-led > span {
+  font-size: 46px;
+  color: #ffe08a;
+}
+
+.choose__of {
+  font-size: 15px;
   font-weight: 800;
-  color: var(--ink-2);
-  min-width: 44px;
-  text-align: right;
+  line-height: 1.05;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--jb-dim);
+}
+
+/* One lamp per game still open; the element sets the count. */
+.choose__meter {
+  --choose-lamps: 20;
+  display: grid;
+  grid-template-columns: repeat(var(--choose-lamps), minmax(0, 1fr));
+  gap: 3px;
+  padding: 5px;
+  border-radius: 4px;
+  background: var(--jb-black);
+  box-shadow: inset 0 0 0 1px #1c212a;
+}
+
+.choose__meter i {
+  height: 18px;
+  border-radius: 2px;
+  background: #161a21;
+}
+
+.choose__meter i.is-on {
+  background: linear-gradient(180deg, #fff1c2, #ffd65a 55%, #d99a1e);
+  box-shadow: 0 0 8px rgba(255, 214, 90, 0.75);
 }
 
 .notice {
   display: flex;
-  gap: 9px;
-  align-items: flex-start;
-  margin: 12px 14px 0;
-  padding: 10px 12px;
-  border-radius: var(--r-sm);
-  background: var(--accent-wash);
-  color: var(--accent-deep);
-  font-size: 12.5px;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 8px 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: #251a04;
+  box-shadow: inset 0 0 0 1px rgba(255, 176, 32, 0.45);
+  font-family: var(--ui);
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
+  color: #ffd27a;
 }
 
-.games {
-  padding: 12px 12px 0;
-  display: grid;
-  gap: 10px;
+.notice svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--jb-amber);
 }
 
+/* A kickoff day, lettered on the wall with a row of amber bulbs running off it. */
+.games__dayname {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 4px 8px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+}
+
+.games__dayname::after {
+  content: '';
+  flex: 1;
+  height: 6px;
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.95) 1.4px, transparent 1.9px) 0 50% / 8px 6px repeat-x;
+  filter: drop-shadow(0 0 3px rgba(255, 176, 32, 0.7));
+}
+
+/* One game: a panel of LEDs with the two schools stacked in it, away over home. */
 .grow {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  box-shadow: var(--sh-1);
-  padding: 10px 10px 11px;
-  transition: border-color 0.18s ease, background 0.18s ease;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--jb-black);
+  box-shadow: inset 0 0 0 1px #1c212a;
 }
 
-.grow.is-done {
-  background: var(--sunk);
-  box-shadow: none;
-}
-
-.grow.is-locked {
-  opacity: 0.72;
-}
-
+/* 32px, because the Matchup pill is 32 and this line is what holds it. A fixed height, so
+   the twenty tiles stay identical to each other whatever the line carries. */
 .grow__meta {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 4px;
-  /* 22px, not the 18px it was, because the Matchup pill is 22 and this line is what
-     holds it. The margin drops by the same 2px it does not need any more, so the card
-     grows by 2px rather than 4 and the twenty rows stay identical to each other, which
-     is the property that actually matters here. */
-  margin-bottom: 7px;
-  height: 22px;
-  line-height: 22px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-3);
+  height: 32px;
+  margin: 0 2px 6px;
   white-space: nowrap;
 }
 
-.grow__dot {
-  opacity: 0.4;
+.grow__when {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: #251a04;
+  box-shadow: inset 0 0 0 1px rgba(255, 176, 32, 0.55);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--jb-amber);
+}
+
+.grow__when svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* If this line ever runs out of room, the channel is what gives way, never the way in to
+   the matchup. min-width as well as flex, because a flex item will not shrink below its
+   content without it. */
+.grow__tv {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 3px 6px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px #2c3440;
+  font-family: var(--ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--jb-dim);
 }
 
 .grow__spread {
-  color: var(--accent-deep);
-  letter-spacing: 0;
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--jb-white);
 }
 
-/* The way in to the matchup sheet.
+/* The way in to the matchup sheet: a red lamp with a sweep of light across it.
  *
- * It was an outlined 9.5px pill reading "PREVIEW", built to be the quietest thing on the
- * card so it could not compete with the two team buttons. That was the wrong trade: it
- * was quiet enough that nobody tapped it. Grant went through two boards of options and
- * picked this one, on 2026-09-11. A dark pill with a slow sweep of light across it is
- * loud without adding another colour to an app where blue already means "you picked
- * this", green right, red wrong and gold first place.
+ * It was an outlined 9.5px "PREVIEW" pill once, built to be the quietest thing on the card,
+ * and nobody tapped it. Grant rejected a board of gentler options on 2026-09-11 ("none
+ * have any cta or pop"), and on the jumbotron it is the one red thing on the wall. The red
+ * is deep enough that its white lettering clears AA; the glow carries the loudness.
  *
- * --field, not --field-deep. It shipped near-black for an afternoon and stood out too
- * much; Grant picked Slate off a board of eight fills. This is the exact colour of the
- * app header at the top of every screen, so the pill reads as part of the same app
- * rather than as something dropped on the card, and it still measures 12:1 against
- * --on-field. Pressing it goes DOWN to --field-deep, which is the only thing that
- * colour is still doing here.
- *
- * min-height, not height: the global `button { min-height: var(--tap) }` constrains the
- * used height and no `height` at any specificity beats it.
+ * min-height, not height alone: the global `button { min-height: var(--tap) }` constrains
+ * the used height and no `height` at any specificity beats it.
  */
 .grow__preview {
   min-height: 0;
-  height: 22px;
+  height: 32px;
   /* Never the thing that gives way if the meta line gets tight. The TV chip yields. */
   flex: 0 0 auto;
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 0 10px;
+  gap: 4px;
+  margin-left: auto;
+  padding: 0 10px 0 12px;
   border: 0;
   border-radius: var(--r-pill);
-  background: var(--field);
-  color: var(--on-field);
-  box-shadow: 0 2px 10px rgba(16, 21, 28, 0.4);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
+  background: #d7200f;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(255, 70, 40, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-/* The pill is 22px because the row demands it; the thing a thumb hits is 44px. Absolutely
-   positioned so the hit area cannot push the row's height back out.
+.grow__preview b {
+  margin-top: -2px;
+  font-size: 21px;
+  line-height: 1;
+}
+
+/* The pill is 32px because the line demands it; the thing a thumb hits is 44px. Absolutely
+   positioned so the hit area cannot push the line's height back out.
    This is why the sweep below is clipped by its own wrapper rather than by `overflow`
    on the button: overflow here would clip this hit area down to the pill. */
 .grow__preview::after {
   content: '';
   position: absolute;
-  inset: -11px -10px;
+  inset: -6px -3px;
 }
 
 .grow__preview:active {
-  background: var(--field-deep);
+  background: #a8180b;
 }
 
 /* The shimmer. A wrapper that clips, and a bar that travels across it. */
@@ -916,7 +992,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.45) 50%,
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.5) 50%,
                               transparent 80%);
   /* transform, never background-position: this is the only property here that the
      compositor can animate without repainting, and twenty of these run at once. */
@@ -927,7 +1003,7 @@
 /* Both ends are a visible resting state on purpose. A backgrounded tab pauses CSS
    animations wherever they happen to be, and this app has already shipped an overlay
    that froze half transparent because it animated from zero. Worst case here is a
-   stationary highlight on a dark pill, which reads as a gloss rather than as a bug. */
+   stationary highlight on a red lamp, which reads as a gloss rather than as a bug. */
 @keyframes growshine {
   0%, 55% { transform: translateX(-100%); }
   100%    { transform: translateX(100%); }
@@ -940,127 +1016,153 @@
   }
 }
 
-.grow__tv {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 7px;
-  border-radius: var(--r-pill);
-  background: var(--well);
-  font-size: 9.5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 9ch;
-  /* If this line ever does run out of room, the channel is the thing that should give
-     way rather than the way in to the matchup. min-width is needed as well as max-width,
-     because a flex item will not shrink below its content without it. There is about
-     80px of slack at 375px today, so this is a guard and not a fix. */
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
 .grow__teams {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: stretch;
-  gap: 6px;
+  gap: 4px;
 }
 
-.grow__at {
-  align-self: center;
-  font-size: 10.5px;
-  font-weight: 700;
-  color: var(--ink-3);
-  text-transform: uppercase;
-}
-
+/* A school: its mark, its name and its colors, the full width of the tile. The whole panel
+   is the button. */
 .tpick {
   position: relative;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 5px;
-  padding: 11px 6px 9px;
-  min-height: 94px;
-  border-radius: var(--r-md);
-  background: var(--sunk);
-  border: 2px solid transparent;
-  text-align: center;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.1s ease;
+  column-gap: 10px;
+  width: 100%;
+  min-height: 54px;
+  padding: 0 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--jb-team) 90%, #000), color-mix(in srgb, var(--jb-team) 32%, #000) 62%, #07080b);
+  color: var(--jb-white);
+  text-align: left;
+  transition: filter 0.18s ease, box-shadow 0.18s ease;
 }
 
 .tpick:active {
-  transform: scale(0.97);
-}
-
-.tpick.is-picked {
-  background: var(--pick-wash);
-  border-color: var(--pick-edge);
+  transform: scale(0.985);
 }
 
 .tpick:disabled {
-  opacity: 0.55;
+  cursor: default;
+}
+
+.tpick .wf-mark {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
 }
 
 .tpick__name {
-  font-family: var(--display);
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.18;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  white-space: nowrap;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* Not .tpick__school: the team picker in the account sheet already owns that name, at 14px,
+   and it quietly shrank every school on this wall to it. */
+.tpick__label {
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-
-.tpick__rec {
-  font-size: 10.5px;
-  font-weight: 600;
-  color: var(--ink-3);
-  margin-top: auto;
+/* The name is a flex row with its own gap, so the rank adds no margin. */
+.tpick .aprank {
+  margin-right: 0;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 19px;
+  font-weight: 900;
+  color: #ffe08a;
 }
 
-.tpick.is-picked .tpick__rec {
-  color: var(--pick);
-}
-
-.tpick__ring {
-  position: absolute;
-  top: -8px;
-  right: -6px;
-  width: 21px;
-  height: 21px;
+/* An empty socket until you pick, then the gold lamp. */
+.tpick__slot {
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: var(--pick);
-  box-shadow: 0 0 0 3px var(--card);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.38);
 }
 
-.tpick__ring::after {
-  content: '✓';
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 800;
+.tpick__lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 7px;
+  border-radius: 3px;
+  background: #ffd65a;
+  box-shadow: 0 0 14px rgba(255, 214, 90, 0.8);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #1a1300;
 }
 
-.stickycta {
-  position: sticky;
-  bottom: calc(78px + var(--safe-bottom));
-  padding: 14px 14px 6px;
-  margin-top: 8px;
+.tpick.is-picked {
+  background: linear-gradient(90deg, var(--jb-team), color-mix(in srgb, var(--jb-team) 42%, #000) 62%, #0b0c0f);
+  box-shadow: inset 0 0 0 2px #ffd65a, 0 0 22px rgba(255, 196, 60, 0.35);
 }
 
-.stickycta .btn {
-  box-shadow: var(--sh-3);
+/* The side you did not take goes dark, the way a loser does on the Board. */
+.tpick.is-other {
+  filter: saturate(0.25) brightness(0.5);
 }
 
-/* =============================================================== rank phase */
+.tpick.is-other .tpick__slot {
+  visibility: hidden;
+}
+
+.grow.is-locked .tpick {
+  filter: saturate(0.3) brightness(0.62);
+}
+
+.btn.btn--led {
+  min-height: 54px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--jb-amber);
+  box-shadow: 0 0 18px rgba(255, 176, 32, 0.45);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #120b00;
+}
+
+.btn.btn--led:active {
+  background: #e89b12;
+}
+
+/* Still to pick: the lamp is dark, not faded. .btn:disabled fades to 0.38, which on the
+   black wall turned dark lettering on dim amber into mud. */
+.btn.btn--led:disabled {
+  opacity: 1;
+  background: var(--jb-black);
+  box-shadow: inset 0 0 0 2px rgba(255, 176, 32, 0.35);
+  color: rgba(255, 176, 32, 0.85);
+}
+
+.btn.btn--led-ghost {
+  background: #12151b;
+  box-shadow: inset 0 0 0 1px #2c3440;
+  color: var(--jb-white);
+}
+
+.btn.btn--led-ghost:active {
+  background: #1d222b;
+}
+
+/* ------------------------------------------------------------- points */
 
 .rank__head {
   position: sticky;
@@ -1071,82 +1173,69 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: var(--page-a);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
+  background: rgba(3, 4, 6, 0.94);
+  box-shadow: 0 1px 0 #1c212a;
 }
 
-/* Reads as a status, not a control: the Change pill opposite it is the only button. */
-.rank__sealed {
+.rank__chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 4px;
-  font-size: 13px;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 4px;
+  background: #0d1015;
+  box-shadow: inset 0 0 0 1px #2c3440;
+  font-family: var(--ui);
+  font-size: 14px;
   font-weight: 700;
-  color: var(--pick);
+  color: var(--jb-white);
+}
+
+.rank__chip:active {
+  background: #1d222b;
 }
 
 .rank__intro {
-  padding: 14px 16px 10px;
+  padding: 14px 16px 2px;
+}
+
+.rank__title {
+  margin: 0;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.4);
+}
+
+.rank__sub {
+  max-width: 34ch;
+  margin: 8px 0 0;
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--jb-dim);
+}
+
+.rank__sub b {
+  color: #ffe08a;
 }
 
 .rank__list {
-  padding: 0 12px;
   display: grid;
-  gap: 7px;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.rankrow {
-  border-radius: var(--r-md);
-  background: var(--card);
-  border: 1px solid var(--line);
-  box-shadow: var(--sh-1);
-  transition: border-color 0.16s ease, background 0.16s ease, opacity 0.16s ease;
-}
-
-/* The whole row is the tap target: 56px tall, edge to edge, no small handles. */
-.rankrow__hit {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 11px;
-  min-height: 56px;
-  text-align: left;
-  border-radius: var(--r-md);
-}
-
-.rankrow__hit:active {
-  transform: scale(0.99);
-}
-
-/* The game you picked up. Stays in place so the list never jumps under your thumb. */
-.rankrow.is-lifted {
-  border-color: var(--pick-edge);
-  border-width: 2px;
-  background: var(--pick-wash);
-  box-shadow: var(--sh-3);
-}
-
-/* Every other row becomes a destination, with its points number as the label. */
-.rankrow.is-target .rankrow__pts {
-  color: var(--accent-deep);
-}
-
-.rankrow.is-target {
-  border-style: dashed;
-  border-color: var(--line-strong);
-}
-
-.rankrow.is-target:active {
-  background: var(--accent-wash);
-  border-color: var(--accent-bright);
-}
-
-.rank__list.is-moving .rankrow:not(.is-lifted):not(.is-target) {
-  opacity: 0.4;
+.rank__list--locked {
+  margin-bottom: 5px;
 }
 
 /* Room for the floating Moving bar so the bottom games stay tappable. */
@@ -1154,117 +1243,126 @@
   padding-bottom: 76px;
 }
 
-/* Submitted, but not yet kicked off: the same row you ranked, with a lock where the
-   grip dots go and no tap target at all. Tapping Change turns them back into buttons. */
-.rankrow--sealed .rankrow__hit {
-  cursor: default;
+/* A leaderboard row from the Board, lit in the school you picked. */
+.rankrow {
+  position: relative;
+  border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--jb-team) 80%, #000) 0, color-mix(in srgb, var(--jb-team) 22%, #000) 48%, #06070a 80%);
 }
 
-.rankrow--sealed .rankrow__hit:active {
-  transform: none;
-}
-
-.rankrow--sealed .rankrow__cue {
-  color: var(--pick);
-}
-
+/* The whole row is the tap target: 56px tall, edge to edge, no small handles. */
+.rankrow__hit,
 .rankrow--locked {
-  background: var(--well);
-  box-shadow: none;
-  opacity: 0.8;
-  display: flex;
+  display: grid;
+  grid-template-columns: 52px 30px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 8px 11px;
+  column-gap: 10px;
+  width: 100%;
   min-height: 56px;
+  padding: 0 12px 0 4px;
+  border-radius: 3px;
+  color: var(--jb-white);
+  text-align: left;
+}
+
+.rankrow__hit:active {
+  transform: scale(0.99);
+}
+
+/* Kicked off: the points are spent and the row is a record, not a button. */
+.rankrow--locked {
+  filter: saturate(0.4) brightness(0.72);
 }
 
 .rankrow__pts {
-  min-width: 32px;
-  font-family: var(--display);
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--pick);
-  text-align: center;
-  transition: color 0.16s ease;
+  justify-self: center;
+  --jb-glow: rgba(255, 220, 110, 0.95);
+  --jb-glow2: rgba(255, 190, 60, 0.5);
+}
+
+.rankrow__pts > span {
+  font-size: 42px;
+  color: #ffe08a;
 }
 
 .rankrow__team {
-  flex: 1;
-  min-width: 0;
-  font-weight: 700;
-  font-size: 14.5px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .rankrow__opp {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ink-3);
-}
-
-/* The line, for reference while assigning points. Fixed slot on the right so rows
-   stay aligned and a game with no line never shifts the row. */
-.rankrow__spread {
-  flex: none;
-  min-width: 58px;
-  text-align: right;
-  font-size: 11.5px;
-  font-weight: 700;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0;
-  color: var(--ink-3);
-  white-space: nowrap;
+  text-transform: none;
+  color: var(--jb-dim);
 }
 
-.rankrow__lock {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-3);
-}
-
-/* One fixed-width slot so a text cue never changes the row height. */
+/* One slot on the right for the grip, HERE, MOVING or the lock. */
 .rankrow__cue {
-  flex: none;
-  width: 54px;
-  white-space: nowrap;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  color: var(--line-strong);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 5px;
+  min-width: 44px;
+  white-space: nowrap;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
+  color: #6d7582;
+}
+
+.rankrow.is-target .rankrow__cue {
+  color: #d5dbe3;
+}
+
+/* The game you picked up. Stays in place so the list never jumps under your thumb. */
+.rankrow.is-lifted {
+  z-index: 1;
+  box-shadow: inset 0 0 0 2px #ffd65a, 0 0 26px rgba(255, 196, 60, 0.55);
 }
 
 .rankrow.is-lifted .rankrow__cue {
-  color: var(--pick);
-}
-.rankrow.is-target .rankrow__cue {
-  color: var(--accent);
+  padding: 3px 9px;
+  border-radius: 3px;
+  background: #ffd65a;
+  box-shadow: 0 0 14px rgba(255, 214, 90, 0.8);
+  color: #1a1300;
 }
 
 /* Always on screen while a game is in hand, so you can see what you are moving and
-   back out from anywhere in the list. */
+   back out from anywhere in the list. Portalled to the body, so it names its colours
+   rather than borrowing the wall's. */
 .liftbar {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(84px + var(--safe-bottom));
   z-index: 45;
-  width: calc(100% - 28px);
-  max-width: 432px;
+  width: calc(100% - 20px);
+  max-width: 440px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 12px 11px 16px;
-  border-radius: var(--r-md);
-  background: var(--field-press);
-  color: var(--on-field);
-  box-shadow: var(--sh-3);
+  min-height: 62px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 6px;
+  background: #000000;
+  color: #f4f7fb;
+  box-shadow: inset 0 0 0 2px #ffd65a, 0 0 22px rgba(255, 196, 60, 0.35), 0 12px 30px rgba(0, 0, 0, 0.6);
   /* Rises without fading. A hidden or throttled tab pauses CSS animations, and an
      opacity keyframe can leave this bar frozen half-transparent over the list. */
   animation: liftbarIn 0.2s var(--ease) both;
@@ -1282,75 +1380,190 @@
 .liftbar__text {
   flex: 1;
   min-width: 0;
-  font-size: 13px;
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.35;
 }
 
 .liftbar__text strong {
-  color: var(--on-field);
+  color: #ffe08a;
 }
 
 .liftbar__cancel {
   flex: none;
-  min-height: 34px;
-  padding: 7px 14px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--on-field);
-  font-size: 13px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 4px;
+  background: #1d222b;
+  font-family: var(--ui);
+  font-size: 15px;
   font-weight: 700;
+  color: #f4f7fb;
 }
 
 .liftbar__cancel:active {
-  background: rgba(255, 255, 255, 0.28);
+  background: #2a303a;
 }
 
-/* ===================================================================== done */
+/* ---------------------------------------------------------- locked in */
 
-.done {
+/* The marquee: a ring of bulbs around a black screen. */
+.done__marquee {
+  position: relative;
+  margin: 10px 8px 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #1a1e25, #0c0e12);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.done__bulbs {
+  position: absolute;
+  inset: 5px;
+  border: 5px dotted #ffd65a;
+  border-radius: 8px;
+  filter: drop-shadow(0 0 4px rgba(255, 214, 90, 0.95));
+  pointer-events: none;
+}
+
+.done__screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 6px;
+  padding: 24px 14px 18px;
+  border-radius: 4px;
+  background: radial-gradient(90% 150px at 50% 0, rgba(255, 214, 90, 0.2), transparent 70%), var(--jb-black);
   text-align: center;
-  padding: 44px 20px 20px;
 }
 
 .done__mark {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  margin: 0 auto 20px;
   display: grid;
   place-items: center;
-  background: var(--pick);
-  color: #fff;
-  font-size: 32px;
-  font-weight: 800;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 90, 0.28), transparent 70%);
+  color: #ffe08a;
+  filter: drop-shadow(0 0 12px rgba(255, 214, 90, 0.8));
+}
+
+.done__headline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+}
+
+.done__headline .jb-led {
+  --jb-glow: rgba(255, 220, 110, 0.95);
+  --jb-glow2: rgba(255, 190, 60, 0.5);
+}
+
+.done__headline .jb-led > span {
+  font-size: 76px;
+  line-height: 0.86;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffe08a;
+}
+
+.done__sub {
+  max-width: 30ch;
+  margin: 0;
+  font-family: var(--ui);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--jb-dim);
+}
+
+/* Two real calls to action: go look at the board, or go back and edit. */
+.done__cta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.done__cta .btn {
+  min-height: 52px;
+  padding: 10px 6px;
+  font-size: 17px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
 }
 
 .done__list {
-  margin: 26px 0 0;
   display: grid;
-  gap: 6px;
-  text-align: left;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .done__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px 26px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  padding: 8px 11px;
-  border-radius: var(--r-sm);
-  background: var(--card);
-  border: 1px solid var(--line);
-  font-size: 13.5px;
-  font-weight: 600;
+  column-gap: 10px;
+  min-height: 46px;
+  padding: 0 12px 0 4px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--jb-team) 60%, #000), #06070a 72%);
 }
 
 .done__pts {
-  min-width: 26px;
-  font-family: var(--display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--pick);
-  text-align: center;
+  justify-self: center;
+  --jb-glow: rgba(255, 220, 110, 0.95);
+  --jb-glow2: rgba(255, 190, 60, 0.5);
+}
+
+.done__pts > span {
+  font-size: 32px;
+  color: #ffe08a;
+}
+
+.done__who {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.done__who b {
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.done__who span {
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jb-dim);
+}
+
+.done__when {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-family: var(--ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--jb-dim);
+}
+
+.done__crawl .jb-crawl__run span {
+  text-transform: uppercase;
 }
 
 /* ================================================== board: the jumbotron === */
@@ -3006,33 +3219,6 @@
 @keyframes toastOut {
   from { opacity: 1; transform: translate(-50%, 0); }
   to { opacity: 0; transform: translate(-50%, 16px); }
-}
-
-/* Two real calls to action on the confirmation screen: go back and edit, or go look at
-   the board. Equal weight side by side, with the forward action filled. */
-.done__cta {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 24px;
-}
-
-.done__cta .btn {
-  font-size: 14px;
-  padding: 14px 10px;
-  line-height: 1.25;
-  min-height: 52px;
-}
-
-.btn--outline {
-  background: var(--surface);
-  border: 1.5px solid var(--line-strong);
-  color: var(--ink);
-}
-
-.btn--outline:active {
-  background: var(--sunk);
-  border-color: var(--pick-edge);
 }
 
 /* Offered, never forced: reloading on its own mid-pick would throw away work. */

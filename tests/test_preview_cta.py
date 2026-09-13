@@ -48,6 +48,17 @@ def token(name):
     return token(inner.group(1)) if inner else value
 
 
+def colour(value):
+    """A declared colour as a hex: a literal as written, or a theme token resolved.
+
+    The pill was a Slate token on a white card until 2026-09-13, when Picks became the
+    jumbotron and the pill became a red lamp named in the jumbotron's own literals, like
+    everything else on that wall."""
+    value = value.strip()
+    inner = re.match(r"var\((--[\w-]+)\)$", value)
+    return token(inner.group(1)) if inner else value
+
+
 def luminance(hex_colour):
     h = hex_colour.lstrip("#")
     parts = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
@@ -59,18 +70,20 @@ def test_the_cta_is_filled_not_outlined():
     """An outlined pill on a white card is what nobody tapped. It has to read as a solid
     control: a real fill, light text on it, no border.
 
-    The fill is deliberately NOT pinned to one token here. It shipped as --field-deep,
-    stood out too much, and became --field the same afternoon. A guard naming the exact
-    shade fails the next colour change for the wrong reason and teaches nobody anything.
-    What must not regress is that it is filled, dark, and legible.
+    The fill is deliberately NOT pinned to one shade here. It shipped as --field-deep,
+    stood out too much, and became --field the same afternoon; on 2026-09-13 it became
+    the jumbotron's red lamp. A guard naming the exact shade fails the next colour change
+    for the wrong reason and teaches nobody anything. What must not regress is that it is
+    filled, dark enough to carry white, and legible.
     """
     body = rule(read("src", "app.css"), ".grow__preview")
-    fill = re.search(r"background: var\((--[\w-]+)\)", body)
-    assert fill, "the CTA has no token background, so it is not filled"
-    assert "color: var(--on-field)" in body, "the CTA has lost its light text"
+    fill = re.search(r"^\s*background:\s*(#[0-9a-fA-F]{6}|var\(--[\w-]+\));", body, re.M)
+    assert fill, "the CTA has no solid background, so it is not filled"
+    ink = re.search(r"^\s*color:\s*(#[0-9a-fA-F]{6}|var\(--[\w-]+\));", body, re.M)
+    assert ink, "the CTA has lost its text colour"
     assert "border: 0" in body, "the CTA is outlined again"
 
-    bg, fg = token(fill.group(1)), token("--on-field")
+    bg, fg = colour(fill.group(1)), colour(ink.group(1))
     lo, hi = sorted((luminance(bg), luminance(fg)))
     ratio = (hi + 0.05) / (lo + 0.05)
     assert ratio >= 4.5, (
@@ -78,8 +91,8 @@ def test_the_cta_is_filled_not_outlined():
         "the family and --ink-3 already had to be darkened once for the same reason."
         % (ratio, fg, bg)
     )
-    # And it has to stay a DARK pill, not become a pale one that stops reading as a
-    # control against a white card.
+    # And it has to stay a DEEP fill: a pale one stops carrying its white lettering, which
+    # is exactly what a brighter red would do.
     assert luminance(bg) < 0.2, "the CTA fill is no longer dark: %s" % bg
 
 
@@ -93,10 +106,10 @@ def test_the_cta_says_where_it_goes():
 
 
 def test_the_thumb_target_is_still_44px():
-    """The pill is 22px because the meta line demands it. What a thumb hits is 44, from a
+    """The pill is 32px because the meta line demands it. What a thumb hits is 44, from a
     pseudo-element, so the hit area can never push the row's height back out.
 
-    22 + 2 * 11 = 44. If either number moves the other has to move with it.
+    32 + 2 * 6 = 44. If either number moves the other has to move with it.
     """
     css = read("src", "app.css")
     height = re.search(r"height: (\d+)px", rule(css, ".grow__preview"))
@@ -107,8 +120,8 @@ def test_the_thumb_target_is_still_44px():
 
 
 def test_the_meta_line_is_tall_enough_to_hold_the_pill():
-    """.grow__meta was pinned at 18px for a pill that no longer exists. A 22px pill in an
-    18px line overflows it."""
+    """.grow__meta was pinned at 18px for a pill that no longer exists. A pill taller than
+    its line overflows it."""
     css = read("src", "app.css")
     meta = int(re.search(r"height: (\d+)px", rule(css, ".grow__meta")).group(1))
     pill = int(re.search(r"height: (\d+)px", rule(css, ".grow__preview")).group(1))

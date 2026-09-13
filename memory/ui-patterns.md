@@ -137,8 +137,10 @@ the spread sort stops re-applying.
 
 ## The matchup preview is a bottom sheet, opened from a loud pill
 
-Every game row on the choose step carries a dark Slate pill reading "MATCHUP >" at the
-right of its meta line, with a slow sweep of light travelling across it. Tapping it opens
+Every game row on the choose step carries a pill reading "MATCHUP >" at the right of its
+meta line, with a slow sweep of light travelling across it. Since the tab became the
+jumbotron on 2026-09-13 it is a red lamp (#d7200f, white lettering clearing AA) with a red
+glow, the one red thing on the wall. Tapping it opens
 a `Sheet` with the AP ranks, ESPN's win probability, both records, each team's form THIS
 SEASON, ESPN's own preview line and the venue and weather.
 
@@ -164,8 +166,8 @@ rather than something dropped on the card.
 - Both ends of the keyframes are a visible resting state, for the reason recorded below
   under "Never animate an overlay's opacity from 0".
 
-`.grow__meta` is 22px to hold the pill, up from 18. The pill never shrinks; the TV chip
-yields if the line gets tight.
+`.grow__meta` is fixed at the pill's height (32px on the jumbotron, 44px tap target from
+`::after`). The pill never shrinks; the TV chip yields if the line gets tight.
 
 **Form is this season only.** ESPN's `lastFiveGames` window spans seasons, so in September
 it is mostly last year: a week 1 payload showed Indiana as five straight wins ending with
@@ -181,7 +183,7 @@ mojibake character leading it. Clamped to four lines, and hidden entirely when E
 nothing, which is most games not on a network.
 
 **Not available after you submit.** The preview lives in `ChoosePhase`, so once picks are
-in, the `Done` screen has no previews and no ranks. That was the scope Grant asked for
+in, the Locked in screen has no previews and no ranks. That was the scope Grant asked for
 ("when you're picking games"). Adding it to `Done` and `Board` is a small change if it
 ever comes up.
 
@@ -210,8 +212,8 @@ Any badge inside a list row is fixed at 18px tall and its meta line is fixed to 
 were 61px and rows with the "ESPN top" badge were 67px, because the chip's vertical
 padding grew the line box. The fix keeps the badge, which carries real information.
 
-**How to apply:** `.chip` has `height: 18px` and no vertical padding. `.arow__meta` and
-`.grow__meta` set `height` and `line-height` to 18px. When adding any new badge, measure
+**How to apply:** `.chip` has `height: 18px` and no vertical padding. `.arow__meta` sets
+`height` and `line-height` to 18px, and `.grow__meta` a fixed height equal to its pill's. When adding any new badge, measure
 a list with and without it rather than eyeballing: the difference was only 6px and was
 invisible in a screenshot until measured. The Board goes further and renders a row for
 every claimed player, so a game card's height never depends on how many people picked.

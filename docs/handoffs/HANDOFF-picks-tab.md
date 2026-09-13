@@ -1,5 +1,9 @@
 # Handoff: Picks tab redesign
 
+> **Status 2026-09-13:** done in the next session. Grant picked direction 1, the jumbotron,
+> off https://claude.ai/code/artifact/e7dffb78-ccd0-42f6-bee7-aade8a65f6e3 and it is built
+> (see `memory/decisions.md`). Kept below as the record of how the session was set up.
+
 Written 2026-09-12, late, at the end of the session that redid the Week tab and the Board.
 
 ## TL;DR

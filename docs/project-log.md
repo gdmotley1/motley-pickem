@@ -279,3 +279,21 @@ change, the picked team's logo on each pick, and saved the 8-bit arcade in
 
 **Deploys.** Three, each proved on the served bundle and the four live seats. The Picks tab
 is next, in a new chat.
+
+## 2026-09-13: the Picks tab, redone as the jumbotron
+
+A first look of four directions as one screenshot about 12 minutes in, then a published
+board of six (https://claude.ai/code/artifact/e7dffb78-ccd0-42f6-bee7-aade8a65f6e3), each as
+Winners, Points and Locked in phones on Grant's real Week 1 card, with today's tab on top
+from a new harness (`outputs/harness/tools/picks_shots.ps1`). Measured today: 146px a game,
+12.5px school names, a 10px Matchup label and a 9.5px TV chip. He picked 1, the Board's
+jumbotron: "lets do 1, build it".
+
+Built on the Board's own parts: `Led` moved out of Board.jsx into `src/components/Led.jsx`,
+and `data-skin="jumbo"` now covers both tabs. Old class names kept so the Matchup pill
+guards hold. Measured on the real screen at 390px: 20 game tiles all 166px (picked or not),
+team panels 54px, the pill 32px with a 44px target, points rows 56px, Locked in rows 46px,
+smallest text 13px, nothing sideways. Twenty games take about 3,480px, up from 3,120.
+Under-13px declarations in app.css 51 to 39. One trap on the way: a class name the team
+picker already owned (see memory/traps.md).
+
