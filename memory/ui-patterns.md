@@ -182,6 +182,9 @@ the sheet already makes. Headline only, never `description`: that field arrived 
 mojibake character leading it. Clamped to four lines, and hidden entirely when ESPN wrote
 nothing, which is most games not on a network.
 
+**Going jumbotron next.** On 2026-09-13 Grant asked for the sheet to match the jumbotron like
+the Board, Picks and the Week top, in a new chat: `docs/handoffs/HANDOFF-matchup-sheet.md`.
+
 **Not available after you submit.** The preview lives in `ChoosePhase`, so once picks are
 in, the Locked in screen has no previews and no ranks. That was the scope Grant asked for
 ("when you're picking games"). Adding it to `Done` and `Board` is a small change if it
