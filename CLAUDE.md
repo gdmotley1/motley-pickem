@@ -5,7 +5,7 @@
 
 Live: https://gdmotley1.github.io/motley-pickem/ · repo `gdmotley1/motley-pickem`
 Backend is REAL as of 2026-09-03: Supabase project `lugxthfaksdjmvxepryt`, migrations
-001-012 and 014 applied, Week 1 graded and Week 2 published. The app is no longer in mock
+001-012, 014 and 015 applied (015 confirmed live 2026-09-12). The app is no longer in mock
 mode. **Do not paste 013.** It was the dedupe fix and 014 replaces `push_due` outright
 and includes it, so running 013 now would roll the notification wording back.
 Deploy with `bash deploy.sh`, which publishes `dist/` to the `gh-pages` branch.
