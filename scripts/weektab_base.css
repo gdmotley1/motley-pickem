@@ -1,0 +1,17 @@
+/* Shared phone chrome for the Week tab board. Each option skins these. */
+:root {
+  --display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --ui: 'Inter', -apple-system, 'Segoe UI', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+.wt-phone { width: 390px; overflow: hidden; border-radius: 28px; box-shadow: 0 18px 40px rgba(8, 14, 26, .3); -webkit-font-smoothing: antialiased; }
+:where(.wt-phone) :where(p, h2, h3, ol) { margin: 0; }
+.wt-hdr { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px 12px; }
+.wt-hdr__title { display: block; font-family: var(--display); font-weight: 700; font-size: 19px; letter-spacing: -.02em; }
+.wt-hdr__week { display: block; margin-top: 1px; font-family: var(--ui); font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.wt-hdr__me { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 5px 12px 5px 6px; border-radius: 999px; font-family: var(--ui); font-size: 13px; font-weight: 600; }
+.wt-disc { display: grid; place-items: center; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(19, 26, 34, .12); }
+.wt-disc i { display: block; background: center / contain no-repeat; }
+.wt-mark { display: block; flex: none; background: center / contain no-repeat; }
+.wt-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 6px 8px 10px; }
+.wt-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 5px 0; border-radius: 8px; font-size: 13px; font-weight: 600; line-height: 1.2; }

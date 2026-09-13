@@ -1,0 +1,124 @@
+/* ================================================== 3: banner night ========= */
+/* An arena after the lights go down: graphite, one spotlight, and the week's winner
+   hanging a felt banner in their school color. Graduate, a varsity slab, is on the banner
+   and nowhere else. Everything under it is the Season tab's ladder, cut in silver. */
+.bn {
+  --bn-ground: #141518;
+  --bn-card: #1c1e22;
+  --bn-card-hi: #23262b;
+  --bn-edge: #2e3238;
+  --bn-text: #f2f3f5;
+  --bn-text-2: #b4bac2;
+  --bn-silver: #d9dde3;
+  --bn-good: #6fd49b;
+  --bn-bad: #ff8577;
+  background: var(--bn-ground);
+  color: var(--bn-text);
+  font-family: var(--display);
+}
+
+.bn-hdr { background: #0e0f11; border-bottom: 1px solid #25282d; }
+.bn-hdr .wt-hdr__week { color: var(--bn-text-2); }
+.bn-hdr .wt-hdr__me { background: rgba(255, 255, 255, .09); }
+
+.bn-pager { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: #17181b; }
+.bn-arrow { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 50%; background: #25282d; color: var(--bn-text); }
+.bn-mid { flex: 1; display: flex; flex-direction: column; align-items: center; }
+.bn-mid b { display: inline-flex; align-items: center; gap: 4px; font-size: 18px; font-weight: 800; }
+.bn-mid span { font-family: var(--ui); font-size: 14px; font-weight: 600; color: var(--bn-text-2); }
+.bn-back { padding: 10px 12px; text-align: center; font-family: var(--ui); font-size: 15px; font-weight: 700; color: var(--bn-silver); background: #1f2226; border-top: 1px solid #2a2d32; border-bottom: 1px solid #2a2d32; }
+
+/* --- the rafters ------------------------------------------------------------------- */
+.bn-rafters {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 18px 12px 26px;
+  background:
+    radial-gradient(46% 64% at 50% 0%, rgba(255, 250, 235, .2), rgba(255, 250, 235, .05) 62%, transparent 76%),
+    linear-gradient(180deg, #0f1012, var(--bn-ground));
+}
+.bn-rig { display: block; }
+.bn-rig path { stroke: #7c828b; stroke-width: 1.6; fill: none; }
+.bn-rig circle { fill: #9aa1aa; }
+.bn-rod { position: relative; width: 290px; height: 9px; margin-top: -12px; border-radius: 5px; background: linear-gradient(180deg, #eef1f4, #8d949d 60%, #5f656d); box-shadow: 0 3px 6px rgba(0, 0, 0, .6); }
+.bn-rod i { position: absolute; top: -3px; width: 15px; height: 15px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #9aa1aa 60%, #5f656d); }
+.bn-rod i:first-child { left: -7px; }
+.bn-rod i:last-child { right: -7px; }
+
+.bn-banner {
+  position: relative;
+  width: 262px;
+  height: 322px;
+  margin-top: -2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 22px;
+  color: var(--bn-letter);
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, .22), transparent 18%, transparent 80%, rgba(0, 0, 0, .26)),
+    var(--bn-felt);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 36px), 0 100%);
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, .55));
+}
+.bn-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: .55;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.3' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1.2 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+.bn-stitch { position: absolute; inset: 0; }
+.bn-stitch polygon { stroke: var(--bn-letter); stroke-opacity: .6; stroke-width: 2; stroke-dasharray: 6 5; }
+.bn-banner p { position: relative; margin: 0; font-family: 'Graduate', var(--display); text-transform: uppercase; text-shadow: 0 1px 0 rgba(0, 0, 0, .35), 0 3px 4px rgba(0, 0, 0, .3); }
+.bn-b-wk { font-size: 20px; letter-spacing: .12em; }
+.bn-b-champ { margin-top: 2px !important; padding: 0 12px 8px; font-size: 16px; letter-spacing: .24em; border-bottom: 2px solid currentColor; }
+.bn-b-disc { position: relative; margin-top: 16px; box-shadow: 0 0 0 4px var(--bn-letter), 0 4px 8px rgba(0, 0, 0, .4); }
+.bn-b-name { margin-top: 12px !important; font-size: 44px; line-height: 1; letter-spacing: .02em; }
+.bn-b-pts { margin-top: 4px !important; font-size: 30px; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.bn-under { margin: 16px 0 0; font-family: var(--ui); font-size: 17px; font-weight: 600; color: var(--bn-text-2); }
+.bn-under b { color: var(--bn-text); }
+
+/* --- sections: the Season tab's ladder, in silver ------------------------------------ */
+.bn-sec { margin: 0 10px 12px; padding: 12px 14px 6px; border-radius: 16px; border: 1px solid var(--bn-edge); background: linear-gradient(170deg, var(--bn-card-hi), var(--bn-card)); box-shadow: 0 5px 14px rgba(0, 0, 0, .4); }
+.bn-title { margin: 2px 0 8px; font-family: var(--display); font-size: 21px; font-weight: 800; line-height: 1.15; color: var(--bn-text); }
+.bn-help { margin: -4px 0 8px; font-family: var(--ui); font-size: 15px; line-height: 1.4; color: var(--bn-text-2); text-wrap: balance; }
+.bn-ladder { margin: 0; padding: 0; list-style: none; }
+.bn-rung { display: grid; grid-template-columns: 26px 36px minmax(0, 1fr) auto; align-items: center; column-gap: 10px; min-height: 58px; border-top: 1px solid rgba(255, 255, 255, .07); }
+.bn-rung.is-lead { min-height: 66px; }
+.bn-rung--n { grid-template-columns: minmax(0, 1fr) auto; }
+.bn-rung > .wt-disc { justify-self: center; }
+.bn-rank { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #2a2d33; font-size: 14px; font-weight: 800; color: var(--bn-text-2); }
+.bn-rung.is-lead .bn-rank { background: linear-gradient(180deg, #ffffff, #aab1ba); color: #16181b; box-shadow: 0 0 12px rgba(255, 255, 255, .35); }
+.bn-who { display: flex; flex-direction: column; min-width: 0; }
+.bn-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px; font-weight: 700; line-height: 1.2; color: var(--bn-text-2); }
+.bn-rung.is-lead .bn-name { font-size: 23px; font-weight: 800; color: var(--bn-text); }
+.bn-rung--n .bn-name { color: var(--bn-text); }
+.bn-note { margin-top: 1px; font-family: var(--ui); font-size: 15px; font-weight: 600; color: var(--bn-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bn-val { font-size: 22px; font-weight: 800; font-stretch: 87.5%; font-variant-numeric: tabular-nums; color: var(--bn-text); }
+.bn-rung.is-lead .bn-val { font-size: 32px; color: #fff; text-shadow: 0 0 16px rgba(255, 255, 255, .35); }
+
+.bn-card { padding: 12px 0 13px; border-top: 1px solid rgba(255, 255, 255, .07); }
+.bn-title + .bn-card { border-top: 0; padding-top: 4px; }
+.bn-line { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.bn-team { display: inline-flex; align-items: center; gap: 8px; }
+.bn-team b { font-size: 19px; font-weight: 800; }
+.bn-team strong { min-width: 26px; font-size: 26px; font-weight: 800; font-stretch: 87.5%; font-variant-numeric: tabular-nums; }
+.bn-team.is-loser { opacity: .55; }
+.bn-if { margin: 8px 0 0; font-family: var(--ui); font-size: 16px; line-height: 1.45; color: var(--bn-text-2); }
+.bn-if b { color: var(--bn-text); }
+.bn-if--quiet { margin-top: 6px; }
+.bn-tag { display: inline-block; padding: 1px 8px; border-radius: 6px; background: #30343a; font-family: var(--display); font-size: 16px; font-weight: 800; color: var(--bn-text); font-variant-numeric: tabular-nums; }
+.bn-stake { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; margin-top: 9px; }
+.bn-stake > span { font-family: var(--ui); font-size: 15px; font-weight: 600; color: var(--bn-text-2); }
+.bn-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: rgba(111, 212, 155, .13); }
+.bn-chip b { font-size: 17px; font-weight: 800; color: var(--bn-good); font-variant-numeric: tabular-nums; }
+.bn-chip.is-lost { background: rgba(255, 133, 119, .12); }
+.bn-chip.is-lost b { color: var(--bn-bad); }
+
+.bn-tabs { background: #0e0f11; border-top: 1px solid #25282d; margin-top: 10px; }
+.bn-tabs .wt-tab { color: var(--bn-text-2); font-family: var(--ui); }
+.bn-tabs .wt-tab.is-on { background: var(--bn-silver); color: #16181b; }

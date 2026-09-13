@@ -1,0 +1,37 @@
+/* The board around the phones. One committed dark look, matching the style picked. */
+html, body { margin: 0; background: #0e0d0f; color: #f3f1f4; font-family: var(--ui); }
+.bd-wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+
+.bd-top { padding: 40px 0 34px; background: linear-gradient(160deg, #a32136 0 62%, #7e1829 62% 100%); color: #fff; }
+.bd-kick { margin: 0 0 10px; font: 900 italic 15px var(--display); font-stretch: 75%; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+.bd-top h1 { margin: 0 0 16px; font: 900 italic clamp(44px, 7vw, 86px)/.86 var(--display); font-stretch: 65%; text-transform: uppercase; text-wrap: balance; }
+.bd-lede { max-width: 66ch; margin: 0 0 10px; font-size: 17px; line-height: 1.6; }
+.bd-how { max-width: 66ch; margin: 0; font-size: 17px; line-height: 1.6; }
+.bd-how b { padding: 1px 8px; background: #0e0d0f; }
+
+.bd-part { padding: 46px 0 10px; }
+.bd-range { margin: 0 0 6px; font: 900 italic 16px var(--display); font-stretch: 75%; letter-spacing: .1em; text-transform: uppercase; color: #ff8a7a; }
+.bd-part__hd h2,
+.bd-stays__copy h2 { margin: 0; font: 900 italic 46px/.9 var(--display); font-stretch: 68%; text-transform: uppercase; }
+.bd-part__hd { margin-bottom: 26px; padding-bottom: 14px; border-bottom: 4px solid #a32136; }
+
+.bd-part--stays { display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: 40px; align-items: start; }
+.bd-stays__copy { max-width: 60ch; }
+.bd-stays__copy > p:not(.bd-range):not(.bd-take) { margin: 14px 0 0; font-size: 17px; line-height: 1.6; color: #cfcad1; }
+.bd-take { margin: 22px 0 0; padding: 14px 16px; background: #1c1b1e; box-shadow: inset 6px 0 0 #a32136; font-size: 17px; line-height: 1.6; color: #e6e2e8; }
+.bd-take b { color: #fff; }
+
+.bd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 390px), 1fr)); gap: 44px 30px; align-items: start; }
+.bd-opt { min-width: 0; }
+.bd-opt__hd { display: flex; align-items: flex-start; gap: 14px; max-width: 390px; min-height: 96px; margin-bottom: 12px; }
+.bd-num { flex: none; min-width: 58px; font: 900 italic 74px/.8 var(--display); font-stretch: 65%; color: #ff8a7a; font-variant-numeric: tabular-nums; }
+.bd-opt__hd h3 { margin: 2px 0 6px; font: 900 italic 28px/1 var(--display); font-stretch: 72%; text-transform: uppercase; }
+.bd-opt__hd p { margin: 0; font-size: 15px; line-height: 1.5; color: #c4bfc6; }
+.bd-opt .wt-phone { max-width: 100%; }
+
+@media (max-width: 900px) {
+  .bd-part--stays { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .bd-wrap { padding: 0 14px; }
+}

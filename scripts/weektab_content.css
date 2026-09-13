@@ -1,0 +1,44 @@
+/* Round 2 sections, in option 2's style. cx- is new; wc- comes from weektab_opt2.css. */
+.bd-sec { padding-bottom: 18px; }
+.bd-sec .wc-sec { padding-top: 22px; }
+
+.cx-race { display: block; width: 100%; height: auto; margin: 2px 0 6px; overflow: visible; }
+.cx-grid line { stroke: #2d2b30; stroke-width: 1; }
+.cx-grid text { fill: #a9a3ab; font: 700 13px var(--ui); text-anchor: end; }
+.cx-lock { stroke: var(--wc-field); stroke-width: 2; stroke-dasharray: 4 4; }
+.cx-end { font: 900 italic 15px var(--display); font-stretch: 75%; text-transform: uppercase; }
+.cx-x { fill: #a9a3ab; font: 600 13px var(--ui); }
+
+.cx-facts { display: grid; gap: 2px; margin-top: 6px; }
+.cx-facts p { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; column-gap: 12px; min-height: 58px; margin: 0; border-top: 1px solid #2a282d; }
+.cx-facts p:first-child { border-top: 0; }
+.cx-facts strong { justify-self: end; font-size: 46px; font-weight: 900; font-style: italic; font-stretch: 70%; line-height: .9; font-variant-numeric: tabular-nums; }
+.cx-facts span { font-family: var(--ui); font-size: 16px; font-weight: 600; line-height: 1.35; color: var(--wc-text); text-wrap: balance; }
+.cx-facts--row p { border-top: 0; }
+
+.cx-sub { margin: 18px 2px 8px; font-size: 18px; font-weight: 900; font-style: italic; font-stretch: 75%; letter-spacing: .05em; text-transform: uppercase; color: var(--wc-text-2); }
+
+.cx-you { display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 14px; align-items: center; padding: 14px 12px; background: var(--wc-row); box-shadow: inset 6px 0 0 var(--wc-field); }
+.cx-you__k { font-family: var(--ui); font-size: 15px; font-weight: 600; color: var(--wc-text-2); }
+.cx-you__v { font-size: 40px; font-weight: 900; font-style: italic; font-stretch: 70%; line-height: .95; text-transform: uppercase; }
+.cx-you__s { margin-top: 4px !important; font-family: var(--ui); font-size: 15px; font-weight: 600; color: var(--wc-text-2); }
+
+.cx-h2h,
+.cx-agree { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 12px; align-items: center; min-height: 62px; margin-bottom: 6px; padding: 0 14px 0 12px; background: var(--wc-row); }
+.cx-agree { grid-template-columns: 36px minmax(0, 1fr); }
+.cx-h2h strong { font-size: 32px; font-weight: 900; font-style: italic; font-stretch: 70%; font-variant-numeric: tabular-nums; }
+.cx-h2h .wc-who b,
+.cx-agree .wc-who b { font-size: 21px; }
+
+.cx-heldrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.cx-held { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 10px; background: var(--wc-row); }
+.cx-held b { font-size: 19px; font-weight: 900; font-style: italic; font-stretch: 75%; color: var(--wc-good); }
+
+.cx-alone { margin-bottom: 6px; padding: 10px 14px 12px 10px; background: var(--wc-row); }
+.cx-alone__hd { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; column-gap: 11px; align-items: center; min-height: 46px; }
+.cx-alone__hd strong { font-size: 38px; font-weight: 900; font-style: italic; font-stretch: 70%; font-variant-numeric: tabular-nums; }
+.cx-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; padding-left: 45px; }
+.cx-pick { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 6px; background: var(--wc-row-2); }
+.cx-pick b { font-size: 16px; font-weight: 900; font-style: italic; font-stretch: 78%; }
+.cx-pick em { font-style: italic; font-size: 17px; font-weight: 900; font-stretch: 78%; color: var(--wc-good); font-variant-numeric: tabular-nums; }
+.cx-pick.is-lost em { color: var(--wc-bad); }
