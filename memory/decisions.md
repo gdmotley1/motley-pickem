@@ -224,6 +224,22 @@ week a 0 when it was Nicole's 147, and credited Nicole with winning Week 2 after
 over because its graded count is above zero. `tests/recap_check.mjs` and
 `tests/records_check.mjs` hold both halves.
 
+## A finished week is painted in the winner's colors, with Grant's seven sections
+
+Picked 2026-09-12 off two boards: option 2, "Winner's colors" (the athletic department
+FINAL graphic, header included, in the winner's school color on charcoal), then sections
+1, 2, 3, 6, 7, 8, 9 in that order: decided it, upsets, how it unfolded, your week, when
+you all agreed, went it alone, by the numbers. Shipped the same night.
+
+**Why:** he called the old tab "AI slop", the ranking bars unreadable (90 to 95%, fills
+within 12px) and the text tiny (8.5px). He did not understand "points left on the table"
+even explained, so the ceiling stat is gone from the screen; `ceiling` stays in the lib.
+
+**How to apply:** only a FINISHED week gets the skin (`data-skin="winner"`, set by App
+from Week's `onSkin`). A live week keeps the Board's scorebug on Slate, per the
+one-scoreboard call. New recap numbers go in `weekRecap.js` with checks in
+`tests/recap_check.mjs`; `tests/test_week_final.py` holds the section order and the cuts.
+
 ## The record book is Grant's seventeen, each with his badge
 
 Eight numbers every player has, eight Hall of fame awards and one Hall of shame award,
