@@ -343,3 +343,10 @@ one team unranked, final with no projection, ESPN down, the longest real name): 
 about 133px. Under-13px declarations in app.css 39 to 25. Guards in
 `tests/test_matchup_jumbo.py`, each broken once in a scratch copy to see it fail; two missed
 the first time and were fixed (see memory/traps.md for the three traps found on the way).
+
+Deployed the same afternoon on "push deploy makemlive": GitHub Pages named the new bundle
+about 10 seconds after `bash deploy.sh`; the served index-BSYgn6gc.css (77,970 bytes) and
+index-SW9gr2Ps.js (650,977 bytes) are byte-identical to dist, carry `.sheet.sheet--jumbo`,
+`.mu__card.is-mine` and the name-fit rules, and no longer carry `.pbar`, `.form__score` or
+`.mu__team`. The live sign-in screen, loaded read-only in a throwaway headless profile,
+shows all four seats (Grant, James, Parker, Nicole) on the new bundle.
