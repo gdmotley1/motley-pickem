@@ -92,6 +92,12 @@ export function decisiveGames(games, rows, names) {
     const scores = scoreWith(rows, alt)
     const leaders = leadersOf(scores)
     if (sameSet(leaders, base)) continue
+    const top = scores.get(leaders[0]).points
+    /* The best total under the new leaders, so a reversal can be told as a score:
+       "James takes the week, 196 to 194" rather than only "James wins it on 196". */
+    let nextPts = -1
+    for (const [id, s] of scores) if (!leaders.includes(id) && s.points > nextPts) nextPts = s.points
+    const nextIds = [...scores].filter(([id, s]) => !leaders.includes(id) && s.points === nextPts).map(([id]) => id)
     out.push({
       game_id: g.game_id,
       label: matchupLabel(g),
@@ -99,10 +105,163 @@ export function decisiveGames(games, rows, names) {
       actual: g.winner_abbr,
       leaders: leaders.map((id) => names.get(id) || `#${id}`),
       shared: leaders.length > 1,
-      points: leaders.map((id) => scores.get(id).points)[0],
+      points: top,
+      next: nextIds.length ? { names: nextIds.map((id) => names.get(id) || `#${id}`), points: nextPts } : null,
+      // Nobody who actually won the week would still be on top.
+      reversal: leaders.every((id) => !base.includes(id)),
     })
   }
-  return out
+  // A result that hands the week to someone else outright reads before one that only
+  // makes it a tie. Both were recomputed; the order is a fact about them, not a ranking.
+  return out.sort((a, b) => Number(b.reversal) - Number(a.reversal))
+}
+
+/**
+ * Who had what riding on one game, biggest wager first. Only ever called on a game that
+ * has kicked off, which is the only kind get_board returns rows for.
+ */
+export function stakes(game, rows) {
+  return rows
+    .filter((r) => r.game_id === game.game_id)
+    .map((r) => ({
+      player_id: r.player_id,
+      name: r.player_name,
+      pick: r.pick_abbr,
+      confidence: r.confidence,
+      won: !!game.winner_abbr && r.pick_abbr === game.winner_abbr,
+    }))
+    .sort((a, b) => b.confidence - a.confidence || a.player_id - b.player_id)
+}
+
+/** Kickoff order, ties on the clock broken by game id so the order never wobbles. */
+function byKickoff(games) {
+  return [...games].sort((a, b) => String(a.kickoff).localeCompare(String(b.kickoff)) || a.game_id - b.game_id)
+}
+
+/**
+ * Where everyone stood after each game, in kickoff order.
+ *
+ * Kickoff order rather than the order games went final, because that is the only order
+ * the data has. Close enough to tell the week as it happened, and labelled as what it is.
+ *
+ * `changes` counts the times a different player took the lead outright; a tie at the top
+ * is not a change, and neither is the first player to lead alone. `lockedAt` is the game
+ * after which the week's actual winners were on top and never left it, or null when the
+ * week ended shared, since nobody took a shared lead "for good".
+ */
+export function race(games, rows, roster) {
+  const order = byKickoff(games.filter((g) => g.winner_abbr))
+  const pts = new Map(roster.map((p) => [p.id, 0]))
+  const steps = order.map((g) => {
+    for (const r of rows) {
+      if (r.game_id === g.game_id && r.pick_abbr === g.winner_abbr && pts.has(r.player_id)) {
+        pts.set(r.player_id, pts.get(r.player_id) + r.confidence)
+      }
+    }
+    const points = Object.fromEntries(pts)
+    const rank = {}
+    for (const [id, v] of pts) rank[id] = 1 + [...pts.values()].filter((o) => o > v).length
+    const top = Math.max(...pts.values())
+    return {
+      game_id: g.game_id,
+      label: matchupLabel(g),
+      points,
+      rank,
+      leaders: [...pts].filter(([, v]) => v === top).map(([id]) => id).sort((a, b) => a - b),
+    }
+  })
+
+  let changes = 0
+  let holder = null
+  const led = new Map(roster.map((p) => [p.id, 0]))
+  for (const s of steps) {
+    if (s.leaders.length !== 1) continue
+    led.set(s.leaders[0], led.get(s.leaders[0]) + 1)
+    if (holder !== null && s.leaders[0] !== holder) changes += 1
+    holder = s.leaders[0]
+  }
+
+  const last = steps[steps.length - 1]
+  let lockedAt = null
+  if (last && last.leaders.length === 1) {
+    let i = steps.length - 1
+    while (i > 0 && sameSet(steps[i - 1].leaders, last.leaders)) i -= 1
+    lockedAt = i + 1
+  }
+  const most = Math.max(0, ...led.values())
+  return {
+    steps,
+    changes,
+    lockedAt,
+    ledMost: { ids: [...led].filter(([, n]) => n === most && most > 0).map(([id]) => id), games: most },
+  }
+}
+
+/**
+ * The games all of you picked the same way, and how each went. A game only counts once
+ * every seat has a pick on it, which after kickoff is always, thanks to the auto-pick.
+ */
+export function unanimous(games, rows, roster) {
+  const seats = new Set(roster.map((p) => p.id))
+  return byKickoff(games.filter((g) => g.winner_abbr))
+    .map((g) => {
+      const on = rows.filter((r) => r.game_id === g.game_id && seats.has(r.player_id))
+      if (on.length !== seats.size || new Set(on.map((r) => r.pick_abbr)).size !== 1) return null
+      return {
+        game_id: g.game_id,
+        label: matchupLabel(g),
+        pick: on[0].pick_abbr,
+        won: on[0].pick_abbr === g.winner_abbr,
+        total: on.reduce((n, r) => n + r.confidence, 0),
+      }
+    })
+    .filter(Boolean)
+}
+
+/** Picks nobody else in the family made, per player, biggest first. */
+export function alone(games, rows, roster) {
+  const graded = new Map(games.filter((g) => g.winner_abbr).map((g) => [g.game_id, g]))
+  return roster.map((p) => {
+    const picks = rows
+      .filter((r) => r.player_id === p.id && graded.has(r.game_id))
+      .filter((r) => rows.every((o) => o.game_id !== r.game_id || o.player_id === p.id || o.pick_abbr !== r.pick_abbr))
+      .map((r) => {
+        const g = graded.get(r.game_id)
+        return { game_id: r.game_id, label: matchupLabel(g), pick: r.pick_abbr, confidence: r.confidence, won: r.pick_abbr === g.winner_abbr }
+      })
+      .sort((a, b) => b.confidence - a.confidence)
+    return { id: p.id, name: p.name, color: p.color, team_id: p.team_id, picks, right: picks.filter((x) => x.won).length }
+  })
+}
+
+/**
+ * One player's week against the nearest rival: the runner-up if they won it outright,
+ * whoever won it otherwise. Every game where the two banked a different number, split
+ * into where you pulled ahead and where they got points back, biggest first. The nets
+ * add up to the gap between you, which is the check that nothing was dropped.
+ */
+export function headToHead(games, rows, players, meId) {
+  const me = players.find((p) => p.id === meId)
+  if (!me) return null
+  const rival = me.rank === 1
+    ? players.find((p) => p.id !== meId && (p.rank === 1 || p.rank === 2)) || players.find((p) => p.id !== meId)
+    : players.find((p) => p.rank === 1)
+  if (!rival) return null
+  const earned = (r, g) => (r && r.pick_abbr === g.winner_abbr ? r.confidence : 0)
+  const diffs = byKickoff(games.filter((g) => g.winner_abbr))
+    .map((g) => {
+      const a = rows.find((r) => r.game_id === g.game_id && r.player_id === meId)
+      const b = rows.find((r) => r.game_id === g.game_id && r.player_id === rival.id)
+      const side = (r) => (r ? { pick: r.pick_abbr, confidence: r.confidence, won: r.pick_abbr === g.winner_abbr } : null)
+      return { game_id: g.game_id, label: matchupLabel(g), mine: side(a), theirs: side(b), net: earned(a, g) - earned(b, g) }
+    })
+    .filter((d) => d.net !== 0)
+  return {
+    rival: { id: rival.id, name: rival.name },
+    gap: me.points - rival.points,
+    gained: diffs.filter((d) => d.net > 0).sort((a, b) => b.net - a.net),
+    lost: diffs.filter((d) => d.net < 0).sort((a, b) => a.net - b.net),
+  }
 }
 
 /**
@@ -255,6 +414,10 @@ export function weekRecap(games, rows, roster) {
     chalk: { won: favWins, of: lined },
     whiffs: whiffs.map((g) => ({ game_id: g.game_id, label: matchupLabel(g), winner: g.winner_abbr })),
     sweeps: sweeps.length,
+    sweepGames: sweeps.map((g) => ({ game_id: g.game_id, label: matchupLabel(g), winner: g.winner_abbr })),
     slateSize: slate.length,
+    race: complete ? race(slate, board, seats) : null,
+    unanimous: complete ? unanimous(slate, board, seats) : [],
+    alone: complete ? alone(slate, board, seats) : [],
   }
 }

@@ -87,6 +87,8 @@ export default function App() {
   const [week, setWeek] = useState(null)
   const [weekId, setWeekId] = useState(rememberedWeek)
   const [stale, setStale] = useState(false)
+  /* The finished week's colors, reported by the Week screen: { field, ink } or null. */
+  const [weekSkin, setWeekSkin] = useState(null)
 
   useEffect(() => {
     loadTeams() // 18KB, wanted before the first avatar renders
@@ -220,8 +222,14 @@ export default function App() {
      in theme.css, so this line is the entire wiring. */
   const mode = tab === 'season' ? 'book' : undefined
 
+  /* Winner's colors. Not a mode: the tokens stay Slate, and only a FINISHED week on the
+     Week tab paints the header in the winner's school color. While a week is live the tab
+     shows the Board's scoreboard, so the chrome stays exactly as the Board has it. */
+  const skin = tab === 'week' && weekSkin ? weekSkin : null
+
   return (
-    <div className="app" data-mode={mode}>
+    <div className="app" data-mode={mode} data-skin={skin ? 'winner' : undefined}
+         style={skin ? { '--wf-field': skin.field, '--wf-ink': skin.ink } : undefined}>
       <header className="apphdr">
         <div>
           <span className="apphdr__title">Motley Pick&apos;em</span>
@@ -256,7 +264,7 @@ export default function App() {
           {tab === 'board' && (
             <Board me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
-          {tab === 'week' && <Week me={me} weekId={weekId} week={week} />}
+          {tab === 'week' && <Week me={me} weekId={weekId} week={week} onSkin={setWeekSkin} />}
           {tab === 'season' && <Season />}
           {tab === 'admin' && <Admin me={me} weekId={weekId} />}
         </motion.div>

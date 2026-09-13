@@ -99,6 +99,78 @@ check('the tie is Grant and James', unlv.leaders.includes('Grant') && unlv.leade
 check('every decisive game names what would have happened instead',
   d.every((x) => x.instead && x.actual && x.instead !== x.actual))
 
+/* The Week tab tells a reversal as a score, so the runner-up in the flipped week has to
+   be right: GT holding on is James 196, Grant 194. A reversal reads before a tie. */
+check('the outright reversal is listed first', d[0].label === 'COLO at GT' && d[0].reversal === true)
+check('flipping Colorado leaves Grant second on 194',
+  colo.points === 196 && colo.next && colo.next.points === 194 && colo.next.names.join() === 'Grant',
+  JSON.stringify(colo.next))
+check('the UNLV flip is a tie, not a reversal', unlv.reversal === false && unlv.points === 176)
+
+const { stakes, race, unanimous, alone, headToHead } = await import(
+  pathToFileURL(join(root, 'src', 'lib', 'weekRecap.js')).href
+)
+const gtGame = fx.slate.find((g) => g.home_abbr === 'GT')
+const gtStakes = stakes(gtGame, fx.board)
+check('all four had Georgia Tech, and all four lost it',
+  gtStakes.length === 4 && gtStakes.every((s) => s.pick === 'GT' && !s.won), JSON.stringify(gtStakes))
+check('the biggest wager on it was James at 17', gtStakes[0].name === 'James' && gtStakes[0].confidence === 17)
+
+const rc = race(fx.slate, fx.board, fx.seats)
+const nameById = new Map(fx.seats.map((s) => [s.id, s.name]))
+check('the race has a step for every game', rc.steps.length === 20, String(rc.steps.length))
+check('the lead changed hands five times', rc.changes === 5, String(rc.changes))
+check('Grant took the lead for good after game 15', rc.lockedAt === 15, String(rc.lockedAt))
+check('game 15 was UNLV at Hawaii', rc.steps[14].label === 'UNLV at HAW', rc.steps[14].label)
+check('Parker led the most games, 7', rc.ledMost.games === 7 && rc.ledMost.ids.map((id) => nameById.get(id)).join() === 'Parker',
+  JSON.stringify(rc.ledMost))
+check('the last step is the final table',
+  rc.steps[19].points[1] === 186 && rc.steps[19].points[2] === 179 && rc.steps[19].rank[1] === 1)
+/* Invented, and says so: James takes NEV and SMU, Grant takes LOU, and they finish level
+   on 182. A shared week was never led "for good" by anybody. */
+const swap = { 'James|WKU': 'NEV', 'James|FSU': 'SMU', 'Grant|MISS': 'LOU' }
+const level = fx.board.map((x) => (swap[`${x.player_name}|${x.pick_abbr}`] ? { ...x, pick_abbr: swap[`${x.player_name}|${x.pick_abbr}`] } : x))
+const levelRace = race(fx.slate, level, fx.seats)
+check('the invented shared week really is level on 182',
+  levelRace.steps[19].points[1] === 182 && levelRace.steps[19].points[2] === 182, JSON.stringify(levelRace.steps[19].points))
+check('a shared week has no lead taken for good', levelRace.lockedAt === null, String(levelRace.lockedAt))
+
+const un = unanimous(fx.slate, fx.board, fx.seats)
+check('all four agreed on nine games', un.length === 9, un.map((x) => x.pick).join(' '))
+check('six of them held', un.filter((x) => x.won).length === 6)
+check('GT, OKST and FSU burned everyone',
+  un.filter((x) => !x.won).map((x) => x.pick).join() === 'GT,OKST,FSU', un.filter((x) => !x.won).map((x) => x.pick).join())
+check('47 points went down with Georgia Tech', un.find((x) => x.pick === 'GT').total === 47)
+
+const al = Object.fromEntries(alone(fx.slate, fx.board, fx.seats).map((p) => [p.name, p]))
+check('Nicole went alone five times', al.Nicole.picks.length === 5 && al.Nicole.right === 0,
+  al.Nicole.picks.map((x) => x.pick).join(' '))
+check('Parker went alone three times', al.Parker.picks.length === 3 && al.Parker.right === 0)
+check('Grant and James never went alone', al.Grant.picks.length === 0 && al.James.picks.length === 0)
+
+const h = headToHead(fx.slate, fx.board, r.players, 1)
+check("Grant's rival is the runner-up, James", h.rival.name === 'James' && h.gap === 7)
+check('the head to head adds up to the gap',
+  [...h.gained, ...h.lost].reduce((n, x) => n + x.net, 0) === 7)
+check('Grant pulled ahead most on UNLV at Hawaii, 10 to 3',
+  h.gained[0].label === 'UNLV at HAW' && h.gained[0].net === 7 && h.gained[0].theirs.confidence === 3)
+check('James got 6 back on each of Cincinnati and Michigan State',
+  h.lost.slice(0, 2).every((x) => x.net === -6), h.lost.map((x) => `${x.label} ${x.net}`).join(' | '))
+const hj = headToHead(fx.slate, fx.board, r.players, 2)
+check("James's rival is the winner, Grant", hj.rival.name === 'Grant' && hj.gap === -7)
+
+check('the six games everyone got are named',
+  r.sweepGames.map((x) => x.winner).join() === 'MSU,USC,ALA,UGA,ORE,TEX', r.sweepGames.map((x) => x.winner).join())
+
+const { schoolField } = await import(pathToFileURL(join(root, 'src', 'lib', 'schoolField.js')).href)
+const teams = Object.fromEntries(JSON.parse(readFileSync(join(root, 'static', 'data', 'teams.json'), 'utf-8')).map((t) => [t.id, t]))
+check('Arkansas paints the week cardinal with white type',
+  JSON.stringify(schoolField(teams['8'])) === JSON.stringify({ field: '#a32136', ink: '#ffffff' }), JSON.stringify(schoolField(teams['8'])))
+check('Tulane paints it green', schoolField(teams['2655']).field === '#006747', schoolField(teams['2655']).field)
+check('Kennesaw State gold takes dark type', schoolField(teams['338']).ink === '#111111', JSON.stringify(schoolField(teams['338'])))
+check('Georgia paints it red, not charcoal', schoolField(teams['61']).field === '#ba0c2f', schoolField(teams['61']).field)
+check('a seat with no school falls back to its own color', schoolField(undefined, '#8A2E4F').field === '#8A2E4F')
+
 /* A week nobody could have swung with one result must come back empty rather than
    inventing a nearest miss. Forty points clear is out of reach of any single game. */
 const runaway = fx.board.map((row) =>

@@ -131,7 +131,7 @@ def test_the_week_tab_uses_the_scorebug():
     # settled week back to a light table left the guard green. Verified by doing exactly
     # that and watching it pass.
     assert body.count("<WeekScore") == 2, (
-        "expected the scorebug at both call sites, the skeleton and the settled week; "
+        "expected the scorebug at both call sites, the skeleton and the week in progress; "
         "found %d" % body.count("<WeekScore")
     )
     assert "weekScore(games, rows, roster)" in body, (
@@ -206,11 +206,12 @@ def test_every_call_site_takes_the_same_cut():
 
 
 def test_the_week_tab_still_has_both_of_its_call_sites():
-    """The skeleton and the settled week. Named here rather than in the walk above,
+    """The skeleton and the week in progress. A FINISHED week draws the winner's-colors
+    table instead (tests/test_week_final.py), still read from weekScore. Named here rather than in the walk above,
     because the walk cannot know how many each screen is supposed to have."""
     sites = [f for f, _ in call_sites()]
     assert sites.count("Week.jsx") == 2, (
-        "expected the scorebug at both Week call sites, the skeleton and the settled "
+        "expected the scorebug at both Week call sites, the skeleton and the in-progress "
         "week; found %d" % sites.count("Week.jsx")
     )
     assert sites.count("Board.jsx") == 1, (
