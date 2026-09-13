@@ -422,7 +422,7 @@ function ChoosePhase({
 
       {/* Keyed on the game so switching previews refetches, rather than showing the last
           one's numbers under the new one's teams. */}
-      <Sheet open={!!preview} onClose={() => setPreview(null)} label="Matchup preview">
+      <Sheet open={!!preview} onClose={() => setPreview(null)} label="Matchup preview" tone="jumbo">
         {preview && (
           <Matchup
             key={preview.game_id}

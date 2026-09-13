@@ -26,8 +26,11 @@ export function Portal({ children }) {
  * never completed, so a closed sheet stayed in the DOM and its full-screen scrim kept
  * swallowing every tap on the page behind it. Here the close is a CSS animation plus a
  * timer we control, so the node is always gone afterwards.
+ *
+ * `tone="jumbo"` puts a sheet on the jumbotron (the matchup preview). Opt-in, because the
+ * account sheet, Pick your team, Reminders and the Week tab's jump list stay light.
  */
-export function Sheet({ open, onClose, label, children }) {
+export function Sheet({ open, onClose, label, tone, children }) {
   const [mounted, setMounted] = useState(open)
   const [closing, setClosing] = useState(false)
 
@@ -74,7 +77,7 @@ export function Sheet({ open, onClose, label, children }) {
         aria-hidden="true"
       />
       <div
-        className={`sheet${closing ? ' is-out' : ''}`}
+        className={`sheet${tone ? ` sheet--${tone}` : ''}${closing ? ' is-out' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={label}

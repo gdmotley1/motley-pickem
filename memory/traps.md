@@ -602,3 +602,41 @@ The harness hid it for one run in the other direction: `outputs/harness/week_liv
 loaded only Archivo and Inter, so even the header fell back. A harness page must use
 index.html's font link verbatim, or its screenshots are of a different app.
 
+
+## An absolutely positioned grid item measures from its grid cell
+
+Building the matchup sheet's two-column tops, the `@` between the teams landed on the home
+team's logo in four of six options. It was `position: absolute; left: 50%` inside a
+`position: relative` grid, but it still carried `grid-column: 2; grid-row: 1` from a shared
+rule. When an absolutely positioned child of a grid has grid placement, its containing block
+is that grid area, not the grid, so `left: 50%` meant the middle of the home card. The same
+shared rule's `.is-home { grid-column: 3 }` had also quietly added a third column to the
+two-column layouts, squeezing the away card to 70px.
+
+**How to apply:** an absolutely placed item inside a grid takes no grid placement at all
+(`grid-area: auto`, or none set). `tests/test_matchup_jumbo.py` holds it for `.mu__at`.
+Measure where it lands (the harness reports the `@` centre against the gap between the
+stages), because a screenshot at phone size makes a 10px miss look deliberate.
+
+## Resetting state in a passive effect races the layout effect's update
+
+The cards' name fit steps down in a `useLayoutEffect` when a name wraps. A companion
+`useEffect(() => setFit(0), [names])` meant to reset it for a new game raced it: when a
+layout effect schedules a synchronous update, React first flushes the pending passive effects
+of the same commit, so the reset and the step were applied in one render and the reset won.
+It only appeared to work because `document.fonts.ready` fired the check again later.
+
+**How to apply:** let a measured step only ever go down, and get a fresh start from a fresh
+mount (the sheet is keyed on the game). `tests/test_matchup_jumbo.py` fails if the reset
+comes back.
+
+## Team names run long at half the phone's width
+
+Swept 2026-09-13 through a copy of the matchup card's name bar (140px of text, Big Shoulders
+900 at 0.03em): 18 of the 139 schools in the team library wrap at 25px and 9 still wrap at
+22px; all fit by 19px. Names the library does not hold come from Postgres as ESPN's location
+and run to 24 characters: 72 of 222 names wrap at 25px and 29 still wrap at 19px.
+
+**How to apply:** any layout that puts the two teams side by side at phone width needs a plan
+for long names before it is shown to Grant: one shared size that steps down, and a place for
+a second line that does not throw the two sides out of step.

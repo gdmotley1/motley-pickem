@@ -315,3 +315,31 @@ and each section's rule still wears the winner's color.
 Then "remove back to week 2 button pls then ship deploy": the Back to Week N button under the
 pager went, with its styles; the right arrow and the jump list already do that job.
 
+
+## 2026-09-13, afternoon: the matchup sheet goes jumbotron
+
+Started from `docs/handoffs/HANDOFF-matchup-sheet.md` in a new chat. Three rounds, each the
+real sheet opened from its pill in the Picks harness on real ESPN data (#8 LSU at #9 Ole
+Miss, pulled that morning), never a mockup.
+
+1. The sheet re-skinned, with two lower halves: big LED percentages and chips, or lamp bars
+   and lamp tiles. Grant: "Neither I want the logo to be bigger, and it's not very even or
+   makes much sense. everything below it's fine, but those boxes with the color looks weird.
+   I want the logo bigger and uniform text and ranking under it. Make it easier to see the
+   spread and over under and channel."
+2. Three tops (logo plates, tale of the tape, marquee spotlights), no school colors, with TV,
+   spread and O/U as labelled tiles. "make an artifact. 3 is best but still dont love. new
+   choices pls".
+3. An artifact of six tops, each on LSU at Ole Miss and on #7 Miami at unranked Wake Forest,
+   with the measured height and scroll under each:
+   https://claude.ai/code/artifact/5a115f17-67e8-4a48-8cbf-51ac2b251978. Recommended 7
+   (broadcast); he said "lets do 8", trading cards.
+
+Built as `Cards` in `Matchup.jsx` with round one's option 1 below, on `Sheet`'s new opt-in
+`tone="jumbo"`. Measured at 390px in six harness states (pick away, pick home, no pick with
+one team unranked, final with no projection, ESPN down, the longest real name): both cards
+244px, names and stats level across the two, the `@` on the logo centreline, smallest text
+13px, nothing sideways or clipped, no Supabase traffic. On an 844px phone the sheet scrolls
+about 133px. Under-13px declarations in app.css 39 to 25. Guards in
+`tests/test_matchup_jumbo.py`, each broken once in a scratch copy to see it fail; two missed
+the first time and were fixed (see memory/traps.md for the three traps found on the way).

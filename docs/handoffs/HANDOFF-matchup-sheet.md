@@ -1,5 +1,10 @@
 # Handoff: the matchup preview sheet, on the jumbotron
 
+> **Status 2026-09-13:** done in the next session. Grant picked the trading cards (8 of an
+> artifact of six tops, https://claude.ai/code/artifact/5a115f17-67e8-4a48-8cbf-51ac2b251978)
+> and it is built (see `memory/decisions.md` and `docs/project-log.md`). Kept below as the
+> record of how the session was set up.
+
 Written 2026-09-13, at the end of the session that rebuilt the Picks tab and the Week tab's
 top as the jumbotron.
 

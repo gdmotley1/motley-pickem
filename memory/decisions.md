@@ -278,7 +278,27 @@ one stadium" and took it over five genuinely different looks
 one component, `src/components/Led.jsx`, and Picks reuses `.jb`, `.jb-wall`, `.jb-empty` and
 `.jb-crawl`. Picks kept its old class names so the old guards still pin the same things
 (`tests/test_preview_cta.py`, `tests/test_qa.py`); the new rules are in
-`tests/test_picks_jumbo.py`. The Matchup sheet it opens is still the light Slate sheet.
+`tests/test_picks_jumbo.py`. The Matchup sheet it opens went jumbotron the same day (below).
+
+## The matchup sheet is the jumbotron too, the two teams as trading cards
+
+Picked 2026-09-13 over three rounds. Round one lit each team's box in its school colors and
+Grant said "those boxes with the color looks weird. I want the logo bigger and uniform text and
+ranking under it. Make it easier to see the spread and over under and channel." Round two: he
+called the logo plates best but did not love them. From an artifact of six tops
+(https://claude.ai/code/artifact/5a115f17-67e8-4a48-8cbf-51ac2b251978): "lets do 8", trading
+cards. Below the cards he kept round one's option 1: big LED win percentages over a bar in
+the schools' colors, and this season as a column of chips per team.
+
+**Why:** the sheet was the one light thing left on the jumbotron tabs, and its 14 sizes under
+13px went with it (down to 8.5px).
+
+**How to apply:** `Sheet` takes `tone="jumbo"` and only the matchup sheet passes it; never
+restyle `.sheet`. Both cards come from one map in `Cards` in `Matchup.jsx`: logo on a lit
+stage, the school on a name bar, AP rank (via `<Rank>`) and record on the foot, your pick the
+gold card with a YOUR PICK strip that never moves it. No school color on the cards. Both names
+share one size and step down together (25, 22, 19px) when either would wrap. TV, spread and
+O/U are three labelled tiles. `tests/test_matchup_jumbo.py` holds all of it.
 
 ## The record book is Grant's seventeen, each with his badge
 

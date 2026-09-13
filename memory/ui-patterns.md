@@ -182,8 +182,22 @@ the sheet already makes. Headline only, never `description`: that field arrived 
 mojibake character leading it. Clamped to four lines, and hidden entirely when ESPN wrote
 nothing, which is most games not on a network.
 
-**Going jumbotron next.** On 2026-09-13 Grant asked for the sheet to match the jumbotron like
-the Board, Picks and the Week top, in a new chat: `docs/handoffs/HANDOFF-matchup-sheet.md`.
+**On the jumbotron since 2026-09-13.** Top to bottom: a MATCHUP strip with the kickoff, the
+two teams as trading cards, TV and spread and O/U as three labelled tiles, then the sections
+above as black LED panels headed like a Picks kickoff day. The locked call is in
+`memory/decisions.md`. Two things about its shape are load-bearing:
+
+- Team names come from the team library first and Postgres second, so an FCS opponent can be
+  24 characters ("Southeast Missouri State") in a 140px name bar. `Cards` measures the text's
+  own line boxes and steps both names down together, twice at most; the bar takes the spare
+  height (`flex: 1`) so a two-line name never lifts its card's stats out of line.
+- The sheet portals into `document.body`, so nothing from `.app[data-skin='jumbo']` reaches
+  it. Its colors are named in its own rules and `.mu` carries `.jb` for the variables.
+
+The harness scenarios for it are `#sheet`, `#home` (the pick on the home side), `#w8` (one team
+unranked), `#final` (no projection), `#offline` and `#long` in
+`outputs/harness/tools/picks_shots.ps1`; the sheet run also sweeps every school name in the
+library and the Week 1 pool through a copy of the real name bar.
 
 **Not available after you submit.** The preview lives in `ChoosePhase`, so once picks are
 in, the Locked in screen has no previews and no ranks. That was the scope Grant asked for
