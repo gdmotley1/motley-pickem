@@ -235,10 +235,12 @@ you all agreed, went it alone, by the numbers. Shipped the same night.
 within 12px) and the text tiny (8.5px). He did not understand "points left on the table"
 even explained, so the ceiling stat is gone from the screen; `ceiling` stays in the lib.
 
-**How to apply:** only a FINISHED week gets the skin (`data-skin="winner"`, set by App
-from Week's `onSkin`). A live week keeps the Board's scorebug on Slate, per the
-one-scoreboard call. New recap numbers go in `weekRecap.js` with checks in
-`tests/recap_check.mjs`; `tests/test_week_final.py` holds the section order and the cuts.
+**How to apply:** the Week tab shows FINISHED weeks only and opens on the newest one
+("always have it lag a week", Grant, 2026-09-12); the week being played is the Board's.
+`recapWeeks` in `weekNav.js` decides what finished means. Each week repaints in its own
+winner's school color (`data-skin="winner"`, set by App from Week's `onSkin`). New recap
+numbers go in `weekRecap.js` with checks in `tests/recap_check.mjs`;
+`tests/test_week_final.py` holds the section order, the cuts and the lag.
 
 ## The record book is Grant's seventeen, each with his badge
 

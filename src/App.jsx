@@ -264,7 +264,7 @@ export default function App() {
           {tab === 'board' && (
             <Board me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
-          {tab === 'week' && <Week me={me} weekId={weekId} week={week} onSkin={setWeekSkin} />}
+          {tab === 'week' && <Week me={me} onSkin={setWeekSkin} />}
           {tab === 'season' && <Season />}
           {tab === 'admin' && <Admin me={me} weekId={weekId} />}
         </motion.div>

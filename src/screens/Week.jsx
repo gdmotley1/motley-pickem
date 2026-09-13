@@ -2,33 +2,31 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../components/ui.jsx'
-import { withLive } from '../lib/espn.js'
-import { useLiveScores } from '../lib/useLiveScores.js'
 import { headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
 import { weekScore } from '../lib/weekScore.js'
-import { WeekScore } from '../components/WeekScore.jsx'
-import { isComplete, weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
+import { weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
 import { schoolField } from '../lib/schoolField.js'
 import { onDark } from '../lib/onDark.js'
 
 /**
- * One week: live while it is being played, a recap once it is over.
+ * The recap of a finished week. Never the week being played.
  *
- * WHILE GAMES ARE ON the tab carries the Board's scorebug, byte for byte, because Grant
- * asked on 2026-09-11 for one scoreboard in the app and not two.
+ * Grant, 2026-09-12: "show nothing for week two and just have it be whatever the most
+ * recent published week is. So always have it lag a week." The live week is the Board's.
+ * This tab opens on the newest FINISHED week, and its arrows step between finished weeks
+ * only; see recapWeeks in src/lib/weekNav.js for what finished means.
  *
- * ONCE EVERY GAME IS FINAL it becomes the recap Grant picked on 2026-09-12 from two
- * boards: option 2, "Winner's colors", the FINAL graphic an athletic department posts,
- * painted in the winner's school colors (the header too, through `onSkin`). Under it, the
- * sections he chose by number, in his order: what decided it, upsets, how it unfolded,
- * your week, when you all agreed, went it alone, and by the numbers. He cut the ranking
- * bars and the ceiling stat that replaced them on the board, and two per-player ladders.
+ * The look is the one he picked the same night from two boards: option 2, "Winner's
+ * colors", the FINAL graphic an athletic department posts, painted in that week's winner's
+ * school colors (the header too, through `onSkin`), so stepping from one week to another
+ * repaints it. Under it, the sections he chose by number, in his order: what decided it,
+ * upsets, how it unfolded, your week, when you all agreed, went it alone, by the numbers.
  *
  * Nothing here characterises anybody. Every line is a count over the picks or a what-if
  * that weekRecap actually recomputed; see the note at the top of src/lib/weekRecap.js.
  */
-export default function Week({ me, weekId, week, onSkin }) {
+export default function Week({ me, onSkin }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
@@ -36,24 +34,21 @@ export default function Week({ me, weekId, week, onSkin }) {
   const [error, setError] = useState(null)
   const teams = useTeams()
 
-  /* Which week this screen is looking at.
-
-     Local on purpose. `weekId` is one setting shared by every tab, so stepping it here
-     would drag Picks and Board back with it: you would flip to Week 1 to settle an
-     argument, open Picks, and find the whole slate locked. This resets on its own when
-     the tab changes, because App unmounts the screen. */
-  const [viewId, setViewId] = useState(weekId)
-
-  /* Follow the app when it resolves the real current week, which arrives after first
-     paint. Once the user has stepped somewhere themselves that only happens on a week
-     rollover, which should pull them forward anyway. */
-  useEffect(() => setViewId(weekId), [weekId])
+  /* Which week this screen is looking at: null until the week list arrives, then the newest
+     finished week. Local on purpose, so stepping back here never drags Picks or the Board
+     with it, and it resets when the tab changes because App unmounts the screen. */
+  const [viewId, setViewId] = useState(null)
 
   useEffect(() => {
     let alive = true
     api
       .listWeeks()
-      .then((w) => alive && setWeeks(w))
+      .then((w) => {
+        if (!alive) return
+        setWeeks(w)
+        const { latest } = weekNav(w, null)
+        setViewId((prev) => prev ?? latest?.id ?? null)
+      })
       .catch((e) => alive && setError(friendly(e)))
     return () => {
       alive = false
@@ -61,6 +56,7 @@ export default function Week({ me, weekId, week, onSkin }) {
   }, [])
 
   useEffect(() => {
+    if (viewId == null) return undefined
     let alive = true
     setSlate(null)
     setRows(null)
@@ -77,30 +73,31 @@ export default function Week({ me, weekId, week, onSkin }) {
     }
   }, [viewId])
 
-  const live = useLiveScores(slate)
-
-  /* Same overlay the Board uses, so a final counts here the moment ESPN reports it
-     rather than whenever the sync job next runs. withLive defers to a database winner
-     wherever there is one, so the two can never disagree. */
-  const games = useMemo(() => {
-    if (!slate) return null
-    return live ? slate.map((g) => withLive(g, live)) : slate
-  }, [slate, live])
+  /* Only graded games, and only the picks on them. Every game is graded in all but one
+     case: a week counted as finished because a later week has started, with a result that
+     never came. The recap then covers the games that have one, rather than scoring a pick
+     on an unplayed game as a miss. */
+  const graded = useMemo(() => {
+    if (!slate || !rows) return null
+    const games = slate.filter((g) => g.winner_abbr)
+    const ids = new Set(games.map((g) => g.game_id))
+    return { games, rows: rows.filter((r) => ids.has(r.game_id)) }
+  }, [slate, rows])
 
   const recap = useMemo(
-    () => (games && rows && roster ? weekRecap(games, rows, roster) : null),
-    [games, rows, roster],
+    () => (graded && roster && graded.games.length ? weekRecap(graded.games, graded.rows, roster) : null),
+    [graded, roster],
   )
 
   /* The same object the Board's scorebug reads, so the two screens can never disagree
-     about who is where. The finished week's table reads it too. */
+     about who is where. */
   const score = useMemo(
-    () => (games && rows && roster ? weekScore(games, rows, roster) : null),
-    [games, rows, roster],
+    () => (graded && roster && graded.games.length ? weekScore(graded.games, graded.rows, roster) : null),
+    [graded, roster],
   )
 
-  /* The winner's colors, for the hero and for the header App draws. A shared week takes
-     the first co-champion's school for the header; the hero splits between both. */
+  /* That week's winner's colors, for the hero and for the header App draws. A shared week
+     takes the first co-champion's school for the header; the hero splits between both. */
   const colors = useMemo(() => {
     if (!recap?.complete || !recap.leaders.length) return null
     return recap.leaders.map((p) => schoolField(teams?.find((t) => t.id === p.team_id), p.color))
@@ -114,114 +111,39 @@ export default function Week({ me, weekId, week, onSkin }) {
   useEffect(() => () => onSkin?.(null), [onSkin])
 
   if (error) return <p className="err">{error}</p>
+  if (!weeks) return <Spinner />
 
-  const nav = weekNav(weeks, week?.week_no, viewId)
-  const viewing = nav.current
-  const label = viewing?.label || week?.label || 'This week'
-  const pagerProps = { nav, onGo: setViewId, weeks, currentWeekNo: week?.week_no }
+  const nav = weekNav(weeks, viewId)
 
-  if (!recap)
+  if (!nav.latest)
     return (
-      <>
-        <Pager {...pagerProps} />
-        <Spinner />
-      </>
+      <Screen eyebrow="Week" title="No finished weeks yet">
+        <Empty icon={<IconTrophy />} title="The first recap is on its way">
+          Each week lands here once its last game is final. Follow this week on the Board.
+        </Empty>
+      </Screen>
     )
 
-  const played = recap.players.filter((p) => p.games > 0)
+  if (!recap || !recap.complete || !nav.current) return <Spinner />
 
-  /* An empty week is now a place you can deliberately arrive at, so it has to say which
-     kind of empty it is. Before the arrows existed you could only ever be on the current
-     week and "nothing yet" was the only possibility. */
-  if (!played.length) {
-    const status = weekStatus(viewing)
-
-    /* A published week with a slate that simply has not started is not "nothing to
-       show": the players are known, the twenty games are known, and only the numbers are
-       missing. Drawing the real scorebug with no numbers in it says that, where the old
-       empty state said the tab was broken. The other two statuses genuinely have nothing
-       to frame, so they keep their message. */
-    if (status === 'no results yet' && score) {
-      /* Nothing is final either way, so the numbers stay blank. The heading is the part
-         that has to tell the truth: the bug is already showing a red "20 live" chip. */
-      const underway = score.playing > 0
-      return (
-        <>
-          <Pager {...pagerProps} />
-          <Screen eyebrow={label} title={underway ? 'Underway' : 'Not started yet'}>
-            <WeekScore
-              score={score}
-              me={me}
-              label={label}
-              skeleton
-              record
-              light
-              note={`0 of ${score.slateSize}`}
-              foot={`Out of ${score.total}. Points appear here as games go final.`}
-            />
-          </Screen>
-        </>
-      )
-    }
-
-    return (
-      <>
-        <Pager {...pagerProps} />
-        <Screen eyebrow={label} title="Nothing to show">
-          <Empty icon={<IconTrophy />} title={emptyTitle(status)}>
-            {emptyBody(status)}
-          </Empty>
-        </Screen>
-      </>
-    )
-  }
-
-  if (!recap.complete)
-    return (
-      <>
-        <Pager {...pagerProps} />
-        <Screen
-          eyebrow="In progress"
-          title={label}
-          sub="Ties stand. The recap lands here once every game has finished."
-        >
-          <WeekScore score={score} me={me} label={label} record light />
-        </Screen>
-      </>
-    )
-
-  const byId = new Map(games.map((g) => [g.game_id, g]))
+  const byId = new Map(graded.games.map((g) => [g.game_id, g]))
   const teamOf = (id) => teams?.find((t) => t.id === id)
 
   return (
     <div className="wf">
-      <Hero recap={recap} label={label} colors={colors} teamOf={teamOf} pager={<Pager {...pagerProps} hero />} />
+      <Hero recap={recap} label={nav.current.label} colors={colors || [schoolField(undefined)]} teamOf={teamOf}
+            pager={<Pager nav={nav} onGo={setViewId} />} />
       <FinalTable score={score} me={me} teamOf={teamOf} />
-      <Decided recap={recap} byId={byId} rows={rows} />
-      <Upsets recap={recap} byId={byId} rows={rows} />
+      <Decided recap={recap} byId={byId} rows={graded.rows} />
+      <Upsets recap={recap} byId={byId} rows={graded.rows} />
       <Unfolded race={recap.race} players={recap.players} />
-      <YourWeek recap={recap} games={games} rows={rows} me={me} byId={byId} />
+      <YourWeek recap={recap} games={graded.games} rows={graded.rows} me={me} byId={byId} />
       <Agreed list={recap.unanimous} byId={byId} />
       <Alone list={recap.alone} byId={byId} />
       <InNumbers recap={recap} />
     </div>
   )
 }
-
-const emptyTitle = (status) =>
-  ({
-    'not published': 'Not published yet',
-    'no slate yet': 'No slate yet',
-    'no results yet': 'No games finished',
-  })[status] || 'Nothing to show yet'
-
-const emptyBody = (status) =>
-  ({
-    'not published': 'Your commissioner has not published this week’s twenty games.',
-    'no slate yet': 'The twenty games for this week have not been chosen.',
-    'no results yet': 'The table fills in here as games go final.',
-  })[status] ||
-  'Once games start going final, the table fills in here. The full recap lands when the last game of the week ends.'
 
 const list = (xs) =>
   xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`
@@ -696,16 +618,15 @@ function InNumbers({ recap }) {
 }
 
 /**
- * The week pager: an arrow either side, and a label that opens a jump list.
+ * The week pager, inside the hero: an arrow either side, and a label that opens a jump
+ * list of every finished week.
  *
- * Option C from the board Grant chose on 2026-09-10. The arrows are the common case,
- * one step back; the sheet is what stops week 3 being eleven taps away in November.
- * `hero` draws it inside the finished week's colour field instead of on its own bar.
- *
- * An edge is a null in `nav`, so a disabled arrow is a fact from weekNav rather than a
- * condition restated here.
+ * Option C from the board Grant chose on 2026-09-10, moved into the winner's color field
+ * on 2026-09-12. The arrows only ever step between finished weeks, so the week being
+ * played is never one tap away. An edge is a null in `nav`, so a disabled arrow is a fact
+ * from weekNav rather than a condition restated here.
  */
-function Pager({ nav, onGo, weeks, currentWeekNo, hero = false }) {
+function Pager({ nav, onGo }) {
   const [open, setOpen] = useState(false)
   const [season, setSeason] = useState(null)
   const viewing = nav.current
@@ -721,12 +642,9 @@ function Pager({ nav, onGo, weeks, currentWeekNo, hero = false }) {
     })
   }, [])
 
-  const status = weekStatus(viewing)
-  const sub = status || (isComplete(viewing) ? 'final' : dateRange(viewing))
-
   return (
     <>
-      <div className={`wknav${hero ? ' wknav--hero' : ''}`}>
+      <div className="wknav wknav--hero">
         <button
           className="wknav__arrow"
           onClick={() => nav.prev && onGo(nav.prev.id)}
@@ -738,28 +656,24 @@ function Pager({ nav, onGo, weeks, currentWeekNo, hero = false }) {
 
         <button className="wknav__mid" onClick={openPicker} aria-label="Choose a week">
           <b>
-            {viewing?.label || 'This week'}
+            {viewing?.label}
             <Chevron dir="down" size={13} />
           </b>
-          {!hero && <i>{sub}</i>}
         </button>
 
         <button
           className="wknav__arrow"
           onClick={() => nav.next && onGo(nav.next.id)}
           disabled={!nav.next}
-          aria-label={nav.next ? `Go to ${nav.next.label}` : 'No later week'}
+          aria-label={nav.next ? `Go to ${nav.next.label}` : 'No later finished week'}
         >
           <Chevron dir="right" size={17} />
         </button>
       </div>
 
-      {!nav.isCurrent && nav.list.length > 0 && (
-        <button
-          className={`wknav__back${hero ? ' wknav__back--hero' : ''}`}
-          onClick={() => onGo(nav.list[nav.list.length - 1].id)}
-        >
-          Back to this week
+      {!nav.isLatest && (
+        <button className="wknav__back wknav__back--hero" onClick={() => onGo(nav.latest.id)}>
+          Back to {nav.latest.label}
         </button>
       )}
 
@@ -771,7 +685,6 @@ function Pager({ nav, onGo, weeks, currentWeekNo, hero = false }) {
           weeks={nav.list}
           season={season}
           viewId={viewing?.id}
-          currentWeekNo={currentWeekNo}
           onGo={(id) => {
             onGo(id)
             setOpen(false)
@@ -782,20 +695,13 @@ function Pager({ nav, onGo, weeks, currentWeekNo, hero = false }) {
   )
 }
 
-/** "Sep 8 - Sep 14", or nothing when the week has no boundaries stored. */
-function dateRange(w) {
-  if (!w?.starts_at || !w?.ends_at) return ''
-  const f = (iso) =>
-    new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-  return `${f(w.starts_at)} - ${f(w.ends_at)}`
-}
-
-function WeekList({ weeks, season, viewId, currentWeekNo, onGo }) {
+/** Finished weeks, newest first, each with who took it. */
+function WeekList({ weeks, season, viewId, onGo }) {
   const winners = useMemo(() => winnersByWeek(season), [season])
 
   return (
     <div className="wklist">
-      {weeks.map((w) => {
+      {[...weeks].reverse().map((w) => {
         const won = winners.get(w.week_no)
         const status = weekStatus(w)
         return (
@@ -814,7 +720,6 @@ function WeekList({ weeks, season, viewId, currentWeekNo, onGo }) {
                 status || (season === null ? '…' : 'no result')
               )}
             </span>
-            {w.week_no === currentWeekNo && <span className="chip chip--accent">now</span>}
           </button>
         )
       })}

@@ -411,11 +411,10 @@ check('an all-zero season still has a scale', formGeometry({
 /* ==========================================================================
    src/lib/weekNav.js
 
-   The arrows on the Week tab. Edges are where this kind of control goes wrong: one that
-   stays live at week 1, or one that walks off the end of the season into a week nobody
-   has played, which would also quietly show a slate Dad has not published. */
+   The arrows on the Week tab. Since 2026-09-12 the tab shows finished weeks only and opens
+   on the newest one, so the edge that matters is the week being played: never reachable. */
 
-const { visitableWeeks, weekStatus, isComplete, weekNav, winnersByWeek } = await import(
+const { recapWeeks, weekStatus, isComplete, weekNav, winnersByWeek } = await import(
   pathToFileURL(join(root, 'src', 'lib', 'weekNav.js')).href
 )
 
@@ -433,30 +432,33 @@ const WEEKS = [
   wk(104, 4, { published: true, slate_size: 0, graded: 0 }),
   wk(105, 5, { graded: 0 }),
 ]
-const CURRENT = 2
+/* Today, exactly: Week 1 final, Week 2 being played. */
+check('only the finished week is on the tab', recapWeeks(WEEKS).map((w) => w.week_no).join(',') === '1')
+const today = weekNav(WEEKS, 101)
+check('it opens on Week 1', today.latest && today.latest.id === 101)
+check('and both arrows are dead', today.prev === null && today.next === null && today.isLatest === true)
+check('the week being played cannot be viewed',
+  (() => { const n = weekNav(WEEKS, 102); return !n.current && !n.prev && !n.next })())
 
-check('you can look back but never forward past the current week',
-  visitableWeeks(WEEKS, CURRENT).map((w) => w.week_no).join(',') === '1,2')
-check('an unknown current week does not hide everything',
-  visitableWeeks(WEEKS, null).length === 5)
+/* After Week 2 finishes, with Week 3 under way. */
+const LATER = [wk(101, 1), wk(102, 2), wk(106, 3, { graded: 4 })]
+const atLatest = weekNav(LATER, 102)
+const atFirst = weekNav(LATER, 101)
+check('the tab then opens on Week 2', atLatest.latest.id === 102 && atLatest.isLatest === true)
+check('back goes to Week 1', atLatest.prev && atLatest.prev.id === 101)
+check('forward never reaches Week 3 while it is played', atLatest.next === null)
+check('on Week 1 forward goes to Week 2', atFirst.next && atFirst.next.id === 102 && atFirst.prev === null)
+check('an older week knows it is not the latest', atFirst.isLatest === false)
+check('navigation is by id, not by week number', atFirst.next.week_no === 2)
+
+check('a week with a result missing still counts once a later week has one',
+  recapWeeks([wk(1, 1, { graded: 19 }), wk(2, 2, { graded: 3 })]).map((w) => w.week_no).join(',') === '1')
 check('weeks come back oldest first',
-  visitableWeeks([wk(3, 3), wk(1, 1), wk(2, 2)], 9).map((w) => w.week_no).join(',') === '1,2,3')
-
-const atCurrent = weekNav(WEEKS, CURRENT, 102)
-const atFirst = weekNav(WEEKS, CURRENT, 101)
-check('on the current week the forward arrow is dead', atCurrent.next === null)
-check('and the back arrow goes to week 1', atCurrent.prev && atCurrent.prev.id === 101)
-check('the current week knows it is current', atCurrent.isCurrent === true)
-check('on week 1 the back arrow is dead', atFirst.prev === null)
-check('and forward goes to week 2', atFirst.next && atFirst.next.id === 102)
-check('an earlier week knows it is not current', atFirst.isCurrent === false)
-check('navigation is by id, not by week number',
-  atFirst.next.id === 102 && atFirst.next.week_no === 2)
-
-check('a week outside the visitable range has no arrows and no current',
-  (() => { const n = weekNav(WEEKS, CURRENT, 105); return !n.current && !n.prev && !n.next })())
+  recapWeeks([wk(3, 3), wk(1, 1), wk(2, 2)]).map((w) => w.week_no).join(',') === '1,2,3')
+check('unpublished and slate-less weeks are never on the tab',
+  recapWeeks([wk(1, 1, { published: false }), wk(2, 2, { slate_size: 0, graded: 0 })]).length === 0)
 check('no weeks at all does not throw',
-  (() => { const n = weekNav(null, 2, 1); return n.list.length === 0 && !n.current })())
+  (() => { const n = weekNav(null, 1); return n.list.length === 0 && !n.current && n.latest === null })())
 
 check('an unpublished week says so', weekStatus(WEEKS[2]) === 'not published')
 check('a published week with no slate says so', weekStatus(WEEKS[3]) === 'no slate yet')

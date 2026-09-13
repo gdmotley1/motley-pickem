@@ -298,9 +298,10 @@ the others back with it, so you would flip to Week 1 to settle an argument, open
 and find the whole slate locked. It resets on its own when the tab changes, because App
 unmounts the screen.
 
-**You may look back, never forward past the current week.** Stepping into an unplayed week
-would show four zeroes and would also reveal a slate Dad has not published yet.
-`visitableWeeks` enforces it and the forward arrow is null at the edge.
+**Finished weeks only, since 2026-09-12.** Grant: "always have it lag a week". The tab opens
+on the newest finished week and its arrows never reach the week being played, which lives on
+the Board. `recapWeeks` enforces it and the forward arrow is null at the edge. This replaced
+"look back, never forward past the current week", which showed a half-played week.
 
 **How to apply:** navigation logic goes in `src/lib/weekNav.js` as pure functions with
 assertions in `tests/recap_check.mjs`, never inline in the screen. The fixture there uses

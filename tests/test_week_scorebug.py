@@ -121,39 +121,19 @@ def test_gold_on_the_rail_only_sits_on_the_dark_well():
 
 
 
-def test_the_week_tab_uses_the_scorebug():
-    """Grant asked on 2026-09-10 for the Week tab to carry the bug rather than its own
-    light table. Both screens must read the same `weekScore` object, or they will
-    eventually disagree about who is where."""
+def test_the_week_tab_leaves_the_live_week_to_the_board():
+    """Grant, 2026-09-12: the Week tab shows finished weeks only, so the live scoreboard is
+    the Board's alone. Until then the tab carried the bug too (asked for on 2026-09-10), in
+    a skeleton and a week-in-progress branch. The finished table still reads the same
+    `weekScore` object, so the two screens cannot disagree about who is where."""
     body = read("src", "screens", "Week.jsx")
-    # TWO call sites, not one. The first version of this guard only checked that
-    # `<WeekScore` appeared somewhere, and the skeleton branch satisfied it: swapping the
-    # settled week back to a light table left the guard green. Verified by doing exactly
-    # that and watching it pass.
-    assert body.count("<WeekScore") == 2, (
-        "expected the scorebug at both call sites, the skeleton and the week in progress; "
-        "found %d" % body.count("<WeekScore")
-    )
-    assert "weekScore(games, rows, roster)" in body, (
+    assert "<WeekScore" not in body, "the Week tab is drawing a live scoreboard again"
+    assert "weekScore(graded.games, graded.rows, roster)" in body, (
         "the Week tab is deriving its own standings instead of reading weekScore"
     )
     assert "function Standings" not in body and "<Standings" not in body, (
         "the old light standings table is back; it and the bug would drift"
     )
-
-
-def test_a_published_week_that_has_not_started_shows_the_frame():
-    """The state Grant hit: Week 2 published, twenty games, nothing kicked off. The tab
-    used to show an empty state, which reads as the feature being missing rather than as
-    the week not having happened. The other two empty statuses genuinely have nothing to
-    frame and keep their message."""
-    body = read("src", "screens", "Week.jsx")
-    assert "status === 'no results yet' && score" in body, (
-        "a published-but-unstarted week no longer draws the skeleton"
-    )
-    assert "skeleton" in body, "the skeleton prop is not passed"
-    for kept in ("'not published'", "'no slate yet'"):
-        assert kept in body, "%s lost its empty state" % kept
 
 
 def test_the_skeleton_shows_no_numbers_and_no_rank():
@@ -205,14 +185,14 @@ def test_every_call_site_takes_the_same_cut():
             )
 
 
-def test_the_week_tab_still_has_both_of_its_call_sites():
-    """The skeleton and the week in progress. A FINISHED week draws the winner's-colors
-    table instead (tests/test_week_final.py), still read from weekScore. Named here rather than in the walk above,
+def test_the_scorebug_lives_on_the_board_only():
+    """One on the Board, none on the Week tab, which only ever shows a finished week in the
+    winner's colors (tests/test_week_final.py). Named here rather than in the walk above,
     because the walk cannot know how many each screen is supposed to have."""
     sites = [f for f, _ in call_sites()]
-    assert sites.count("Week.jsx") == 2, (
-        "expected the scorebug at both Week call sites, the skeleton and the in-progress "
-        "week; found %d" % sites.count("Week.jsx")
+    assert sites.count("Week.jsx") == 0, (
+        "the Week tab shows finished weeks only since 2026-09-12; found %d scorebugs on it"
+        % sites.count("Week.jsx")
     )
     assert sites.count("Board.jsx") == 1, (
         "expected exactly one scorebug on the Board; found %d" % sites.count("Board.jsx")

@@ -71,3 +71,18 @@ def test_nothing_in_the_finished_week_is_under_13px():
     block = css[start: css.index("/* The form chart.", start)]
     small = [s for s in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", block) if float(s) < 13]
     assert not small, "under 13px in the finished week: %s" % small
+
+
+def test_the_tab_only_ever_shows_a_finished_week():
+    """Grant, 2026-09-12: "always have it lag a week". It opens on the newest finished
+    week, and nothing on it can reach the week being played. The edges themselves are
+    checked in tests/recap_check.mjs."""
+    body = read("src", "screens", "Week.jsx")
+    assert "const { latest } = weekNav(w, null)" in body, "the tab no longer opens on the newest finished week"
+    assert "const nav = weekNav(weeks, viewId)" in body
+    for gone in ("useLiveScores", "withLive", "getCurrentWeek"):
+        assert gone not in body, "%s is back: the Week tab has no live week to follow" % gone
+    nav = read("src", "lib", "weekNav.js")
+    assert "export function recapWeeks" in nav
+    app = read("src", "App.jsx")
+    assert "<Week me={me} onSkin={setWeekSkin} />" in app, "App is handing the Week tab the current week again"

@@ -122,10 +122,5 @@ def test_a_week_that_is_live_does_not_claim_it_has_not_started():
     nav = read("src", "lib", "weekNav.js")
     assert "'no results yet'" in nav, "the status claims to know something it cannot"
     assert "'not started'" not in nav
-
-    body = read("src", "screens", "Week.jsx")
-    assert "const underway = score.playing > 0" in body, (
-        "the heading no longer distinguishes a live week from an untouched one"
-    )
-    head = body.split("<Screen eyebrow={label} title=")[1].split(">")[0]
-    assert "underway" in head, "the skeleton heading is fixed text again: %s" % head
+    # The Week tab half of this went on 2026-09-12, when the tab stopped showing a week
+    # that is not finished; the jump sheet still prints these statuses.
