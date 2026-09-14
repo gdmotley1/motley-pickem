@@ -172,3 +172,38 @@ def test_the_game_icons_glyphs_are_gone():
                 assert "badgeIcons" not in read(os.path.relpath(os.path.join(base, name), ROOT)), (
                     "%s imports the old game-icons glyphs" % name
                 )
+
+
+def test_the_hall_of_fame_is_the_legends_poster():
+    """Grant, 2026-09-13, off a board of five letterings: "lets do 5 but drop the record book
+    part". HALL OF small over a huge slanted gold FAME in Anton, the awards and names in the
+    same type, and no record book line above it."""
+    season = read("src", "screens", "Season.jsx")
+    assert '<span className="fame__t1">Hall of</span> <span className="fame__t2">fame</span>' in season
+    # The rendered line, not the words: a comment elsewhere in the file says "The record book".
+    assert ">The record book<" not in season and "book-kick" not in season, (
+        "the record book line is back above the Hall of fame"
+    )
+    assert "__fame" not in season, "the lettering board's switch shipped"
+
+    css = re.sub(r"/\*.*?\*/", "", read("src", "app.css"), flags=re.S)
+    title = re.search(r"\n\.fame__title\s*\{(.*?)\}", css, re.S).group(1)
+    assert "font-family: 'Anton'" in title, "the Hall of fame title is not in Anton"
+    assert "skewX" in title
+    big = re.search(r"\n\.fame__t2\s*\{(.*?)\}", css, re.S).group(1)
+    assert float(re.findall(r"font-size:\s*(\d+)px", big)[-1]) >= 100, "FAME is no longer the huge line"
+    for sel in (".award__k", ".fame__sub", ".grab p"):
+        rule = re.search(r"\n%s\s*\{(.*?)\}" % re.escape(sel), css, re.S).group(1)
+        assert "'Anton'" in rule, "%s is not in the poster's type" % sel
+    # The Hall of shame shares .hold; only the Hall of fame's holders change.
+    assert re.search(r"\n\.fame \.hold\s*\{[^}]*'Anton'", css), "the fame holders lost their type"
+    assert "'Anton'" not in re.search(r"\n\.hold\s*\{(.*?)\}", css, re.S).group(1), (
+        "the base .hold rule changed, which restyles the Hall of shame too"
+    )
+    assert "fame--v" not in css and ".book-kick" not in css, "the lettering board's rules shipped"
+    assert re.search(r"\n\.fame\s*\{[^}]*overflow:\s*hidden", css), (
+        "the burst of light behind the title is 520px wide; without overflow hidden the page scrolls sideways"
+    )
+
+    link = re.search(r'href="(https://fonts\.googleapis\.com/css2[^"]+)"', read("index.html")).group(1)
+    assert "family=Anton" in link, "index.html does not load Anton, so the poster falls back to Impact"

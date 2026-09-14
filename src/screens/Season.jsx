@@ -173,8 +173,11 @@ function HallOfFame({ awards }) {
   const open = awards.filter((a) => !a.claimed)
   return (
     <section className="fame" aria-labelledby="fame-title">
-      <p className="book-kick">The record book</p>
-      <h3 className="fame__title" id="fame-title">Hall of fame</h3>
+      {/* Two lines on purpose: HALL OF small over a huge FAME, the legends poster Grant
+          picked on 2026-09-13 (the record book line above it went at the same time). */}
+      <h3 className="fame__title" id="fame-title">
+        <span className="fame__t1">Hall of</span> <span className="fame__t2">fame</span>
+      </h3>
       {won.length > 0 && (
         <div className={`fame__won${won.length % 2 ? ' is-odd' : ''}`}>
           {won.map((a) => (

@@ -5231,17 +5231,6 @@
   margin-left: -7px;
 }
 
-.book-kick {
-  margin: 0;
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 700;
-  font-stretch: condensed;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-
 /* ------------------------------------------------------- 7: the trophy room --- */
 /* The way in. This used to be a near-black panel starting on a hard edge right under
    the last standings row, and Grant called the transition "really rough". Now the dark
@@ -5251,7 +5240,8 @@
 .fame {
   position: relative;
   margin-top: 14px;
-  padding: 64px 12px 28px;
+  padding: 58px 12px 28px;
+  overflow: hidden;
   text-align: center;
   background:
     radial-gradient(60% 170px at 50% 122px, rgba(255, 214, 120, 0.22), transparent 72%),
@@ -5295,14 +5285,58 @@
   box-shadow: 0 0 10px rgba(246, 228, 180, 0.6);
 }
 
+/* The legends poster, Grant's pick on 2026-09-13 from five ("lets do 5 but drop the record
+   book part"): HALL OF over a huge slanted gold FAME on a burst of light, and every award and
+   name under it in the same condensed type. An h3, so it names the face. */
 .fame__title {
-  margin: 6px 0 24px;
-  font-family: var(--display);
-  font-size: 40px;
-  font-weight: 800;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 4px 0 32px;
+  font-family: 'Anton', Impact, sans-serif;
+  font-weight: 400;
+  line-height: 0.86;
+  text-transform: uppercase;
+  transform: skewX(-7deg);
+}
+
+/* The burst. The skew makes the title its own stacking context, so the light sits behind
+   the letters and still in front of the stage. */
+.fame__title::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 520px;
+  height: 520px;
+  margin: -260px 0 0 -260px;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 214, 120, 0.16) 0deg 5deg, transparent 5deg 15deg);
+  -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 60%);
+  mask-image: radial-gradient(circle, #000 12%, transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.fame__t1 {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 14px;
+  padding-left: 0.3em;
+  font-size: 34px;
   line-height: 1;
-  color: var(--lead);
-  text-shadow: 0 0 30px rgba(255, 214, 120, 0.55);
+  letter-spacing: 0.3em;
+  color: #f6e4b4;
+}
+
+.fame__t2 {
+  font-size: 134px;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #fff3c9 0%, #ffd65a 40%, #d99a1e 72%, #8a6118 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 0 #1a1204) drop-shadow(0 0 30px rgba(255, 196, 60, 0.5));
 }
 
 .fame__won {
@@ -5326,34 +5360,43 @@
 
 .award__k {
   margin: 14px 0 8px;
-  font-family: var(--display);
-  font-size: 15px;
-  font-weight: 800;
-  font-stretch: condensed;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 22px;
+  font-weight: 400;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  line-height: 1.2;
-  color: var(--ink);
+  line-height: 1.12;
+  color: #ffffff;
   text-wrap: balance;
+}
+
+/* Scoped: the Hall of shame's holders keep their own size. */
+.fame .hold {
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffd65a;
 }
 
 .award__d {
   margin: 6px 0 0;
   font-family: var(--ui);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.35;
-  color: var(--ink-2);
+  color: #c9d1dc;
   text-wrap: balance;
 }
 
 .fame__sub {
-  margin: 32px 0 14px;
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
+  margin: 40px 0 16px;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: #f6e4b4;
 }
 
 /* Three to a row, centred, so a short last row sits in the middle rather than hanging
@@ -5380,14 +5423,13 @@
 
 .grab p {
   margin: 10px 0 0;
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight: 800;
-  font-stretch: condensed;
+  font-family: 'Anton', Impact, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1.2;
-  color: var(--ink-2);
+  color: #aab3bf;
   text-wrap: balance;
 }
 

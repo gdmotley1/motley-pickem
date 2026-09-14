@@ -347,3 +347,9 @@ none of these stats makes sense at all") and one on tiny text.
 **How to apply:** never add, rename or drop an entry without asking him. A new entry needs
 his art in `inputs/badges/<key>.png`, the key in both `scripts/build_badges.py` and
 `src/lib/seasonRecords.js`, and a rebuild. The gate fails if any of the three drift.
+
+**The Hall of fame is lettered as a legends poster** since 2026-09-13, off a board of five
+("lets do 5 but drop the record book part"): HALL OF small over a huge slanted gold FAME in
+Anton on a burst of light, the award names, holders and Up for grabs in the same type, and no
+"The record book" line above it. Anton is in index.html's font link; the Hall of shame keeps
+its own lettering. `tests/test_records.py` holds it.

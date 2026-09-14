@@ -124,7 +124,8 @@ def test_the_form_chart_stays_gone():
     """Grant, 2026-09-13: "take the form away dont like it". The chart, its styles and the
     geometry that only it used went together, so nothing is left to come back half-built."""
     season = read("src", "screens", "Season.jsx")
-    for gone in ("<Form", "function Form", "formGeometry", "chartwrap", "legend"):
+    # Class names, not words: the Hall of fame's comment rightly says "legends poster".
+    for gone in ("<Form", "function Form", "formGeometry", 'className="chartwrap', 'className="legend'):
         assert gone not in season, "the form chart is back in Season.jsx (%s)" % gone
     css = read("src", "app.css")
     for gone in (".chartwrap", ".chart__grid", ".chart__tick", ".legend"):
