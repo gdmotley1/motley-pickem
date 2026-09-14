@@ -404,3 +404,30 @@ legends poster (Anton). He took 5, "but drop the record book part". HALL OF smal
 lettering, checked side by side. Deployed on "push and deploy": the served
 index-hSkSKokN.css and index-BN54c3qV.js are byte-identical to dist, the live index.html
 requests Anton, and the live sign-in screen, loaded read-only, shows all four seats.
+
+## 2026-09-14: every sheet gets a close button
+
+"i cant click out of the matchup preview. no back button nothing. bad ux ... pick most
+logical design no mockups this time. then push and deploy it". The matchup sheet runs to
+92dvh, which on an 844px phone left 67px of scrim, most of it under the status bar, and the
+grab bar was never draggable; he had to close the app. The team picker had the same trap.
+
+Picked without a board, as asked: a round X at top right in a fixed top bar, drawn by `Sheet`
+so every sheet has it, with the content in a body that is the only part that scrolls. No swipe
+to dismiss (theme.css promises no drag surfaces, and an iOS drag cannot be proved here). Cost:
+16px on a padded sheet, 22px on the matchup sheet.
+
+A new harness (`outputs/harness/tools/sheetclose_shots.ps1`) opened the real matchup sheet at
+a true 390x844: the X at 344,71.5 both at rest and after scrolling the body its full 155px,
+topmost under a tap at its centre and at the corners of its 46px target, clear of the kickoff
+pill; tapping it slid the sheet out and removed sheet and scrim, and the Matchup pill beneath
+was tappable again. The same on TeamPicker. Its stylesheet was byte-identical to the shipped
+one. `tests/test_sheet_close.py` adds six guards, broken fifteen ways in a scratch copy, all
+caught; 405 pass.
+
+Deployed on the same message: GitHub Pages named the new bundle within a minute; the served
+index-Dy_i5WvI.css and index-rzhWFBpl.js are byte-identical to dist and carry `.sheet__top`,
+`.sheet__close` and the scrolling `.sheet__body`. The live sign-in screen in a throwaway
+headless profile shows all four seats (Grant, James, Parker, Nicole). In the Browser pane the
+live site opened Grant's PIN sheet with no digit entered, the X was topmost at 344,350, and
+tapping it closed the sheet; the only Supabase request all session was `list_seats`.
