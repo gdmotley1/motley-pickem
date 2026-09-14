@@ -97,7 +97,7 @@ def test_the_account_sheet_closes_with_a_word_that_is_true_everywhere():
     body = read("src", "App.jsx")
     # The rendered label, not the file: the comment explaining this fix names the old
     # wording, and a whole-file search failed on its own explanation.
-    label = body.split('<button className="btn" onClick={onClose}>')[1].split("<")[0].strip()
+    label = body.split('<button className="btn btn--led" onClick={onClose}>')[1].split("<")[0].strip()
     assert label == "Done", (
         'the account sheet closes with %r; it is opened from Week, Season and Setup too, '
         "so the word has to be true everywhere" % label

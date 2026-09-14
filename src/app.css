@@ -241,13 +241,13 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  height: 18px;
+  height: 20px;
   padding: 0 8px;
   vertical-align: middle;
   border-radius: var(--r-pill);
   background: var(--well);
   color: var(--ink-2);
-  font-size: 10.5px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -317,7 +317,7 @@
   background: transparent;
   color: var(--ink-2);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   padding: 12px;
 }
 .btn--ghost:active {
@@ -432,24 +432,27 @@
   border-radius: var(--r-pill);
   background: var(--field-deep);
   color: var(--on-field);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  box-shadow: var(--sh-3);
+  box-shadow: inset 0 0 0 1px rgba(255, 176, 32, 0.45), var(--sh-3);
   text-align: center;
 }
 
 /* ================================================================== sign in */
 
+/* The first thing anyone sees, so it is the stadium too (2026-09-13): the name in the wall's
+   lettering, each seat a black panel. The screen renders before .app exists, so theme.css
+   gives .signin the jumbotron tokens itself. */
 .signin {
-  background: var(--field);
+  background: #07080b;
   color: var(--on-field);
   padding: calc(var(--safe-top) + 34px) 22px calc(var(--safe-bottom) + 26px);
   justify-content: flex-start;
   overflow: hidden;
 }
 
-/* One soft pool of light instead of drawn-on yard lines, which read as wireframe
-   banding on a real phone. */
+/* One soft pool of light, gold now, instead of drawn-on yard lines, which read as
+   wireframe banding on a real phone. */
 .signin::before {
   content: '';
   position: absolute;
@@ -472,78 +475,89 @@
 }
 
 .signin__kicker {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--accent-bright);
+  color: var(--accent);
 }
 
+/* An h1, so it names the face: theme.css hands every h1 Archivo. */
 .signin__title {
-  font-size: 33px;
-  margin: 8px 0 6px;
-  color: var(--on-field);
-  letter-spacing: -0.03em;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 0.9;
+  margin: 8px 0 10px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
 }
 
 .signin__sub {
   color: var(--on-field-2);
-  font-size: 14px;
-  margin-bottom: 30px;
+  font-size: 16px;
+  margin-bottom: 28px;
   max-width: 30ch;
 }
 
 .seats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
+  gap: 10px;
 }
 
 .seat {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 11px;
-  min-height: 122px;
-  padding: 15px 14px;
-  border-radius: var(--r-lg);
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  gap: 12px;
+  min-height: 132px;
+  padding: 14px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #14171d, #07080b);
+  box-shadow: inset 0 0 0 1px #262c36, 0 10px 20px rgba(0, 0, 0, 0.5);
   color: var(--on-field);
   text-align: left;
-  transition: transform 0.14s ease, background 0.14s ease;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
 }
 
 .seat:active {
   transform: scale(0.97);
-  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 0 0 2px #ffd65a, 0 0 22px rgba(255, 196, 60, 0.35);
 }
 
 .seat.is-empty {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.26);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow: none;
+  outline: 1.5px dashed #3a4250;
+  outline-offset: -1.5px;
   color: var(--on-field-2);
 }
 
 .seat__name {
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 16.5px;
-  line-height: 1.2;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 0.95;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
   overflow-wrap: anywhere;
   margin-top: auto;
 }
 
 .seat__role {
   display: block;
-  font-family: var(--ui);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--accent-bright);
-  margin-top: 3px;
+  color: var(--accent);
+  margin-top: 5px;
 }
 
 .seat__plus {
@@ -552,8 +566,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px dashed rgba(255, 255, 255, 0.42);
-  font-size: 21px;
+  border: 1.5px dashed #3a4250;
+  font-size: 22px;
   font-weight: 300;
   line-height: 1;
   color: var(--on-field-2);
@@ -561,18 +575,21 @@
 
 .signin__hint {
   margin-top: 24px;
-  font-size: 12.5px;
-  color: var(--on-field-2);
+  font-size: 14px;
+  color: var(--ink-3);
   text-align: center;
   line-height: 1.55;
 }
 
 /* ------------------------------------------------------------------- sheet */
 
+/* Every sheet is on the jumbotron since 2026-09-13: theme.css hands .sheet the stadium's
+   tokens, and these rules add what a token cannot say. The scrim is a sibling of the sheet,
+   not a child, so it names its color. */
 .sheet__scrim {
   position: fixed;
   inset: 0;
-  background: var(--scrim);
+  background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(3px);
   z-index: 60;
 }
@@ -585,11 +602,11 @@
   width: 100%;
   max-width: 460px;
   z-index: 61;
-  background: var(--card);
+  background: linear-gradient(180deg, #161a21, #07080b 260px);
   color: var(--ink);
   border-radius: var(--r-xl) var(--r-xl) 0 0;
   padding: 10px 20px calc(20px + var(--safe-bottom));
-  box-shadow: var(--sh-4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 -18px 50px rgba(0, 0, 0, 0.55);
   max-height: 92dvh;
   overflow-y: auto;
 }
@@ -598,20 +615,31 @@
   width: 38px;
   height: 4px;
   border-radius: var(--r-pill);
-  background: var(--line-strong);
+  background: #3a4250;
   margin: 0 auto 16px;
 }
 
+/* An h2, so it names the face: theme.css hands every h2 Archivo. */
 .sheet__title {
-  font-size: 21px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.05em;
   text-align: center;
+  text-transform: uppercase;
+  text-wrap: balance;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
 }
 
 .sheet__sub {
   text-align: center;
   color: var(--ink-3);
-  font-size: 13.5px;
-  margin: 5px 0 20px;
+  font-size: 15px;
+  line-height: 1.45;
+  margin: 8px 0 20px;
+  text-wrap: balance;
 }
 
 .field {
@@ -620,7 +648,8 @@
   min-height: var(--tap);
   border-radius: var(--r-md);
   border: 1.5px solid var(--line);
-  background: var(--surface);
+  background: var(--sunk);
+  color: var(--ink);
   font-size: 17px; /* 16px+ stops iOS zooming the page on focus */
   font-weight: 600;
   outline: none;
@@ -633,36 +662,41 @@
 
 .label {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-3);
-  margin: 0 0 7px 2px;
+  color: var(--accent);
+  margin: 0 0 8px 2px;
 }
 
+/* Four sockets that light gold, the way a pick lights a panel. */
 .pin {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin: 4px 0 20px;
+  gap: 16px;
+  margin: 4px 0 22px;
 }
 
 .pin__dot {
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--line-strong);
+  background: var(--sunk);
+  box-shadow: inset 0 0 0 2px var(--line-strong);
   transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.18s ease;
 }
 
 .pin__dot.is-on {
   background: var(--pick);
+  box-shadow: 0 0 12px rgba(255, 214, 90, 0.8);
   transform: scale(1.2);
 }
 
 .pin__dot.is-bad {
   background: var(--bad);
+  box-shadow: 0 0 12px rgba(255, 59, 48, 0.7);
 }
 
 .keypad {
@@ -672,27 +706,30 @@
 }
 
 .key {
-  height: 58px;
-  border-radius: var(--r-md);
-  background: var(--surface);
+  height: 60px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #161a21, #0b0d11);
   border: 1px solid var(--line);
-  font-family: var(--display);
-  font-size: 23px;
-  font-weight: 700;
-  color: var(--ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 32px;
+  font-weight: 900;
+  color: #ffffff;
   transition: transform 0.1s ease, background 0.1s ease;
 }
 
 .key:active {
   transform: scale(0.94);
-  background: var(--well);
+  background: #ffb020;
+  color: #120b00;
 }
 
 .key--ghost {
   background: transparent;
   border-color: transparent;
+  box-shadow: none;
   font-family: var(--ui);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ink-2);
 }
@@ -1125,11 +1162,13 @@
   filter: saturate(0.3) brightness(0.62);
 }
 
+/* Colors named rather than read from .jb, so the same button lights in a sheet, on the
+   sign-in screen and on Setup, none of which sit inside the wall. */
 .btn.btn--led {
   min-height: 54px;
   padding: 12px;
   border-radius: 6px;
-  background: var(--jb-amber);
+  background: #ffb020;
   box-shadow: 0 0 18px rgba(255, 176, 32, 0.45);
   font-family: 'Big Shoulders Display', var(--display);
   font-size: 22px;
@@ -1147,7 +1186,7 @@
    black wall turned dark lettering on dim amber into mud. */
 .btn.btn--led:disabled {
   opacity: 1;
-  background: var(--jb-black);
+  background: #030406;
   box-shadow: inset 0 0 0 2px rgba(255, 176, 32, 0.35);
   color: rgba(255, 176, 32, 0.85);
 }
@@ -1155,7 +1194,7 @@
 .btn.btn--led-ghost {
   background: #12151b;
   box-shadow: inset 0 0 0 1px #2c3440;
-  color: var(--jb-white);
+  color: #f4f7fb;
 }
 
 .btn.btn--led-ghost:active {
@@ -1585,13 +1624,15 @@
   background: #07080b;
 }
 
-.app[data-skin='jumbo'] .apphdr {
+/* The header and the tab bar are the jumbotron's on every tab, Season included, since
+   2026-09-13: the last old-look title in the app was Season's. */
+.app .apphdr {
   background: #07080b;
   color: #f4f7fb;
   box-shadow: 0 1px 0 #1c212a;
 }
 
-.app[data-skin='jumbo'] .apphdr__title {
+.app .apphdr__title {
   font-family: 'Big Shoulders Display', var(--display);
   font-size: 26px;
   font-weight: 900;
@@ -1600,46 +1641,27 @@
   color: #ffffff;
 }
 
-.app[data-skin='jumbo'] .apphdr__week {
+.app .apphdr__week {
   color: #aab3bf;
 }
 
-.app[data-skin='jumbo'] .apphdr__me {
+.app .apphdr__me {
   background: rgba(255, 255, 255, 0.08);
   color: #f4f7fb;
 }
 
-.app[data-skin='jumbo'] .tabbar {
+.app .tabbar {
   background: rgba(3, 4, 6, 0.94);
   border-top-color: #1c212a;
 }
 
-.app[data-skin='jumbo'] .tabbar__btn {
+.app .tabbar__btn {
   color: #aab3bf;
 }
 
-.app[data-skin='jumbo'] .tabbar__btn.is-on {
+.app .tabbar__btn.is-on {
   background: #ffb020;
   color: #120b00;
-}
-
-/* The strip that pins under the header once the leaderboard scrolls away. */
-.app[data-skin='jumbo'] .wkbug__bar {
-  background: rgba(3, 4, 6, 0.94);
-  border-bottom-color: #1c212a;
-}
-
-.app[data-skin='jumbo'] .wkbug__p {
-  font-size: 13px;
-  color: #aab3bf;
-}
-
-.app[data-skin='jumbo'] .wkbug__p b {
-  color: #f4f7fb;
-}
-
-.app[data-skin='jumbo'] .wkbug__p.is-leader b {
-  color: #ffe08a;
 }
 
 .jb {
@@ -2719,12 +2741,16 @@
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 2px;
-  padding: 7px 10px;
-  background: var(--card-a);
+  padding: 8px 10px;
+  /* The jumbotron's colors, named here. The strip is portalled into document.body so it can
+     stay fixed, which puts it outside .app and out of reach of data-skin='jumbo': rules
+     written against the skin never matched, and it showed the old white card until
+     2026-09-13, when Grant spotted it scrolling the Board. */
+  background: rgba(3, 4, 6, 0.94);
   backdrop-filter: blur(12px) saturate(1.4);
   -webkit-backdrop-filter: blur(12px) saturate(1.4);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 6px 12px -8px var(--shadow-tint);
+  border-bottom: 1px solid #1c212a;
+  box-shadow: 0 10px 18px -10px rgba(0, 0, 0, 0.9);
   /* Slid, never faded: a backgrounded tab pauses opacity work and has left an overlay
      stuck half-transparent here before. */
   transform: translateY(-100%);
@@ -2737,147 +2763,94 @@
   visibility: visible;
 }
 
+/* Name over score, so six-letter names (Parker, Nicole) fit a quarter of a phone whole. On
+   one line they cut to "GRA..." at 17px. */
 .wkbug__p {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: auto minmax(0, auto);
+  grid-template-areas: 'dot who' 'pts pts';
   justify-content: center;
-  gap: 5px;
+  align-items: center;
+  column-gap: 5px;
+  row-gap: 3px;
   min-width: 0;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--ink-2);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #aab3bf;
 }
 
 .wkbug__p i {
+  grid-area: dot;
   display: block;
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  flex: none;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.25);
 }
 
 .wkbug__who {
+  grid-area: who;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .wkbug__p b {
-  font-family: var(--display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink);
+  grid-area: pts;
+  justify-self: center;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 24px;
+  font-weight: 900;
+  color: #f4f7fb;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+/* The leader glows gold, as the leader's row does on the leaderboard above. */
+.wkbug__p.is-leader {
+  color: #ffd65a;
 }
 
 .wkbug__p.is-leader b {
-  color: var(--accent-deep);
-}
-
-/* ================================================================ standings */
-
-.stand {
-  padding: 0 12px;
-  display: grid;
-  gap: 8px;
-}
-
-.srow {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 12px 13px;
-  border-radius: var(--r-lg);
-  background: var(--card);
-  border: 1px solid var(--line);
-  box-shadow: var(--sh-1);
-}
-
-.srow.is-leader {
-  border-color: var(--accent-bright);
-  background: linear-gradient(180deg, var(--accent-wash), var(--card) 62%);
-}
-
-.srow__pos {
-  font-family: var(--display);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink-3);
-  min-width: 20px;
-}
-
-.srow.is-leader .srow__pos {
-  color: var(--accent-deep);
-}
-
-.srow__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.srow__name {
-  display: block;
-  font-family: var(--display);
-  font-size: 16px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.srow__meta {
-  display: block;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  margin-top: 1px;
-}
-
-.srow__pts {
-  display: block;
-  font-family: var(--display);
-  font-size: 25px;
-  font-weight: 700;
-  color: var(--field);
-  line-height: 1;
-  text-align: right;
-}
-
-.srow__ptslabel {
-  display: block;
-  font-family: var(--ui);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  text-align: right;
-  margin-top: 3px;
+  color: #ffe08a;
+  text-shadow: 0 0 12px rgba(255, 214, 90, 0.8);
 }
 
 /* ==================================================================== admin */
 
+/* On the jumbotron since 2026-09-13, like every tab but Season: theme.css re-skins what is
+   written against the tokens, and these rules add the wall's lettering and lamps. */
 .adm__tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
   margin: 12px 12px 12px;
   padding: 4px;
-  border-radius: var(--r-md);
-  background: var(--well);
+  border-radius: 6px;
+  background: #030406;
+  box-shadow: inset 0 0 0 1px #1c212a;
 }
 
 .adm__tab {
-  padding: 9px;
-  border-radius: var(--r-sm);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
-  min-height: 38px;
+  padding: 8px;
+  border-radius: 4px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  min-height: 42px;
 }
 
 .adm__tab.is-on {
-  background: var(--surface);
-  color: var(--field);
-  box-shadow: var(--sh-1);
+  background: #ffb020;
+  color: #120b00;
+  box-shadow: 0 0 14px rgba(255, 176, 32, 0.45);
 }
 
 /* --- pool filters -------------------------------------------------------
@@ -2988,15 +2961,16 @@
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
 }
 
+/* Gold is light, so the lettering on it is dark. */
 .fchip.is-on {
   background: var(--pick);
   border-color: var(--pick);
-  color: #fff;
+  color: #1a1300;
 }
 
 .fchip__n {
@@ -3006,7 +2980,7 @@
 }
 
 .fchip.is-on .fchip__n {
-  color: var(--on-field-2);
+  color: rgba(26, 19, 0, 0.7);
 }
 
 /* Ranked is a different axis from the conferences, so it gets a rule between it and
@@ -3032,11 +3006,16 @@
    else in this app. */
 .fchip--band.is-on {
   background: var(--field);
-  border-color: var(--field);
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.fchip--band.is-on .fchip__n {
+  color: var(--ink-3);
 }
 
 .adm__count {
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--ink-3);
 }
 
@@ -3056,30 +3035,37 @@
   margin-top: 14px;
 }
 
+/* A kickoff day lettered on the wall, with the Picks tab's row of amber bulbs. An h3, so
+   it names the face. */
 .adm__dayhead {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 12px 7px;
-  font-family: var(--display);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ink-2);
+  gap: 10px;
+  margin: 4px 12px 8px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
 .adm__dayhead::after {
   content: '';
   flex: 1;
-  height: 1px;
-  background: var(--line);
+  height: 6px;
+  background: radial-gradient(circle, rgba(255, 176, 32, 0.95) 1.4px, transparent 1.9px) 0 50% / 8px 6px repeat-x;
+  filter: drop-shadow(0 0 3px rgba(255, 176, 32, 0.7));
 }
 
 .adm__daycount {
   order: 1;
-  font-family: var(--ui);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ink-3);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3089,13 +3075,15 @@
   gap: 7px;
 }
 
+/* color named: a button does not inherit it, and the game went dark-on-dark on the wall. */
 .arow {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 9px 11px;
-  border-radius: var(--r-md);
+  border-radius: 4px;
   background: var(--card);
+  color: var(--ink);
   border: 1px solid var(--line);
   width: 100%;
   text-align: left;
@@ -3105,6 +3093,7 @@
 .arow.is-in {
   border-color: var(--pick-edge);
   background: var(--pick-wash);
+  box-shadow: 0 0 14px rgba(255, 196, 60, 0.18);
 }
 
 .arow:active {
@@ -3122,17 +3111,17 @@
 
 .arow__match {
   font-weight: 700;
-  font-size: 13.5px;
-  line-height: 19px;
+  font-size: 15px;
+  line-height: 20px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .arow__meta {
-  font-size: 10.5px;
-  line-height: 18px;   /* matches .chip height, so a badge never grows the row */
-  height: 18px;
+  font-size: 13px;
+  line-height: 20px;   /* matches .chip height, so a badge never grows the row */
+  height: 20px;
   color: var(--ink-3);
   margin-top: 3px;
   display: flex;
@@ -3157,10 +3146,12 @@
   transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
 }
 
+/* The gold lamp, lit, with a dark check on it. */
 .arow.is-in .arow__box {
   background: var(--pick);
   border-color: var(--pick);
-  color: #fff;
+  color: #1a1300;
+  box-shadow: 0 0 10px rgba(255, 214, 90, 0.7);
 }
 
 .arow__logos {
@@ -3168,6 +3159,80 @@
   align-items: center;
   gap: 2px;
   flex: none;
+}
+
+/* --- the rest of the stadium ----------------------------------------------------------
+   The screen heading Setup and the Week tab's empty state share with Season, lettered on the
+   wall wherever the jumbotron is (Season keeps its book). Headings name the face, because
+   theme.css hands every h2 and h3 Archivo. */
+[data-skin='jumbo'] .eyebrow,
+.app[data-mode='book'] .screen > .eyebrow {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+}
+
+[data-skin='jumbo'] .h1,
+.app[data-mode='book'] .h1 {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 46px;
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.3);
+}
+
+[data-skin='jumbo'] .sub {
+  font-size: 15px;
+}
+
+[data-skin='jumbo'] .empty h3 {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-skin='jumbo'] .empty p {
+  font-size: 15px;
+}
+
+/* A newer version: an amber lamp, dark lettering. */
+[data-skin='jumbo'] .update {
+  background: #ffb020;
+  color: #120b00;
+  box-shadow: 0 0 18px rgba(255, 176, 32, 0.5);
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-skin='jumbo'] .update:active {
+  background: #e89b12;
+}
+
+/* The week list's heading, inside a sheet, lettered like every sheet title. */
+.sheet .screen {
+  padding: 0 0 14px;
+  text-align: center;
+}
+
+.sheet .h2 {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.35);
 }
 
 /* ------------------------------------------------- sheet / toast animation
@@ -3259,21 +3324,17 @@
    several of them.
 
    The sheet portals into document.body, out of reach of .app[data-skin='jumbo'], so the
-   colors are named here and .mu carries .jb for its variables. Only this sheet is dark:
-   .sheet--jumbo is opt-in and .sheet itself is untouched.
+   colors are named here and .mu carries .jb for its variables. Every sheet has been on the
+   jumbotron since that evening; this one only adds `flush`, to run its wall edge to edge.
 
    NOTHING HERE IS UNDER 13PX; tests/test_matchup_jumbo.py counts. */
 
-.sheet.sheet--jumbo {
+.sheet.sheet--flush {
   padding: 10px 0 calc(12px + var(--safe-bottom));
-  background: linear-gradient(180deg, #161a21, #07080b 260px);
-  color: #f4f7fb;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 -18px 50px rgba(0, 0, 0, 0.55);
 }
 
-.sheet--jumbo .sheet__grab {
+.sheet--flush .sheet__grab {
   margin-bottom: 10px;
-  background: #3a4250;
 }
 
 .mu.jb {
@@ -3868,7 +3929,7 @@
 
 .tpick__school {
   font-weight: 700;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3876,14 +3937,15 @@
 }
 
 .tpick__mascot {
-  font-size: 11.5px;
-  color: var(--ink-2);
+  font-size: 13px;
+  color: var(--ink-3);
 }
 
 .tpick__on {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--pick);
   flex: none;
@@ -4779,12 +4841,13 @@
 .wkrow {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   width: 100%;
-  padding: 11px 12px;
-  border-radius: var(--r-md);
+  padding: 11px 14px;
+  border-radius: 4px;
   background: var(--sunk);
-  font-size: 13.5px;
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 16px;
   text-align: left;
 }
 
@@ -4803,9 +4866,12 @@
 }
 
 .wkrow__n {
-  font-family: var(--display);
-  font-weight: 700;
-  width: 66px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  width: 84px;
   flex: none;
   color: var(--ink);
 }
@@ -4820,8 +4886,11 @@
 }
 
 .wkrow__v b {
-  color: var(--ink);
-  margin-left: 4px;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--lead);
+  margin-left: 6px;
 }
 
 /* ------------------------------------------------------------------- the AP rank
@@ -4898,12 +4967,12 @@
 }
 
 .notifrow__label {
-  font: 600 13.5px/1.25 var(--ui);
+  font: 600 16px/1.25 var(--ui);
   color: var(--ink);
 }
 
 .notifrow__sub {
-  font: 400 11.5px/1.35 var(--ui);
+  font: 400 13px/1.35 var(--ui);
   color: var(--ink-3);
 }
 
@@ -4935,7 +5004,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--surface);
+  background: #f4f7fb;
   box-shadow: 0 1px 2px var(--shadow-tint);
   transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -4953,7 +5022,7 @@
 
 .notif__err {
   margin: 0 0 8px;
-  font: 500 12.5px/1.4 var(--ui);
+  font: 500 13px/1.4 var(--ui);
   color: var(--bad);
   text-align: center;
 }
@@ -4992,63 +5061,153 @@
   background-attachment: fixed;
 }
 
-/* The header and the tab bar are the frame the wool is stretched over: same weave, darker
-   bolt, with a brass hairline where they meet the page. This is the half of the mode that
-   makes walking into Season feel like a room change rather than a themed panel. */
-.app[data-mode='book'] .apphdr {
-  background-image:
-    repeating-linear-gradient(52deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, var(--wool-700), var(--field-deep));
-  border-bottom: 1px solid var(--brass-700);
-  box-shadow: inset 0 1px 0 rgba(246, 228, 180, 0.1), 0 4px 14px rgba(3, 7, 14, 0.5);
+/* --- the standings: a trading card per player ------------------------------------
+   Grant's pick on 2026-09-13 ("ship the trading card one"), over an LED leaderboard, a podium
+   and brass plaques, and then four variants of the podium. The matchup sheet's cards, on the
+   wool: rank badge and logo on a lit stage, the name on a bar, the points in LED, record and
+   points back along the foot. First place is the gold card. Nothing here is under 13px. */
+.jb.standings {
+  margin: 4px 12px 0;
+  padding: 0;
+  background: none;
 }
 
-.app[data-mode='book'] .tabbar {
-  background-image:
-    repeating-linear-gradient(52deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 3px),
-    linear-gradient(0deg, var(--wool-700), var(--field-deep));
-  border-top: 1px solid var(--brass-700);
+.scards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
-/* The tab bar labels. In Slate the bar is a light card so they take --ink-3; the bar is
-   dark wool here, and this exact line was 2.10:1 on the app's primary navigation before
-   a DOM contrast walk caught it. */
-.app[data-mode='book'] .tabbar__btn {
-  color: var(--on-field-2);
+.scard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0b0d11;
+  box-shadow: inset 0 0 0 3px #3a4250, 0 10px 20px rgba(0, 0, 0, 0.55);
 }
 
-.app[data-mode='book'] .tabbar__btn.is-on {
-  color: var(--field-deep);
-  background: var(--brass-300);
+.scard.is-lead {
+  box-shadow: inset 0 0 0 3px #ffd65a, 0 0 26px rgba(255, 196, 60, 0.5);
 }
 
-/* --- the standings, the one panel left -----------------------------------
-   Wool with a stitched edge rather than a plate, because the pins below are where all
-   the metal in this mode lives and two metals fight. */
-.app[data-mode='book'] .srow {
-  background-image: linear-gradient(176deg, var(--wool-600), var(--wool-700));
-  border-color: var(--stitch);
-  border-radius: 3px;
-  box-shadow: 0 2px 5px rgba(3, 7, 14, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+.scard__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 98px;
+  margin: 3px 3px 0;
+  border-radius: 5px 5px 0 0;
+  background:
+    radial-gradient(70% 90% at 50% 0%, rgba(255, 255, 255, 0.2), transparent 70%),
+    linear-gradient(180deg, #232833, #0b0d11);
 }
 
-/* First place gets the polished brass, which is the only thing in the mode that does. */
-.app[data-mode='book'] .srow.is-leader {
-  background-image: linear-gradient(176deg, #22344F, var(--wool-600));
-  border-color: var(--brass-300);
-  box-shadow: 0 2px 6px rgba(3, 7, 14, 0.5), inset 0 1px 0 rgba(246, 228, 180, 0.18);
+.scard.is-lead .scard__stage {
+  background:
+    radial-gradient(70% 90% at 50% 0%, rgba(255, 214, 90, 0.38), transparent 70%),
+    linear-gradient(180deg, #2e2710, #0b0d11);
 }
 
-/* The points. Slate paints these --field, its dark chrome, which is correct on a white
-   card and 1.08:1 on wool. This is the same class of bug as the inherited `color` above:
-   a token whose value is right for the surface it was written against. */
-.app[data-mode='book'] .srow__pts {
-  color: var(--ink);
+.scard__rank {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  background: #1c212a;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 21px;
+  font-weight: 900;
+  color: #f4f7fb;
 }
 
-.app[data-mode='book'] .srow.is-leader .srow__pos,
-.app[data-mode='book'] .srow.is-leader .srow__pts {
-  color: var(--lead);
+.scard.is-lead .scard__rank {
+  background: #ffd65a;
+  color: #1a1300;
+  box-shadow: 0 0 12px rgba(255, 214, 90, 0.8);
+}
+
+/* A block, not a grid, so a long claimed name (up to 18 characters) ends in an ellipsis
+   rather than pushing the card wider than its column. */
+.scard__name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  height: 42px;
+  padding: 0 8px;
+  line-height: 42px;
+  text-align: center;
+  margin: 0 3px;
+  background: #030406;
+  box-shadow: inset 0 1px 0 #2c3440, inset 0 -1px 0 #2c3440;
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 25px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.scard__pts {
+  display: grid;
+  place-items: center;
+  padding: 12px 0 8px;
+}
+
+.scard__pts .jb-led > span {
+  font-size: 58px;
+}
+
+.scard.is-lead .scard__pts .jb-led {
+  --jb-glow: rgba(255, 220, 110, 0.95);
+  --jb-glow2: rgba(255, 190, 60, 0.5);
+}
+
+.scard.is-lead .scard__pts .jb-led > span {
+  color: #ffe08a;
+}
+
+.scard__foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin: 0 3px 3px;
+  box-shadow: inset 0 1px 0 #2c3440;
+}
+
+.scard__foot > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 2px 9px;
+}
+
+.scard__foot > span + span {
+  box-shadow: inset 1px 0 0 #2c3440;
+}
+
+/* The label over each number on the foot. */
+.scard__k {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a93a0;
+}
+
+.scard__foot b {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 24px;
+  font-weight: 900;
+  color: #ffffff;
 }
 
 /* --- the chart, set into the wool ---------------------------------------- */

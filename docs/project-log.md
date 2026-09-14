@@ -350,3 +350,29 @@ index-SW9gr2Ps.js (650,977 bytes) are byte-identical to dist, carry `.sheet.shee
 `.mu__card.is-mine` and the name-fit rules, and no longer carry `.pbar`, `.form__score` or
 `.mu__team`. The live sign-in screen, loaded read-only in a throwaway headless profile,
 shows all four seats (Grant, James, Parker, Nicole) on the new bundle.
+
+## 2026-09-13, evening: the rest of the app joins the jumbotron, and the standings become cards
+
+Grant: the white strip that pins while scrolling the Board "doesn't fit the theme at all",
+then Setup, "anywhere else that still shows the old theme and design", and the Season
+standings, which looked "dinky compared to everything else".
+
+A new harness drives the whole real app in demo mode into eleven states and reports every
+light surface (`outputs/harness/tools/sweep_shots.ps1`). It found the strip (portalled out of
+reach of the skin, so its jumbotron rules never matched), Setup, sign-in and the PIN keypad,
+and every sheet. The fix is mostly one token set in theme.css, the stadium's colors under
+Slate's job names, applied to the skin and to what lives outside `.app`, plus the wall's
+lettering and lamps where a token cannot say it. Every tab but Season now wears the skin and
+every tab the black header. A pixel diff against the shots taken first: Picks and Week
+unchanged, the Board only in the strip's band.
+
+The standings went through two boards, four options
+(https://claude.ai/code/artifact/0e6b7250-5850-4c20-a5ae-ad82d9816e75, recommended the LED
+leaderboard) and then four variants of the podium he asked to see
+(https://claude.ai/code/artifact/332b4d4b-0f2f-4d7d-a9b0-39e322f06aee). He passed on all of
+them for option 3: "ship the trading card one from before i liked that better".
+
+Under-13px declarations in app.css 25 to 12. The six tests that pinned the old look were
+rewritten to the new calls, and `tests/test_jumbotron_everywhere.py` adds eleven guards, each
+broken once in a scratch copy (fourteen breaks, all caught). Traps: a skin on `.app` cannot
+reach anything portalled, and a button does not inherit the text color (memory/traps.md).

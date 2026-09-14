@@ -120,17 +120,19 @@ def test_no_section_of_app_css_is_duplicated():
         )
 
 
-def test_the_three_gradients_survive():
+def test_the_wool_and_the_chart_well_survive():
     """theme.css re-skins everything from flat tokens, which is most of the mode for free.
-    These three cannot be tokens because a custom property here holds one colour, so they
-    live in app.css and are the part that silently disappears if the block is trimmed."""
+    What a custom property cannot hold lives in app.css and is the part that silently
+    disappears if the block is trimmed.
+
+    The header's and tab bar's own wool went on 2026-09-13, when every tab took the
+    jumbotron's black header, and the standings became trading cards on the jumbotron the
+    same day (tests/test_jumbotron_everywhere.py), so neither is book mode's any more."""
     css = read("src", "app.css")
     for sel, what in (
-        (".app[data-mode='book'] {", "the wood grain on the case"),
-        (".app[data-mode='book'] .apphdr", "the end grain on the header"),
-        (".app[data-mode='book'] .tabbar", "the end grain on the tab bar"),
-        (".app[data-mode='book'] .chartwrap", "the felt well the chart sits in"),
+        (".app[data-mode='book'] {", "the wool on the case"),
+        (".app[data-mode='book'] .chartwrap", "the well the chart sits in"),
     ):
         assert sel in css, "%s is gone" % what
-    # The pin carries its own metal, so the panel rule only has to cover the standings.
-    assert ".app[data-mode='book'] .srow" in css, "the standings lost their panel"
+    for gone in (".app[data-mode='book'] .apphdr", ".app[data-mode='book'] .tabbar"):
+        assert gone not in css, "%s is back: Season would wear a different header from every other tab" % gone

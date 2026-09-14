@@ -640,3 +640,25 @@ and run to 24 characters: 72 of 222 names wrap at 25px and 29 still wrap at 19px
 **How to apply:** any layout that puts the two teams side by side at phone width needs a plan
 for long names before it is shown to Grant: one shared size that steps down, and a place for
 a second line that does not throw the two sides out of step.
+
+## A skin on .app cannot reach anything portalled out of it
+
+The Board's pinned score strip stayed white for a day on the jumbotron while its rules said
+black: `.app[data-skin='jumbo'] .wkbug__bar` was written and never matched, because ScoreBug
+portals into `document.body` to stay fixed. Grant found it scrolling the Board. The matchup
+sheet hit the same wall that morning, and so does every sheet, the toast and the lift bar.
+
+**How to apply:** anything portalled names its own colors, or gets the stadium's tokens from
+theme.css by its own class (the token block lists `.sheet`, `.toast`, `.splash` and
+`.signin` for this reason). `tests/test_jumbotron_everywhere.py` fails on any rule that
+reaches the strip through `.app`. To find the rest, sweep every state for light surfaces
+rather than reading the CSS: `outputs/harness/tools/sweep_shots.ps1`.
+
+## A button does not inherit the text color
+
+Setup's game rows went dark-on-dark the moment the page did: `.arow` is a `<button>`, which
+takes its color from the browser's own stylesheet rather than from the page. It never showed
+while the page was light, because the browser default is dark too.
+
+**How to apply:** a button restyled onto a dark ground names `color`. The sweep's light-surface
+report cannot see this one, so look at the screenshot.

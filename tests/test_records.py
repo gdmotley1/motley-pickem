@@ -92,7 +92,8 @@ def test_the_record_book_css_has_no_tiny_text():
     small = [s for s in sizes if s < 13]
     assert not small, "the record book has text under 13px: %s" % small
 
-    for klass in ("eyebrow", "srow__ptslabel"):
+    # The standings' small label was .srow__ptslabel until they became trading cards.
+    for klass in ("eyebrow", "scard__k"):
         rule = re.search(r"\n\.%s\s*\{(.*?)\}" % re.escape(klass), css, re.S)
         assert rule, ".%s is gone" % klass
         size = float(re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", rule.group(1))[-1])

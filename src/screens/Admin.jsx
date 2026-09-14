@@ -339,7 +339,7 @@ export default function Admin({ weekId }) {
       {error && <p className="err">{error}</p>}
 
       <div className="stickycta">
-        <button className="btn" onClick={publish} disabled={!ready || busy}>
+        <button className="btn btn--led" onClick={publish} disabled={!ready || busy}>
           {busy
             ? 'Publishing…'
             : ready

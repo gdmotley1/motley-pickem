@@ -220,7 +220,7 @@ function SeatForm({ seat, onClose, onDone, onClaimed }) {
               }}
             />
             <div style={{ height: 16 }} />
-            <button className="btn" disabled={!name.trim()} onClick={() => setStage('pin')}>
+            <button className="btn btn--led" disabled={!name.trim()} onClick={() => setStage('pin')}>
               Continue
             </button>
           </>

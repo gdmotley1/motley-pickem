@@ -252,6 +252,75 @@
   --sh-4: 0 12px 32px rgba(3, 7, 14, 0.68);
 }
 
+/* ---------------------------------------------------------------------------
+   THE JUMBOTRON, AS TOKENS
+
+   The Board, Picks, the matchup sheet and a finished Week were built on the stadium's LED
+   wall with their colors named in their own rules. On 2026-09-13 Grant asked for the rest to
+   follow ("fix the setup tab ... and anywhere else that still shows the old theme"), so the
+   wall's colors are a token set too, the way book mode is: anything written against the
+   job names above re-skins wherever this applies.
+
+   It applies to every tab but Season (data-skin on .app), and to what lives outside .app or
+   before it: every sheet, the sign-in screen, the toast and the splash. Gold is the
+   selection, the same as the lamp on a Picks panel; amber is the accent, the same as the
+   tab bar and the kickoff pills.
+   ------------------------------------------------------------------------ */
+[data-skin='jumbo'],
+.sheet,
+.signin,
+.toast,
+.splash {
+  --field: #1a1e25;
+  --field-deep: #030406;
+  --field-press: #232833;
+  --on-field: #f4f7fb;
+  --on-field-2: #aab3bf;
+
+  --page: #07080b;
+  --card: #101318;
+  --surface: #161a21;
+  --sunk: #0b0d11;
+  --well: #1c212a;
+  --line: #262c36;
+  --line-strong: #3a4250;
+
+  --page-a: rgba(7, 8, 11, 0.94);
+  --card-a: rgba(3, 4, 6, 0.94);
+
+  --ink: #f4f7fb;
+  --ink-2: #c9d1dc;
+  /* 6.3:1 on --card. */
+  --ink-3: #8f98a5;
+
+  --accent: #ffb020;
+  --accent-deep: #e89b12;
+  --accent-bright: #ffd65a;
+  --accent-wash: rgba(255, 176, 32, 0.14);
+
+  --pick: #ffd65a;
+  --pick-edge: #ffd65a;
+  --pick-soft: #d9a21e;
+  --pick-wash: rgba(255, 214, 90, 0.12);
+
+  --lead: #ffe08a;
+
+  --good: #3dff8f;
+  --good-wash: rgba(61, 255, 143, 0.14);
+  --bad: #ff5a4f;
+  --bad-wash: rgba(255, 59, 48, 0.16);
+
+  --scrim: rgba(0, 0, 0, 0.7);
+  --glow: rgba(255, 214, 90, 0.2);
+  --glow-out: rgba(7, 8, 11, 0);
+  --shadow-tint: rgba(0, 0, 0, 0.6);
+
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --sh-2: 0 2px 6px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --sh-3: 0 6px 16px rgba(0, 0, 0, 0.6);
+  --sh-4: 0 12px 32px rgba(0, 0, 0, 0.7);
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

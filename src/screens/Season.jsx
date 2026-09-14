@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
+import Led from '../components/Led.jsx'
 import { formGeometry, seasonStats } from '../lib/seasonStats.js'
 import { onDark } from '../lib/onDark.js'
 import { seasonRecords } from '../lib/seasonRecords.js'
@@ -13,7 +14,8 @@ import { badgeUrl } from '../lib/badges.js'
  * Top to bottom, as Grant picked it by number on 2026-09-12: standings, the form chart
  * (only once two weeks are finished), the Hall of fame as the trophy room (7), the Hall of
  * shame as the red panel (10), and everyone's numbers as ranked ladders (4, off a second
- * board the same night, replacing headlines he found hard to read).
+ * board the same night, replacing headlines he found hard to read). The standings became
+ * trading cards on the jumbotron on 2026-09-13, under the same black header as every tab.
  */
 export default function Season() {
   const [rows, setRows] = useState(null)
@@ -72,21 +74,7 @@ export default function Season() {
 
   return (
     <Screen eyebrow="Season 2026" title="Season" sub={sub}>
-      <div className="stand">
-        {stats.players.map((p) => (
-          <div key={p.id} className={`srow${p.rank === 1 ? ' is-leader' : ''}`}>
-            <span className="srow__pos num">{p.rank}</span>
-            <Avatar name={p.name} color={p.color} teamId={p.team_id} size={36} />
-            <span className="srow__body">
-              <span className="srow__name">{p.name}</span>
-            </span>
-            <span>
-              <span className="srow__pts num">{p.points}</span>
-              <span className="srow__ptslabel">pts</span>
-            </span>
-          </div>
-        ))}
-      </div>
+      <Standings players={stats.players} />
 
       <Form form={stats.form} played={stats.played} />
 
@@ -98,6 +86,51 @@ export default function Season() {
         </>
       )}
     </Screen>
+  )
+}
+
+/**
+ * The standings, as a trading card per player: rank badge and logo on a lit stage, the name
+ * on a bar, the season's points in LED, and the record and the points back from first along
+ * the foot. First place is the gold card; a tie for first is two gold cards.
+ *
+ * Grant's pick on 2026-09-13, from four standings and then four variants of the podium:
+ * "ship the trading card one from before i liked that better". The rows it replaced were
+ * "dinky compared to everything else". Two across, so four players are two rows.
+ */
+function Standings({ players }) {
+  const lead = players[0]?.points || 0
+  return (
+    <div className="jb standings">
+      <div className="scards">
+        {players.map((p) => (
+          <div key={p.id} className={`scard${p.points === lead ? ' is-lead' : ''}`}>
+            <span className="scard__stage">
+              <span className="scard__rank num">{p.rank}</span>
+              <Avatar name={p.name} color={p.color} teamId={p.team_id} size={64} />
+            </span>
+            <span className="scard__name">{p.name}</span>
+            <span className="scard__pts">
+              <Led>{p.points}</Led>
+            </span>
+            <span className="scard__foot">
+              <span>
+                <i className="scard__k">Record</i>
+                <b className="num">
+                  {p.correct}-{p.games - p.correct}
+                </b>
+              </span>
+              <span>
+                <i className="scard__k">Back</i>
+                {/* A dash for whoever is in first, never a zero: first is not zero behind
+                    anyone, it is the one everyone else is measured from. */}
+                <b className="num">{p.points === lead ? '-' : lead - p.points}</b>
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

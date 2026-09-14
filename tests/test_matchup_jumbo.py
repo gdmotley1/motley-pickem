@@ -7,7 +7,8 @@ three tops; he took the logo plates as best but did not love them. From an artif
 he said "lets do 8": the two teams as trading cards. Below the cards he kept round one's
 option 1, big LED win percentages and a column of chips per team.
 
-What is guarded: only this sheet goes dark, the two cards are one template and stay level
+What is guarded: the sheet runs edge to edge (every sheet has been on the jumbotron since
+that evening, tests/test_jumbotron_everywhere.py), the two cards are one template and stay level
 whatever the names, no school color on the cards, the pick ribbon never moves a card, TV
 and spread and total as three labelled tiles, one rank style, nothing under 13px, and none
 of the rejected options' code left behind. tests/test_matchup.py still holds the sections
@@ -58,14 +59,14 @@ def cards_component():
     return body[start: body.index("\nfunction ", start + 1)]
 
 
-# ------------------------------------------------------------------ only this sheet
+# ------------------------------------------------------------------ the sheet
 
 
-def test_only_the_matchup_sheet_goes_dark():
-    """Sheet is shared by the account sheet, both team pickers, Reminders, sign in and the
-    Week tab's jump list. Walks every <Sheet in src rather than listing them, so a new sheet
-    is covered the day it is added."""
-    tones = {}
+def test_only_the_matchup_sheet_runs_edge_to_edge():
+    """Every sheet went on the jumbotron on 2026-09-13; this one alone asks for no side
+    padding, for its LED wall. Walks every <Sheet in src rather than listing them, so a new
+    sheet is covered the day it is added."""
+    tags = {}
     for dirpath, _, files in os.walk(SRC):
         for name in files:
             if not name.endswith(".jsx"):
@@ -74,22 +75,19 @@ def test_only_the_matchup_sheet_goes_dark():
             with open(path, encoding="utf-8") as f:
                 # Braced attributes whole: onClose={() => ...} has a > of its own.
                 for tag in re.findall(r"<Sheet\b(?:[^>{}]|\{[^{}]*\})*>", f.read()):
-                    tones.setdefault(os.path.relpath(path, SRC), []).append(tag)
-    toned = {p: t for p, tags in tones.items() for t in tags if "tone=" in t}
-    assert len(tones) >= 5, "found almost no sheets; the walk is looking in the wrong place"
-    assert list(toned) == [os.path.join("screens", "Picks.jsx")], (
-        "only the matchup preview may put a sheet on the jumbotron: %s" % toned
-    )
-    assert 'label="Matchup preview" tone="jumbo"' in next(iter(toned.values()))
-
-    sheet = rule(css(), ".sheet")
-    assert "background: var(--card)" in sheet, ".sheet itself was restyled; every light sheet went with it"
+                    tags.setdefault(os.path.relpath(path, SRC), []).append(tag)
+    assert len(tags) >= 5, "found almost no sheets; the walk is looking in the wrong place"
+    flush = {p: t for p, ts in tags.items() for t in ts if re.search(r"\sflush[\s>]", t)}
+    assert list(flush) == [os.path.join("screens", "Picks.jsx")], flush
+    assert 'label="Matchup preview" flush>' in next(iter(flush.values()))
+    assert not any("tone=" in t for ts in tags.values() for t in ts), "the old opt-in tone is back"
 
 
-def test_the_sheet_is_opt_in_in_one_place():
+def test_the_flush_sheet_is_one_prop():
     ui = read("src", "components", "ui.jsx")
-    assert "export function Sheet({ open, onClose, label, tone, children })" in ui
-    assert "sheet--${tone}" in ui
+    assert "export function Sheet({ open, onClose, label, flush = false, children })" in ui
+    assert "sheet--flush" in ui
+    assert re.search(r"padding:\s*10px 0 ", rule(css(), ".sheet.sheet--flush"))
 
 
 # ------------------------------------------------------------------ the cards

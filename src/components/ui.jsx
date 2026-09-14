@@ -27,10 +27,10 @@ export function Portal({ children }) {
  * swallowing every tap on the page behind it. Here the close is a CSS animation plus a
  * timer we control, so the node is always gone afterwards.
  *
- * `tone="jumbo"` puts a sheet on the jumbotron (the matchup preview). Opt-in, because the
- * account sheet, Pick your team, Reminders and the Week tab's jump list stay light.
+ * Every sheet is on the jumbotron (theme.css gives .sheet the stadium's tokens). `flush`
+ * runs the content edge to edge, for the matchup sheet's LED wall.
  */
-export function Sheet({ open, onClose, label, tone, children }) {
+export function Sheet({ open, onClose, label, flush = false, children }) {
   const [mounted, setMounted] = useState(open)
   const [closing, setClosing] = useState(false)
 
@@ -77,7 +77,7 @@ export function Sheet({ open, onClose, label, tone, children }) {
         aria-hidden="true"
       />
       <div
-        className={`sheet${tone ? ` sheet--${tone}` : ''}${closing ? ' is-out' : ''}`}
+        className={`sheet${flush ? ' sheet--flush' : ''}${closing ? ' is-out' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-label={label}

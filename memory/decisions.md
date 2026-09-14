@@ -293,12 +293,45 @@ the schools' colors, and this season as a column of chips per team.
 **Why:** the sheet was the one light thing left on the jumbotron tabs, and its 14 sizes under
 13px went with it (down to 8.5px).
 
-**How to apply:** `Sheet` takes `tone="jumbo"` and only the matchup sheet passes it; never
-restyle `.sheet`. Both cards come from one map in `Cards` in `Matchup.jsx`: logo on a lit
+**How to apply:** it passes `flush` to `Sheet` for an edge-to-edge wall (every sheet is dark
+since that evening, below). Both cards come from one map in `Cards` in `Matchup.jsx`: logo on a lit
 stage, the school on a name bar, AP rank (via `<Rank>`) and record on the foot, your pick the
 gold card with a YOUR PICK strip that never moves it. No school color on the cards. Both names
 share one size and step down together (25, 22, 19px) when either would wrap. TV, spread and
 O/U are three labelled tiles. `tests/test_matchup_jumbo.py` holds all of it.
+
+## Everything but Season's record book is on the jumbotron
+
+Grant, 2026-09-13, after the matchup sheet shipped: the white score strip that pins on the
+Board "doesn't fit the theme at all ... fix the setup tab, that little white piece, and
+anywhere else that still shows, like, the old theme and design". A sweep of every state
+found it in the strip, Setup, sign-in and its PIN keypad, and every sheet. Season's header
+was the last old-look title. He saw the restyle and shipped it with the standings below.
+
+**Why:** four tabs and the matchup sheet were already the stadium; everything else read as a
+different, older app wrapped around them.
+
+**How to apply:** every tab but Season wears `data-skin="jumbo"` (`const jumbo = tab !==
+'season'`), and the header and tab bar are the jumbotron's on every tab, Season included. The
+stadium is also a token set in theme.css, applied to the skin and to what lives outside
+`.app`: every sheet, sign-in, the toast, the splash. Portalled things (the score strip) name
+their own colors. Gold is the selection and always carries dark lettering; primary buttons
+are `btn btn--led`. `tests/test_jumbotron_everywhere.py` holds it.
+
+## The Season standings are trading cards
+
+Picked 2026-09-13 ("ship the trading card one from before i liked that better") from an
+artifact of four (https://claude.ai/code/artifact/0e6b7250-5850-4c20-a5ae-ad82d9816e75) and
+then four variants of the podium he asked for and passed on
+(https://claude.ai/code/artifact/332b4d4b-0f2f-4d7d-a9b0-39e322f06aee). The rows they
+replaced were "dinky compared to everything else".
+
+**Why:** the matchup sheet's cards, which he had just picked, carried onto the standings.
+
+**How to apply:** `Standings` in `Season.jsx` is one map of `.scard`s, two across: rank badge
+and logo on a lit stage, the name on a bar, points in LED, record and points back on the foot
+(a dash for first). First is the gold card, and a tie for first is two gold cards. The wool,
+the form chart and the record book below are unchanged.
 
 ## The record book is Grant's seventeen, each with his badge
 

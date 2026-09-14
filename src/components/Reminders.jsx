@@ -82,7 +82,7 @@ export function RemindersView({ state, prefs, busy, error, onToggle, onSetKind, 
 
           {error && <p className="notif__err">{error}</p>}
 
-          <button className="btn" disabled={busy} onClick={() => onToggle(!state.on)}>
+          <button className="btn btn--led" disabled={busy} onClick={() => onToggle(!state.on)}>
             {busy
               ? 'One moment…'
               : state.on

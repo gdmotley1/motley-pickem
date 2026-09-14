@@ -228,9 +228,10 @@ export default function App() {
   const skin = tab === 'week' && weekSkin ? weekSkin : null
 
   /* The jumbotron. The Board picked it on 2026-09-12, Picks followed on 2026-09-13, and the
-     finished week's top the same day, so every tab with a result on it is one stadium: same
-     black header, same amber tab. */
-  const jumbo = tab === 'board' || tab === 'picks' || !!skin
+     finished week's top the same day; that evening Grant asked for Setup and everything else
+     still in the old look to join them. So every tab but Season is one stadium: same black
+     header, same amber tab. Season keeps the book it was built as. */
+  const jumbo = tab !== 'season'
 
   return (
     <div className="app" data-mode={mode} data-skin={jumbo ? 'jumbo' : undefined}
@@ -361,7 +362,7 @@ function AccountSheet({ open, me, onClose, onSignOut, onPickTeam, onReminders })
       </button>
       {/* "Keep picking" read as nonsense from Week, Season or Setup, which is most of
           where this sheet gets opened from. "Done" is true everywhere. */}
-      <button className="btn" onClick={onClose}>
+      <button className="btn btn--led" onClick={onClose}>
         Done
       </button>
       <button className="btn btn--ghost" onClick={onSignOut}>
@@ -380,7 +381,7 @@ function TeamNudge({ open, onDismiss, onPick }) {
         Put your school&apos;s logo on your picks, the board and the standings. Any of 139
         teams, and you can change it whenever you like.
       </p>
-      <button className="btn" onClick={onPick}>
+      <button className="btn btn--led" onClick={onPick}>
         Pick my team
       </button>
       <button className="btn btn--ghost" onClick={onDismiss}>
