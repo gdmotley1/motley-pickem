@@ -376,3 +376,10 @@ Under-13px declarations in app.css 25 to 12. The six tests that pinned the old l
 rewritten to the new calls, and `tests/test_jumbotron_everywhere.py` adds eleven guards, each
 broken once in a scratch copy (fourteen breaks, all caught). Traps: a skin on `.app` cannot
 reach anything portalled, and a button does not inherit the text color (memory/traps.md).
+
+Deployed the same evening on "ship": GitHub Pages named the new bundle about 30 seconds after
+`bash deploy.sh`; the served index-BKSbJBRX.css (81,787 bytes) and index-DmGd07T5.js (651,424
+bytes) are byte-identical to dist, carry the cards, the strip, the flush sheet and the Setup
+and sign-in rules, and no longer carry `.srow`, `.pod__`, `.plaque` or `.sheet--jumbo`. The
+live sign-in screen, loaded read-only in a throwaway headless profile, shows all four seats
+(Grant, James, Parker, Nicole) on the new bundle.
