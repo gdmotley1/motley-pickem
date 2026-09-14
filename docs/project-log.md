@@ -391,3 +391,16 @@ seasonStats.js that only it used all went, with their checks; the standings card
 straight into the Hall of fame, about 240px shorter on a phone. Deployed on "push and deploy":
 the served index-COaeGSpu.css and index-B52KFDv_.js are byte-identical to dist and carry no
 chart rules, and the live sign-in screen, loaded read-only, shows all four seats.
+
+## 2026-09-13, late: the Hall of fame lettered as a legends poster
+
+"lets make the hall of fame font bigger and better more ledgendary and epic. make options".
+A board of five letterings on the real record book
+(https://claude.ai/code/artifact/52ee52e7-64dc-4bdd-bc12-a5d99caf301a): engraved trophy
+(Cinzel), championship blackletter (UnifrakturCook), varsity (Graduate), gold LED, and a
+legends poster (Anton). He took 5, "but drop the record book part". HALL OF small over a
+134px slanted gold FAME on a burst of light; award names 22px, holders 24px, Up for grabs
+26px, where all of it was 14 to 15px; Anton added to index.html. The Hall of shame kept its
+lettering, checked side by side. Deployed on "push and deploy": the served
+index-hSkSKokN.css and index-BN54c3qV.js are byte-identical to dist, the live index.html
+requests Anton, and the live sign-in screen, loaded read-only, shows all four seats.
