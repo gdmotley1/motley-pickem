@@ -29,6 +29,12 @@ export function Portal({ children }) {
  *
  * Every sheet is on the jumbotron (theme.css gives .sheet the stadium's tokens). `flush`
  * runs the content edge to edge, for the matchup sheet's LED wall.
+ *
+ * Every sheet also carries its own way out, in a top bar that the content scrolls beneath.
+ * Grant got stuck in the matchup sheet on 2026-09-14 ("no back button nothing"): it runs to
+ * 92% of the screen, which leaves 67px of scrim on an 844px iPhone, most of it under the
+ * status bar, and the grab bar has never been a handle. The close lives here rather than in each sheet so
+ * that no sheet, present or future, can be opened without one.
  */
 export function Sheet({ open, onClose, label, flush = false, children }) {
   const [mounted, setMounted] = useState(open)
@@ -85,8 +91,13 @@ export function Sheet({ open, onClose, label, flush = false, children }) {
           if (closing && e.target === e.currentTarget) finish()
         }}
       >
-        <div className="sheet__grab" />
-        {children}
+        <div className="sheet__top">
+          <div className="sheet__grab" />
+          <button className="sheet__close" onClick={onClose} aria-label="Close">
+            <IconClose />
+          </button>
+        </div>
+        <div className="sheet__body">{children}</div>
       </div>
     </Portal>
   )
@@ -323,6 +334,13 @@ export const IconGrip = () => (
       strokeWidth="2.5"
       strokeLinecap="round"
     />
+  </svg>
+)
+
+export const IconClose = () => (
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none">
+    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="2.8"
+          strokeLinecap="round" />
   </svg>
 )
 

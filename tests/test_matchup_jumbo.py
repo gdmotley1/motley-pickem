@@ -87,7 +87,9 @@ def test_the_flush_sheet_is_one_prop():
     ui = read("src", "components", "ui.jsx")
     assert "export function Sheet({ open, onClose, label, flush = false, children })" in ui
     assert "sheet--flush" in ui
-    assert re.search(r"padding:\s*10px 0 ", rule(css(), ".sheet.sheet--flush"))
+    # The body, not the sheet: the sheet is a column since 2026-09-14, its top bar fixed and
+    # only the body scrolling (tests/test_sheet_close.py).
+    assert re.search(r"padding:\s*0 0 ", rule(css(), ".sheet--flush .sheet__body"))
 
 
 # ------------------------------------------------------------------ the cards

@@ -359,6 +359,26 @@ is still fine for what it does well in this app: `layoutId` on the pick check ba
 simple enter animations. If an overlay ever needs to animate out, extend `Sheet` rather
 than reaching for AnimatePresence.
 
+## Every sheet has a close button, in a top bar that does not scroll
+
+`Sheet` draws it for every sheet: a round X at top right in `.sheet__top`, beside the grab
+bar. The sheet is a flex column and `.sheet__body`, which holds the content, is the only part
+that scrolls, so the X is on screen however far down you are. Tapping outside and Escape
+still close too.
+
+**Why:** 2026-09-14, Grant: "i cant click out of the matchup preview. no back button nothing.
+bad ux." The matchup sheet runs to 92dvh, which leaves 67px of scrim on an 844px iPhone, most
+of it under the status bar in the Home Screen app, and the grab bar has never been draggable,
+so he had to close the app. The team picker had the same trap. He asked for the most logical design, no
+mockups, and shipped it.
+
+**How to apply:** pass `onClose` to every `<Sheet>`, never put sheet content outside the body,
+and never build an overlay by hand. The bar costs 16px on a padded sheet and 22px on the
+matchup sheet. There is still no swipe to dismiss: theme.css promises no drag surfaces, and a
+touch drag on iOS cannot be proved from this machine. `tests/test_sheet_close.py` holds it;
+`outputs/harness/tools/sheetclose_shots.ps1` opens the real sheet at 390x844, scrolls it to
+the end and taps the X.
+
 ## position: fixed resolves against a transformed ancestor, not the viewport
 
 Overlays (Sheet, Toast, the Moving bar) render through `Portal` in
