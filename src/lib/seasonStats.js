@@ -222,70 +222,6 @@ export function seasonRecords(players, weeks) {
   return out
 }
 
-/**
- * Points per week per player, shaped for the form chart.
- *
- * Weeks run oldest to newest here, the opposite of the history list, because a chart
- * reads left to right in time and a list reads newest first.
- */
-export function seasonForm(players, weeks) {
-  // Finished weeks only: a week one game in plotted as a collapse to near zero for everyone.
-  const order = [...weeks].filter((w) => w.finished).sort((a, b) => a.week_no - b.week_no)
-  const max = Math.max(1, ...players.flatMap((p) => [...p.byWeek.values()]))
-  return {
-    weeks: order.map((w) => ({ week_no: w.week_no, label: w.label })),
-    max,
-    series: players.map((p) => ({
-      id: p.id,
-      name: p.name,
-      color: p.color,
-      points: order.map((w) => p.byWeek.get(w.week_no) ?? null),
-    })),
-  }
-}
-
-/**
- * Turn the form data into drawable coordinates.
- *
- * Kept out of the screen so the gate can check it. A chart is the one thing on either
- * tab that can look plausible and be wrong: a point off the top of the viewBox, or a
- * gridline labelled with a value the scale never reaches, both render without erroring.
- *
- * The scale starts at zero and ends on the next multiple of 25 above the best week, so
- * every tick is a number the chart actually spans, and a missing week breaks the line
- * rather than drawing through it.
- */
-export function formGeometry(form, box = {}) {
-  const W = box.W ?? 320
-  const H = box.H ?? 132
-  const padL = box.padL ?? 26
-  const padB = box.padB ?? 18
-  const padT = box.padT ?? 8
-  const n = form.weeks.length
-  const top = Math.max(25, Math.ceil(form.max / 25) * 25)
-
-  const x = (i) => (n <= 1 ? padL + (W - padL) / 2 : padL + (i * (W - padL - 6)) / (n - 1))
-  const y = (v) => padT + (1 - v / top) * (H - padT - padB)
-
-  return {
-    W,
-    H,
-    top,
-    ticks: [0, top / 2, top].map((v) => ({ value: v, y: y(v) })),
-    columns: form.weeks.map((w, i) => ({ ...w, x: x(i) })),
-    series: form.series.map((s) => ({
-      id: s.id,
-      name: s.name,
-      color: s.color,
-      // Nulls are holes, not zeroes: a week someone has not played yet must not drag
-      // their line to the floor.
-      points: s.points
-        .map((v, i) => (v == null ? null : { x: x(i), y: y(v), value: v }))
-        .filter(Boolean),
-    })),
-  }
-}
-
 /** One call for the whole tab. */
 export function seasonStats(rows, roster) {
   const weeks = weekHistory(rows || [])
@@ -294,7 +230,6 @@ export function seasonStats(rows, roster) {
     players,
     weeks,
     records: seasonRecords(players, weeks),
-    form: seasonForm(players, weeks),
     played: weeks.filter((w) => w.finished).length,
   }
 }

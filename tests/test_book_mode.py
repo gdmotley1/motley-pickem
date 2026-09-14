@@ -65,20 +65,6 @@ def test_only_the_season_tab_takes_the_mode():
         )
 
 
-def test_the_chart_lifts_its_colours():
-    """Two places still put a seat colour on a dark ground: the chart lines in the well
-    and the legend dots beside it. There were three until the ranking bars were cut on
-    2026-09-11; the guard said three and correctly failed when one went away, which is
-    the whole reason to spell the number out rather than write >= 1."""
-    body = read("src", "screens", "Season.jsx")
-    assert "from '../lib/onDark.js'" in body, "Season.jsx no longer lifts anything"
-    assert body.count("onDark(") == 2, (
-        "expected onDark at both dark-ground call sites, the chart and the legend; "
-        "found %d" % body.count("onDark(")
-    )
-    assert "stroke={s.color}" not in body, "a chart line is still drawn in the raw seat colour"
-
-
 def test_book_mode_re_resolves_the_inherited_text_colour():
     """`body` sets `color: var(--ink)` and resolves it against Slate's near-black. Custom
     properties cascade into this subtree; an already-computed `color` does not re-resolve,
@@ -120,19 +106,28 @@ def test_no_section_of_app_css_is_duplicated():
         )
 
 
-def test_the_wool_and_the_chart_well_survive():
+def test_the_wool_survives():
     """theme.css re-skins everything from flat tokens, which is most of the mode for free.
-    What a custom property cannot hold lives in app.css and is the part that silently
+    The wool itself cannot be a token, so it lives in app.css and is the part that silently
     disappears if the block is trimmed.
 
     The header's and tab bar's own wool went on 2026-09-13, when every tab took the
-    jumbotron's black header, and the standings became trading cards on the jumbotron the
-    same day (tests/test_jumbotron_everywhere.py), so neither is book mode's any more."""
+    jumbotron's black header; the standings became trading cards the same day
+    (tests/test_jumbotron_everywhere.py) and the form chart, with its well, went that night."""
     css = read("src", "app.css")
-    for sel, what in (
-        (".app[data-mode='book'] {", "the wool on the case"),
-        (".app[data-mode='book'] .chartwrap", "the well the chart sits in"),
-    ):
-        assert sel in css, "%s is gone" % what
+    assert ".app[data-mode='book'] {" in css, "the wool on the case is gone"
     for gone in (".app[data-mode='book'] .apphdr", ".app[data-mode='book'] .tabbar"):
         assert gone not in css, "%s is back: Season would wear a different header from every other tab" % gone
+
+
+def test_the_form_chart_stays_gone():
+    """Grant, 2026-09-13: "take the form away dont like it". The chart, its styles and the
+    geometry that only it used went together, so nothing is left to come back half-built."""
+    season = read("src", "screens", "Season.jsx")
+    for gone in ("<Form", "function Form", "formGeometry", "chartwrap", "legend"):
+        assert gone not in season, "the form chart is back in Season.jsx (%s)" % gone
+    css = read("src", "app.css")
+    for gone in (".chartwrap", ".chart__grid", ".chart__tick", ".legend"):
+        assert gone not in css, "a form chart rule is back in app.css (%s)" % gone
+    lib = read("src", "lib", "seasonStats.js")
+    assert "formGeometry" not in lib and "seasonForm" not in lib, "the form chart's geometry is back"

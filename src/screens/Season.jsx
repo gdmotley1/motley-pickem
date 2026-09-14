@@ -3,19 +3,19 @@ import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
 import Led from '../components/Led.jsx'
-import { formGeometry, seasonStats } from '../lib/seasonStats.js'
-import { onDark } from '../lib/onDark.js'
+import { seasonStats } from '../lib/seasonStats.js'
 import { seasonRecords } from '../lib/seasonRecords.js'
 import { badgeUrl } from '../lib/badges.js'
 
 /**
  * The whole year: the standings, form once there is any, and the record book.
  *
- * Top to bottom, as Grant picked it by number on 2026-09-12: standings, the form chart
- * (only once two weeks are finished), the Hall of fame as the trophy room (7), the Hall of
- * shame as the red panel (10), and everyone's numbers as ranked ladders (4, off a second
- * board the same night, replacing headlines he found hard to read). The standings became
- * trading cards on the jumbotron on 2026-09-13, under the same black header as every tab.
+ * Top to bottom, as Grant picked it by number on 2026-09-12: standings, the Hall of fame as
+ * the trophy room (7), the Hall of shame as the red panel (10), and everyone's numbers as
+ * ranked ladders (4, off a second board the same night, replacing headlines he found hard to
+ * read). The standings became trading cards on the jumbotron on 2026-09-13, under the same
+ * black header as every tab, and the form chart that sat under them went the same night:
+ * "take the form away dont like it".
  */
 export default function Season() {
   const [rows, setRows] = useState(null)
@@ -62,7 +62,7 @@ export default function Season() {
     return (
       <Screen eyebrow="Season 2026" title="Season">
         <Empty icon={<IconTrophy />} title="Nothing graded yet">
-          Standings, form and the record book all fill in here as the season goes. Come
+          The standings and the record book fill in here as the season goes. Come
           back once the first game has a result.
         </Empty>
       </Screen>
@@ -75,8 +75,6 @@ export default function Season() {
   return (
     <Screen eyebrow="Season 2026" title="Season" sub={sub}>
       <Standings players={stats.players} />
-
-      <Form form={stats.form} played={stats.played} />
 
       {book && (
         <>
@@ -131,71 +129,6 @@ function Standings({ players }) {
         ))}
       </div>
     </div>
-  )
-}
-
-/**
- * Points per week, one line per player.
- *
- * Drawn to a single scale that starts at zero and ends on a round number above the best
- * week. Nothing at all below two finished weeks: a chart of one point is worse than no
- * chart, and a sentence apologising for it was just something to scroll past.
- */
-function Form({ form, played }) {
-  if (played < 2) return null
-
-  const g = formGeometry(form)
-
-  return (
-    <>
-      <div className="screen">
-        <h3 className="h2">Form</h3>
-        <p className="sub">Points scored each week.</p>
-      </div>
-      <div className="chartwrap">
-        <svg className="chart" viewBox={`0 0 ${g.W} ${g.H}`} role="img"
-             aria-label="Points scored by each player, week by week">
-          {g.ticks.map((t) => (
-            <g key={t.value}>
-              <line x1={26} y1={t.y} x2={g.W - 2} y2={t.y} className="chart__grid" />
-              <text x={21} y={t.y + 3} className="chart__tick" textAnchor="end">
-                {t.value}
-              </text>
-            </g>
-          ))}
-          {g.columns.map((c) => (
-            <text key={c.week_no} x={c.x} y={g.H - 5} className="chart__tick"
-                  textAnchor="middle">
-              {c.week_no}
-            </text>
-          ))}
-          {g.series.map((s) => {
-            /* The chart sits in a dark well. Every seat colour was picked against Slate's
-               white card and three of the four fail the 3:1 graphics floor down here.
-               onDark raises lightness only, so the line is still recognisably theirs. */
-            const c = onDark(s.color)
-            return s.points.length ? (
-              <g key={s.id}>
-                <polyline points={s.points.map((p) => `${p.x},${p.y}`).join(' ')}
-                          fill="none" stroke={c} strokeWidth="2"
-                          strokeLinejoin="round" strokeLinecap="round" />
-                {s.points.map((p) => (
-                  <circle key={p.x} cx={p.x} cy={p.y} r="2.6" fill={c} />
-                ))}
-              </g>
-            ) : null
-          })}
-        </svg>
-      </div>
-      <div className="legend">
-        {form.series.map((s) => (
-          <span className="legend__i" key={s.id}>
-            <span className="legend__dot" style={{ background: onDark(s.color) }} />
-            {s.name}
-          </span>
-        ))}
-      </div>
-    </>
   )
 }
 

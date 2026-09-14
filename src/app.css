@@ -4706,53 +4706,6 @@
 }
 
 
-/* The form chart. One scale, gridlines only on values it actually reaches. */
-.chartwrap {
-  padding: 2px 12px 0;
-}
-
-.chart {
-  display: block;
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-.chart__grid {
-  stroke: var(--line);
-  stroke-width: 1;
-}
-
-.chart__tick {
-  fill: var(--ink-3);
-  font-family: var(--ui);
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.legend {
-  padding: 9px 14px 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-}
-
-.legend__i {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--ink-2);
-}
-
-.legend__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex: none;
-}
-
 /* ------------------------------------------------------- the week pager (Week tab)
 
    Option C from the board on 2026-09-10: an arrow either side and a label that opens a
@@ -5210,32 +5163,9 @@
   color: #ffffff;
 }
 
-/* --- the chart, set into the wool ---------------------------------------- */
-.app[data-mode='book'] .chartwrap {
-  margin: 2px 12px 0;
-  padding: 10px 10px 4px;
-  border-radius: 3px;
-  background-image: linear-gradient(170deg, var(--wool-800), var(--wool-900));
-  box-shadow: inset 0 0 22px rgba(0, 0, 0, 0.55), 0 1px 0 rgba(246, 228, 180, 0.08);
-}
-
-/* --- headings ------------------------------------------------------------
-   Brass caps. The wood version used gradient-clipped gold type with a drop shadow, which
-   needed the brown behind it to read as engraving; on wool it just looked smudged. */
-.app[data-mode='book'] .h2 {
-  color: var(--accent);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  font-size: 13px;
-  font-stretch: condensed;
-}
-
+/* --- headings ------------------------------------------------------------ */
 .app[data-mode='book'] .eyebrow {
   color: var(--accent-bright);
-}
-
-.app[data-mode='book'] .chart__grid {
-  stroke: rgba(246, 228, 180, 0.13);
 }
 
 /* ==================================================== the record book ==== */

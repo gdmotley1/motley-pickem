@@ -237,7 +237,7 @@ check('but it still ranks everyone', partial.players.length === 4)
    hold a tied week, a week nobody has played yet and a shared record, none of which
    one real week contains. */
 
-const { seasonStats, seasonTotals, weekHistory, formGeometry } = await import(
+const { seasonStats, seasonTotals, weekHistory } = await import(
   pathToFileURL(join(root, 'src', 'lib', 'seasonStats.js')).href
 )
 
@@ -310,10 +310,6 @@ check('nobody exceeds their season ceiling',
   s.players.every((p) => p.points <= p.ceiling))
 
 check('best and worst week are found', sby.Grant.best.week_no === 1 && sby.Grant.worst.week_no === 2)
-check('the form chart has one column per graded week', s.form.weeks.length === 2)
-check('and one series per player', s.form.series.length === 4)
-check('form runs oldest to newest', s.form.weeks[0].week_no < s.form.weeks[1].week_no)
-check('the form scale covers the biggest week', s.form.max === 186, String(s.form.max))
 
 const recs = Object.fromEntries(s.records.map((x) => [x.key, x]))
 check('the best week on record is Grant in Week 1', recs.bestWeek.value === '186' &&
@@ -349,7 +345,6 @@ check('and leading it after one game is not winning it',
   `Nicole ${mby.Nicole.weeksWon}`)
 check('its points still count towards the standings',
   mby.Nicole.points === 160 && mby.Grant.points === 186, `${mby.Nicole.points} ${mby.Grant.points}`)
-check('the form chart waits for it', mid.form.weeks.length === 1, String(mid.form.weeks.length))
 check('an unfinished week cannot be anybody\'s worst week',
   mby.Grant.worst.week_no === 1 && mby.Grant.worst.points === 186, JSON.stringify(mby.Grant.worst))
 check('a player with graded picks is in the standings before any week finishes',
@@ -360,53 +355,6 @@ check('a graded game in a later week finishes the one before it', nextWeekStarte
   String(nextWeekStarted.played))
 check('and then it has a winner',
   nextWeekStarted.weeks.find((w) => w.week_no === 2).winners.map((x) => x.name).join() === 'Nicole')
-
-/* ------------------------------------------------------------- the form chart
-
-   A chart is the one thing on either tab that can look completely plausible and be
-   wrong: a point off the top of the viewBox, or a gridline labelled with a value the
-   scale never reaches, both render without erroring and without complaint. */
-
-const geo = formGeometry(s.form)
-const allPts = geo.series.flatMap((x) => x.points)
-
-check('every point is inside the viewBox',
-  allPts.every((p) => p.x >= 0 && p.x <= geo.W && p.y >= 0 && p.y <= geo.H),
-  JSON.stringify(allPts.filter((p) => p.y < 0 || p.y > geo.H)))
-check('the scale reaches the best week', geo.top >= s.form.max, `${geo.top} vs ${s.form.max}`)
-check('the top gridline is the top of the scale', geo.ticks[2].value === geo.top)
-check('zero sits at the bottom of the plot',
-  geo.ticks[0].value === 0 && geo.ticks[0].y > geo.ticks[2].y)
-check('a bigger week plots higher than a smaller one', (() => {
-  const grant = geo.series.find((x) => x.name === 'Grant')
-  return grant.points[0].value > grant.points[1].value && grant.points[0].y < grant.points[1].y
-})())
-check('one column per graded week', geo.columns.length === 2)
-check('columns run left to right', geo.columns[0].x < geo.columns[1].x)
-
-/* A week somebody has not played is a hole in their line, never a plotted zero. Drawing
-   it as zero would show a collapse that did not happen. */
-const gap = formGeometry({
-  max: 186,
-  weeks: s.form.weeks,
-  series: [{ id: 1, name: 'Grant', color: '#B85C1F', points: [186, null] }],
-})
-check('a missing week is a gap, not a zero', gap.series[0].points.length === 1,
-  JSON.stringify(gap.series[0].points))
-
-/* One graded week never reaches the chart (Form bails below two), but the geometry must
-   still be finite rather than dividing by zero on n-1. */
-const single = formGeometry({
-  max: 186,
-  weeks: [{ week_no: 1, label: 'Week 1' }],
-  series: [{ id: 1, name: 'Grant', color: '#B85C1F', points: [186] }],
-})
-check('a single column is centred and finite',
-  Number.isFinite(single.columns[0].x) && single.columns[0].x > 0)
-check('an all-zero season still has a scale', formGeometry({
-  max: 0, weeks: s.form.weeks, series: [],
-}).top === 25)
-
 
 /* ==========================================================================
    src/lib/weekNav.js

@@ -213,7 +213,7 @@ caps it at three a week in a four-person pool without any counting.
 ## A week counts only once it is finished
 
 A week is finished when all 20 of its games are graded, or when a later week has a graded
-game. Week records, weeks won, the form chart and "N weeks in the books" read finished
+game. Week records, weeks won and "N weeks in the books" read finished
 weeks only. Standings, the season record and season points count every graded game.
 
 **Why:** weeks used to count from their first graded game. On 2026-09-12, one game into
@@ -330,8 +330,9 @@ replaced were "dinky compared to everything else".
 
 **How to apply:** `Standings` in `Season.jsx` is one map of `.scard`s, two across: rank badge
 and logo on a lit stage, the name on a bar, points in LED, record and points back on the foot
-(a dash for first). First is the gold card, and a tie for first is two gold cards. The wool,
-the form chart and the record book below are unchanged.
+(a dash for first). First is the gold card, and a tie for first is two gold cards. The wool
+and the record book below are unchanged. The form chart that sat under the cards went the
+same night: "take the form away dont like it".
 
 ## The record book is Grant's seventeen, each with his badge
 

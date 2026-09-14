@@ -20,9 +20,9 @@ PINNED = ("eyebrow", "apphdr__title", "apphdr__week", "apphdr__me", "tabbar__btn
 # Declarations under FLOOR left in src/app.css. 65 after 2026-09-12; 55 once the Week tab
 # recap was rebuilt that night and its 9.5px labels went; 51 when the Board became the
 # jumbotron; 39 when Picks followed it on 2026-09-13; 25 when the matchup sheet did the same
-# day; 12 that evening, when Setup, the sheets, sign-in and the standings joined it. Lower it
-# as they get fixed.
-CEILING = 12
+# day; 12 that evening, when Setup, the sheets, sign-in and the standings joined it; 10 when
+# the form chart went. Lower it as they get fixed.
+CEILING = 10
 
 
 def css():

@@ -68,7 +68,7 @@ def test_the_italic_it_is_set_in_is_actually_loaded():
 def test_nothing_in_the_finished_week_is_under_13px():
     css = read("src", "app.css")
     start = css.index("/* ================================================ the finished week ==== */")
-    block = css[start: css.index("/* The form chart.", start)]
+    block = css[start: css.index("/* ------------------------------------------------------- the week pager (Week tab)", start)]
     small = [s for s in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", block) if float(s) < 13]
     assert not small, "under 13px in the finished week: %s" % small
 
