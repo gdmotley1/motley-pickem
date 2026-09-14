@@ -383,3 +383,11 @@ bytes) are byte-identical to dist, carry the cards, the strip, the flush sheet a
 and sign-in rules, and no longer carry `.srow`, `.pod__`, `.plaque` or `.sheet--jumbo`. The
 live sign-in screen, loaded read-only in a throwaway headless profile, shows all four seats
 (Grant, James, Parker, Nicole) on the new bundle.
+
+## 2026-09-13, late: the form chart comes off Season
+
+"take the form away dont like it". The chart, its legend and well, and the geometry in
+seasonStats.js that only it used all went, with their checks; the standings cards now run
+straight into the Hall of fame, about 240px shorter on a phone. Deployed on "push and deploy":
+the served index-COaeGSpu.css and index-B52KFDv_.js are byte-identical to dist and carry no
+chart rules, and the live sign-in screen, loaded read-only, shows all four seats.
