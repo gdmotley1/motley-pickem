@@ -264,6 +264,27 @@ export function headToHead(games, rows, players, meId) {
   }
 }
 
+/** "A, B and C", the way every name list in the recap reads. */
+export const andList = (xs) =>
+  xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`
+
+/**
+ * Who called which upset, one sentence per set of callers: "Grant, Parker and Nicole called
+ * FAU. Nicole called USF". It used to put every caller against every team, "Grant, Parker
+ * and Nicole called FAU and USF", which read as if all three had both when only Nicole had
+ * USF (copy audit, 2026-09-14). Takes upsets() output; names keep the order they came in.
+ */
+export function calledLine(list) {
+  const groups = new Map()
+  for (const u of list) {
+    if (!u.calledBy.length) continue
+    const key = [...u.calledBy].sort().join('|')
+    if (!groups.has(key)) groups.set(key, { names: u.calledBy, teams: [] })
+    groups.get(key).teams.push(u.winner)
+  }
+  return [...groups.values()].map((g) => `${andList(g.names)} called ${andList(g.teams)}`).join('. ')
+}
+
 /**
  * A game where the favourite lost, and who had it.
  *

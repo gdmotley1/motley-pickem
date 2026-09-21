@@ -72,6 +72,7 @@ export const BADGE_KEYS = [...NUMBERS, ...FAME, ...SHAME].map((x) => x.key)
 const num = (v) => Number(v) || 0
 const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(1))
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+const andList = (xs) => (xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`)
 const DASH = '–'
 
 /* ------------------------------------------------------------------ shaping ---- */
@@ -136,7 +137,7 @@ function rank(rows, { lower = false, bad = false } = {}) {
 }
 
 /* What a row says instead of a number when the record does not apply to that person. */
-const NONE = { worst_miss: 'no misses yet' }
+const NONE = { worst_miss: 'No misses yet' }
 
 /* The one line a ladder row may carry under its name, by what kind of detail it is.
    Grant, looking at the first ladders: "make everything uniform ... no weird text or
@@ -162,7 +163,7 @@ export function rungs(key, rows) {
   const valued = rows.filter((r) => r.value != null)
   const sameWeek = valued.every((r) => r.detail === (valued[0] && valued[0].detail))
   return rows.map((r) => {
-    const empty = r.value == null ? r.detail || NONE[key] || 'none yet' : ''
+    const empty = r.value == null ? r.detail || NONE[key] || 'None yet' : ''
     let note = ''
     if (!empty && TEAM.has(key)) note = r.detail
     if (!empty && WEEKLY.has(key) && !sameWeek) note = r.detail
@@ -231,16 +232,18 @@ export function seasonRecords(seasonRows, pickRows, roster) {
       }
       return { value: best, display: String(best), detail: 'in a row' }
     },
-    // Stake and team only, per Grant: "8 on GT". Not the opponent, not the score.
+    // Stake and team only, per Grant: "8 on GT". Not the opponent, not the score. The 8
+    // is the number column, so the note is the team alone, the same as Biggest upset you
+    // called beside it (copy audit, 2026-09-14).
     worst_miss(p) {
       const lost = picksFor(p).filter((x) => !x.won)
       if (!lost.length) return {}
       const w = lost.reduce((a, c) => (c.stake >= a.stake ? c : a))
-      return { value: w.stake, display: String(w.stake), detail: `on ${w.team}` }
+      return { value: w.stake, display: String(w.stake), detail: w.team }
     },
     my_upset(p) {
       const ups = picksFor(p).filter((x) => x.won && x.dog)
-      if (!ups.length) return { detail: 'none yet' }
+      if (!ups.length) return { detail: 'None yet' }
       const u = ups.reduce((a, c) => (c.spread >= a.spread ? c : a))
       return { value: u.spread, display: `+${fmt(u.spread)}`, detail: u.team }
     },
@@ -390,11 +393,17 @@ export function seasonRecords(seasonRows, pickRows, roster) {
         detail: hits.length === 1 ? hits[0].label : plural(hits.length, 'week', 'weeks'),
       }
     },
+    // "2 times" under two names read like each of them did it twice (copy audit,
+    // 2026-09-14), so more than one says whose 20 went on what: "Parker on OU, Grant on KENN".
     lost_20() {
       const hits = picks.filter((x) => x.stake === SLATE && !x.won)
+      const holders = counted(hits.map((x) => x.player_id))
+      const teamsOf = (id) => hits.filter((x) => x.player_id === id).map((x) => x.team)
       return {
-        holders: counted(hits.map((x) => x.player_id)),
-        detail: hits.length === 1 ? `${SLATE} on ${hits[0].team}, ${hits[0].label}` : plural(hits.length, 'time', 'times'),
+        holders,
+        detail: hits.length === 1
+          ? `${SLATE} on ${hits[0].team}, ${hits[0].label}`
+          : holders.map((h) => `${h.name} on ${andList(teamsOf(h.id))}`).join(', '),
       }
     },
   }

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../components/ui.jsx'
-import { headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
+import { calledLine, headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
+import { ampList } from '../lib/format.js'
 import { weekScore } from '../lib/weekScore.js'
 import { weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
@@ -174,7 +175,7 @@ function Hero({ recap, label, finals, slateSize, teamOf, pager }) {
   const lead = leaders[0]
   const team = teamOf(lead.team_id)
   const panel = (p) => schoolPanel(teamOf(p.team_id), p.color)
-  const names = shared ? leaders.map((p) => p.name).join(' & ') : lead.name
+  const names = shared ? ampList(leaders.map((p) => p.name)) : lead.name
   const size = shared
     ? Math.min(64, ledNameSize(Math.max(...leaders.map((p) => p.name.length))))
     : ledNameSize(names.length)
@@ -254,7 +255,7 @@ function Stakes({ game, rows, only }) {
   )
   return sides.map((pick) => (
     <div className="wf-stake" key={pick}>
-      <span>Had {pick}</span>
+      <span>Picked {pick}</span>
       {all
         .filter((s) => s.pick === pick)
         .map((s) => {
@@ -352,7 +353,7 @@ function Upsets({ recap, byId, rows }) {
               {u.calledBy.length ? (
                 <Stakes game={g} rows={rows} only={(s) => s.won} />
               ) : (
-                <p className="wf-none">Nobody had {u.winner}</p>
+                <p className="wf-none">Nobody picked {u.winner}</p>
               )}
             </div>
           </article>
@@ -427,13 +428,16 @@ function Unfolded({ race, players }) {
       <div className="wf-facts">
         <p>
           <strong className="num">{race.changes}</strong>
-          <span>{race.changes === 1 ? 'time the lead changed hands' : 'times the lead changed hands'}</span>
+          <span>{race.changes === 1 ? 'Lead change' : 'Lead changes'}</span>
         </p>
         {locked && (
           <p>
             <strong className="num">{race.lockedAt}</strong>
             <span>
-              {nameOf.get(steps[steps.length - 1].leaders[0])} took the lead for good, at {locked.label}
+              {nameOf.get(steps[steps.length - 1].leaders[0])} took the lead for good
+              <em className="wf-facts__sub num">
+                Game {race.lockedAt} of {steps.length}, {locked.label}
+              </em>
             </span>
           </p>
         )}
@@ -441,7 +445,10 @@ function Unfolded({ race, players }) {
           <p>
             <strong className="num">{race.ledMost.games}</strong>
             <span>
-              games {list(race.ledMost.ids.map((id) => nameOf.get(id)))} led, the most of anyone
+              Games {list(race.ledMost.ids.map((id) => nameOf.get(id)))} led
+              <em className="wf-facts__sub">
+                {race.ledMost.ids.length === 1 ? 'More than anyone' : 'Tied for the most'}
+              </em>
             </span>
           </p>
         )}
@@ -450,7 +457,7 @@ function Unfolded({ race, players }) {
   )
 }
 
-/** Just yours: where you gained and gave back against whoever finished next to you. */
+/** Just yours: where you gained and gave back against the winner, or the runner-up if you won. */
 function YourWeek({ recap, games, rows, me, byId }) {
   const p = recap.players.find((x) => x.id === me?.id)
   const h = p ? headToHead(games, rows, recap.players, p.id) : null
@@ -458,8 +465,8 @@ function YourWeek({ recap, games, rows, me, byId }) {
   const rival = h.rival.name
   const item = (d) => {
     const g = byId.get(d.game_id)
-    const mine = d.mine?.won ? `your ${d.mine.confidence}` : 'you missed'
-    const theirs = d.theirs?.won ? `${rival} ${d.theirs.confidence}` : `${rival} missed`
+    const mine = d.mine?.won ? `You got ${d.mine.confidence}` : 'You missed'
+    const theirs = d.theirs?.won ? `${rival} got ${d.theirs.confidence}` : `${rival} missed`
     const pick = d.net > 0 ? d.mine.pick : d.theirs.pick
     return (
       <div className="wf-h2h" key={d.game_id}>
@@ -474,9 +481,19 @@ function YourWeek({ recap, games, rows, me, byId }) {
   }
   const standing =
     h.gap > 0 ? `${h.gap} ahead of ${rival}` : h.gap < 0 ? `${-h.gap} behind ${rival}` : `level with ${rival}`
+  // headToHead measures you against the winner, and the winner against a co-winner or the
+  // runner-up. This line used to say your rival finished beside you, which was false for
+  // 3rd and 4th (copy audit, 2026-09-14).
+  const theirRank = recap.players.find((x) => x.id === h.rival.id)?.rank
+  const compared =
+    p.rank !== 1
+      ? `Compared with ${rival}, who won the week.`
+      : theirRank === 1
+        ? `Compared with ${rival}, who shared the win.`
+        : `Compared with ${rival}, who finished ${ordinal(theirRank)}.`
   return (
     <section className="wf-sec">
-      <Title help={`It compares you with ${rival}, who finished next to you.`}>Your week</Title>
+      <Title help={compared}>Your week</Title>
       <div className="wf-you">
         <Avatar name={p.name} color={p.color} teamId={p.team_id} size={56} />
         <div>
@@ -507,12 +524,12 @@ function Agreed({ list: agreed, byId }) {
       <div className="wf-facts">
         <p>
           <strong className="num">{agreed.length}</strong>
-          <span>{agreed.length === 1 ? 'game all four of you picked the same team' : 'games all four of you picked the same team'}</span>
+          <span>{agreed.length === 1 ? 'Game you all picked the same team' : 'Games you all picked the same team'}</span>
         </p>
       </div>
       {held.length > 0 && (
         <>
-          <p className="wf-sub">{held.length} held</p>
+          <p className="wf-sub">{held.length} won</p>
           <div className="wf-held">
             {held.map((a) => (
               <span className="wf-held__i" key={a.game_id}>
@@ -523,13 +540,13 @@ function Agreed({ list: agreed, byId }) {
           </div>
         </>
       )}
-      {burned.length > 0 && <p className="wf-sub">{burned.length} didn&rsquo;t</p>}
+      {burned.length > 0 && <p className="wf-sub">{burned.length} lost</p>}
       {burned.map((a) => (
         <div className="wf-h2h wf-h2h--two" key={a.game_id}>
           <Mark id={sideOf(byId.get(a.game_id), a.pick)} abbr={a.pick} size={34} />
           <span className="wf-who">
             <b>{a.pick} lost</b>
-            <span className="num">{a.total} points between you, all gone</span>
+            <span className="num">Cost you {a.total} points combined</span>
           </span>
         </div>
       ))}
@@ -542,16 +559,16 @@ function Alone({ list: players, byId }) {
   const sorted = [...players].sort((a, b) => b.picks.length - a.picks.length || b.right - a.right)
   return (
     <section className="wf-sec">
-      <Title help="Picks nobody else in the family made, and how they went.">Went it alone</Title>
+      <Title help="Picks nobody else in the family made.">Went at it alone</Title>
       {sorted.map((p) => (
         <div className="wf-alone" key={p.id}>
           <div className="wf-alone__hd">
             <Avatar name={p.name} color={p.color} teamId={p.team_id} size={34} />
             <span className="wf-who">
               <b>{p.name}</b>
-              <span>{p.picks.length ? `${p.right} right` : 'Went with somebody every time'}</span>
+              <span>{p.picks.length ? `${p.right} won, ${p.picks.length - p.right} lost` : 'No solo picks'}</span>
             </span>
-            <strong className="num">{p.picks.length}</strong>
+            <strong className="num">{p.picks.length || '–'}</strong>
           </div>
           {p.picks.length > 0 && (
             <div className="wf-picks">
@@ -572,13 +589,12 @@ function Alone({ list: players, byId }) {
 
 function InNumbers({ recap }) {
   const called = recap.upsets.filter((u) => u.calledBy.length)
-  const callers = [...new Set(called.flatMap((u) => u.calledBy))]
   const rows = [
     [recap.chalk.won, 'Favorites won', `of ${recap.chalk.of} games with a line`],
     [
       recap.upsets.length,
       recap.upsets.length === 1 ? 'Upset' : 'Upsets',
-      called.length ? `${list(callers)} called ${list(called.map((u) => u.winner))}` : 'Nobody called one',
+      called.length ? calledLine(called) : 'Nobody called one',
     ],
     [recap.sweeps, 'All four got it right', recap.sweepGames.map((g) => g.winner).join(', ') || 'None this week'],
     [recap.whiffs.length, 'Nobody got it right', recap.whiffs.map((w) => w.winner).join(', ') || 'None this week'],
@@ -693,7 +709,7 @@ function WeekList({ weeks, season, viewId, onGo }) {
             <span className="wkrow__v">
               {won ? (
                 <>
-                  {won.names.join(' & ')} <b className="num">{won.points}</b>
+                  {ampList(won.names)} <b className="num">{won.points}</b>
                 </>
               ) : (
                 status || (season === null ? '…' : 'no result')

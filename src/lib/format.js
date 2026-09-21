@@ -86,3 +86,10 @@ const TV_SHORT = {
 }
 
 export const tvLabel = (tv) => (tv ? TV_SHORT[tv] || tv : '')
+
+/**
+ * Names joined for a heading: "Grant & James", "Grant, Parker & Nicole". Commas, then one
+ * ampersand, because two ampersands in a row read like a typo (copy audit, 2026-09-14).
+ */
+export const ampList = (xs) =>
+  xs.length <= 1 ? xs[0] || '' : `${xs.slice(0, -1).join(', ')} & ${xs[xs.length - 1]}`

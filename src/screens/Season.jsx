@@ -6,6 +6,7 @@ import Led from '../components/Led.jsx'
 import { seasonStats } from '../lib/seasonStats.js'
 import { seasonRecords } from '../lib/seasonRecords.js'
 import { badgeUrl } from '../lib/badges.js'
+import { ampList } from '../lib/format.js'
 
 /**
  * The whole year: the standings, form once there is any, and the record book.
@@ -68,9 +69,11 @@ export default function Season() {
       </Screen>
     )
 
+  // The tie rule read like fine print here (copy audit, 2026-09-14). A shared week still
+  // says Co-winners where it happens.
   const sub = stats.played
-    ? `${stats.played} ${stats.played === 1 ? 'week' : 'weeks'} in the books. Ties stand, so a week can be shared.`
-    : 'The first week is still being played. Ties stand, so a week can be shared.'
+    ? `${stats.played} ${stats.played === 1 ? 'week' : 'weeks'} in the books.`
+    : 'The first week is still being played.'
 
   return (
     <Screen eyebrow="Season 2026" title="Season" sub={sub}>
@@ -119,7 +122,7 @@ function Standings({ players }) {
                 </b>
               </span>
               <span>
-                <i className="scard__k">Back</i>
+                <i className="scard__k">Behind</i>
                 {/* A dash for whoever is in first, never a zero: first is not zero behind
                     anyone, it is the one everyone else is measured from. */}
                 <b className="num">{p.points === lead ? '-' : lead - p.points}</b>
@@ -145,8 +148,12 @@ function Medal({ id, size, open = false }) {
   )
 }
 
-/** Faces and names of whoever holds an award, with a count for anyone who holds it twice. */
+/**
+ * Faces and names of whoever holds an award, with a count for anyone who holds it twice:
+ * "Nicole ×2, Grant & Parker", never "Nicole ×2 & Grant & Parker".
+ */
 function Holders({ people, size = 22 }) {
+  const names = people.map((h) => (h.count > 1 ? `${h.name} ×${h.count}` : h.name))
   return (
     <span className="hold">
       <span className="hold__faces">
@@ -154,7 +161,7 @@ function Holders({ people, size = 22 }) {
           <Avatar key={h.id} name={h.name} color={h.color} teamId={h.team_id} size={size} />
         ))}
       </span>
-      <span>{people.map((h) => (h.count > 1 ? `${h.name} ×${h.count}` : h.name)).join(' & ')}</span>
+      <span>{ampList(names)}</span>
     </span>
   )
 }

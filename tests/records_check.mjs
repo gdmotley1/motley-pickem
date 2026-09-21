@@ -143,26 +143,26 @@ for (const name of ['Grant', 'Nicole', 'James']) assert.equal(cell(book, 'streak
 /* Worst miss is the most confidence on a loser, told as stake and team: "4 on H3". Grant
    never lost, so he has no value at all and must not sit at the bottom on a zero. */
 assert.equal(cell(book, 'worst_miss', 'Nicole').display, '4')
-assert.equal(cell(book, 'worst_miss', 'Nicole').detail, 'on H3')
-assert.equal(cell(book, 'worst_miss', 'James').detail, 'on H3')
+assert.equal(cell(book, 'worst_miss', 'Nicole').detail, 'H3')
+assert.equal(cell(book, 'worst_miss', 'James').detail, 'H3')
 assert.equal(cell(book, 'worst_miss', 'Grant').value, null, 'a player who never lost has no worst miss')
 assert.equal(cell(book, 'worst_miss', 'Grant').mark, null)
 assert.equal(cell(book, 'worst_miss', 'Nicole').mark, 'worst')
 /* A team is the record itself, not a repeated unit, so it shows on every row even when it
    is the same team as the leader's. And a player it does not apply to says so in words. */
-assert.equal(cell(book, 'worst_miss', 'James').note, 'on H3')
-assert.equal(cell(book, 'worst_miss', 'Grant').empty, 'no misses yet')
+assert.equal(cell(book, 'worst_miss', 'James').note, 'H3')
+assert.equal(cell(book, 'worst_miss', 'Grant').empty, 'No misses yet')
 assert.equal(cell(book, 'worst_miss', 'Grant').note, '')
 assert.equal(cell(book, 'worst_miss', 'Grant').lead, false)
 
 /* Underdog winners: game 1 (+10), game 3 (+21), game 4 (+7). Grant took all three, Nicole
-   took game 1, James took none and shows "none yet" rather than a zero. */
+   took game 1, James took none and shows "None yet" rather than a zero. */
 assert.equal(cell(book, 'my_upset', 'Grant').display, '+21')
 assert.equal(cell(book, 'my_upset', 'Grant').detail, 'A3')
 assert.equal(cell(book, 'my_upset', 'Nicole').display, '+10')
 assert.equal(cell(book, 'my_upset', 'James').value, null)
 assert.equal(cell(book, 'my_upset', 'Nicole').note, 'A1')
-assert.equal(cell(book, 'my_upset', 'James').empty, 'none yet')
+assert.equal(cell(book, 'my_upset', 'James').empty, 'None yet')
 
 /* Week 2 tied on 140 and ties stand, so it counts for both James and Nicole. */
 assert.equal(cell(book, 'weeks_won', 'Nicole').display, '2')
@@ -210,7 +210,18 @@ const shamed = seasonRecords(SEASON, [
 ], ROSTER)
 assert.equal(who(award(shamed.shame, 'lost_20')), 'Nicole')
 assert.equal(award(shamed.shame, 'lost_20').detail, '20 on H9, Week 2')
-assert.equal(cell(shamed, 'worst_miss', 'Nicole').detail, 'on H9', 'the 20 is now her worst miss')
+assert.equal(cell(shamed, 'worst_miss', 'Nicole').detail, 'H9', 'the 20 is now her worst miss')
+
+/* More than one lost 20 says whose went on what. "2 times" under two names read like each
+   of them had done it twice (copy audit, 2026-09-14). Nicole loses two, in Weeks 2 and 3,
+   and Grant one in Week 3; holders are in the order they first earned it. */
+const shamed2 = seasonRecords(SEASON, [
+  ...PICKS,
+  ...games([[9, 'away', 'home', -3, [null, null, 'h20']]], 2),
+  ...games([[7, 'away', 'home', -3, [null, null, 'h20']], [8, 'home', 'home', -3, ['a20', null, null]]], 3),
+], ROSTER)
+assert.equal(who(award(shamed2.shame, 'lost_20')), 'Nicole x2 & Grant')
+assert.equal(award(shamed2.shame, 'lost_20').detail, 'Nicole on H9 and H7, Grant on A8')
 
 /* ------------------------------------------------ the half-played week bug ---- */
 

@@ -4575,6 +4575,16 @@
   text-wrap: balance;
 }
 
+/* The detail under a fact, so the fact itself reads as a heading: "Game 14 of 20, TTU at
+   ORST" under "James took the lead for good". From the copy audit, 2026-09-14. */
+.wf-facts__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 15px;
+  font-style: normal;
+  color: var(--wf-text-2);
+}
+
 /* --- your week -------------------------------------------------------------------- */
 .wf-you {
   display: grid;

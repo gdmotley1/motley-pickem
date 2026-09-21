@@ -18,7 +18,7 @@ import { dirname, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const root = join(here, '..')
-const { ceiling, weekRecap, decisiveGames, upsets, playerBreakdown } = await import(
+const { ceiling, weekRecap, decisiveGames, upsets, playerBreakdown, calledLine } = await import(
   pathToFileURL(join(root, 'src', 'lib', 'weekRecap.js')).href
 )
 
@@ -193,6 +193,21 @@ const nev = u.find((x) => x.label === 'WKU at NEV')
 check('two people called Nevada', nev.calledBy.length === 2, nev.calledBy.join(', '))
 check('they were Grant and Nicole',
   nev.calledBy.includes('Grant') && nev.calledBy.includes('Nicole'))
+
+/* By the numbers says who called which upset. Week 2 read "Grant, Parker and Nicole called
+   FAU and USF" when only Nicole had USF (copy audit, 2026-09-14). */
+check('Week 1 names both Nevada callers', calledLine(u) === 'Grant and Nicole called NEV', calledLine(u))
+const wk2 = [
+  { winner: 'FAU', calledBy: ['Grant', 'Parker', 'Nicole'] },
+  { winner: 'USF', calledBy: ['Nicole'] },
+  { winner: 'OKST', calledBy: [] },
+]
+check('each set of callers gets its own sentence',
+  calledLine(wk2) === 'Grant, Parker and Nicole called FAU. Nicole called USF', calledLine(wk2))
+check('the same callers share one sentence',
+  calledLine([{ winner: 'A', calledBy: ['Nicole', 'Grant'] }, { winner: 'B', calledBy: ['Grant', 'Nicole'] }]) ===
+    'Nicole and Grant called A and B')
+check('nobody calling anything is an empty line', calledLine([{ winner: 'A', calledBy: [] }]) === '')
 
 /* -------------------------------------------------------- the rest of the week */
 
