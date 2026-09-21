@@ -112,6 +112,10 @@ Stanford pick against a 24.5-point line correctly falls to 1.
 **How to apply:** `autoRank` in `src/screens/Picks.jsx`. Score is `+line` when the pick is
 the favourite and `-line` when it is the underdog. Keep it a suggestion, never forced.
 
+Revisited 2026-09-21: Grant said most cards were just the spread order and asked how to stop
+it; after a board of four options he said "actually its fine leave as is". Do not re-propose
+removing or hiding the sort unless he raises it again (docs/project-log.md has the numbers).
+
 ## Confidence points: tap to lift, tap to place. No dragging.
 
 The ranking screen arrives already sorted by the spread. Tapping a game lifts it, every

@@ -431,3 +431,45 @@ index-Dy_i5WvI.css and index-rzhWFBpl.js are byte-identical to dist and carry `.
 headless profile shows all four seats (Grant, James, Parker, Nicole). In the Browser pane the
 live site opened Grant's PIN sheet with no digit entered, the X was topmost at 344,350, and
 tapping it closed the sheet; the only Supabase request all session was `list_seats`.
+
+## 2026-09-21: confidence points stay on the spread sort
+
+"too many of us are just using the spread for confidence points instead of actually picking.
+how can we prevent this while still making picking points easy". Measured read-only over
+Weeks 1 to 3, as games moved off the spread order before locking in: Grant 9, 5, 10; James
+5, 2, 3; Parker 5, 13, 1; Nicole 0, 1, 1. All 8 cards that moved two or more games scored less
+than the same winners in spread order would have (75 points in all), and a card of every
+favourite in spread order would have won all three weeks. A board of four options
+(https://claude.ai/artifact/AS727PvDSi2So7XczfxJTV): count down, four buckets, a Vegas meter,
+and Vegas as a fifth row on the Board. He answered "actually its fine leave as is". Nothing
+changed; the spread sort on arrival stays.
+
+## 2026-09-21: the copy audit, built at last
+
+"the language like went it all on the hall of fame. i thought we fixed it but i checked its
+still there". On 2026-09-14 he had asked for an audit of how the app reads, starting with
+"Went it alone", and marked its ballot
+(https://claude.ai/code/artifact/6a71d168-1c73-4ee4-82d2-dc7239d89ec9): twelve Change it, one
+Keep it (Decided it), the Picks, Board, sign-in, Setup and contraction lines left unmarked.
+That session never got its "done", so nothing was built. The artifact db still held his taps
+(`ballot/answers`), which is how the twelve were recovered exactly.
+
+Built as marked: Went at it alone (his wording) with "1 won, 2 lost" and "No solo picks";
+Picked for Had; How it unfolded as headings with the game on its own line; Your week as "You
+got 8, James got 17" and compared with the winner, since "who finished next to you" was false
+for 3rd and 4th; When you all agreed as won, lost and "Cost you 70 points combined"; By the
+numbers says who called which upset (it had credited three people with USF); holders as
+"Nicole ×2, Grant & Parker", and the same comma rule for three co-winners on the Week tab;
+"Parker on OU, Grant on KENN" for more than one lost 20; Behind for Back; no tie fine print
+under the Season title; record notes "KENN" and "None yet".
+
+Checked on the real screens with the live finished weeks through a new read-only harness
+(`outputs/harness/week3_live.html`, fed by `outputs/harness/tools/week3_data.py`). Week 2 now
+reads "Grant, Parker and Nicole called FAU. Nicole called USF". `tests/test_copy_audit.py`
+bans the old wording from every file under src/ and was broken six ways in a scratch copy,
+all caught, including a phrase moved into another file; 408 pass.
+
+Deployed on "push and deploy" (commit 2ae750a): GitHub Pages named the new bundle after 20
+seconds; the served index-OGUrciSj.js and index-C32C7qSZ.css are byte-identical to dist, carry
+every new line and none of the old. The live sign-in screen in a throwaway headless profile
+shows all four seats.
