@@ -53,7 +53,10 @@ export const NUMBERS = [
 /** The Hall of fame, easiest first, which is the order it fills up in. */
 export const FAME = [
   { key: 'season_points', label: 'Most points in a season' },
-  { key: 'margin', label: 'Biggest margin of victory in a week' },
+  // Grant, 2026-09-25: "take off the 'in a week' line on biggest margin of victory so it
+  // even". It was the one label that ran to three lines in a trophy-room card while every
+  // other one took two. The week is still named in the detail under it ("Won Week 2 by 33").
+  { key: 'margin', label: 'Biggest margin of victory' },
   { key: 'big_upset', label: 'Biggest upset called', picks: true },
   { key: 'only_one', label: 'Only one who called it', picks: true },
   { key: 'three_upsets', label: 'Three upsets in one week', picks: true },

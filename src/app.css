@@ -5395,6 +5395,29 @@
   gap: 26px 10px;
 }
 
+/* Uniform, Grant 2026-09-25: "try to make everything uniform, like stuff being lined up".
+   The two cards on a row are four rows of ONE grid, so the badge, the award, the name and
+   the detail each sit on a shared line even when one name wraps to two ("Nicole x2, Grant
+   & Parker") and the one beside it does not. Own row-gap, or the outer 26px would open up
+   inside every card; the margins below do the spacing, as they did under flexbox.
+
+   Behind @supports because a card that spans four rows without subgrid is not a card at
+   all. Safari has had it since 16, so every phone in the family gets the aligned version
+   and anything older falls back to the flex column, which is what shipped until today. */
+@supports (grid-template-rows: subgrid) {
+  .fame__won > .award {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 4;
+    row-gap: 0;
+    justify-items: center;
+    /* The card's own align-items: center is for the flex fallback. Left on, a label that
+       takes two lines in a three-line row floats half a line down and the pair is out
+       again, which is the whole bug: every item sits at the top of its line instead. */
+    align-items: start;
+  }
+}
+
 /* An odd number of claimed awards: the first one takes the whole row. */
 .fame__won.is-odd > .award:first-child {
   grid-column: 1 / -1;
@@ -5409,6 +5432,10 @@
 }
 
 .award__k {
+  /* Two lines held open whatever the award is called, so Perfect week, which takes one,
+     does not sit its name a line higher than the card beside it. 1.12 is the line height
+     above; a third line is allowed to grow, and subgrid keeps the pair together. */
+  min-height: 2.24em;
   margin: 14px 0 8px;
   font-family: 'Anton', Impact, sans-serif;
   font-size: 22px;
@@ -5472,6 +5499,8 @@
 }
 
 .grab p {
+  /* Two lines held open here too, so a row of three does not step up and down. */
+  min-height: 2.4em;
   margin: 10px 0 0;
   font-family: 'Anton', Impact, sans-serif;
   font-size: 16px;

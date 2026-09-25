@@ -207,3 +207,55 @@ def test_the_hall_of_fame_is_the_legends_poster():
 
     link = re.search(r'href="(https://fonts\.googleapis\.com/css2[^"]+)"', read("index.html")).group(1)
     assert "family=Anton" in link, "index.html does not load Anton, so the poster falls back to Impact"
+
+
+def test_the_hall_of_fame_names_carry_no_team_logo():
+    """Grant, 2026-09-25: "can we drop the logo from our team and just put the players
+    name?" Under a badge on the lit stage the school mark was a second logo competing with
+    the one the award is about. The Hall of shame keeps its faces, so the guard is that
+    <Holders> can still draw them and that the fame is the caller opting out."""
+    season = read("src", "screens", "Season.jsx")
+    fame = season.split("function HallOfFame", 1)[1].split("function HallOfShame", 1)[0]
+    assert "<Avatar" not in fame, "the Hall of fame is drawing a team logo again"
+    assert re.search(r"<Holders people=\{a\.holders\} faces=\{false\}", fame), (
+        "the Hall of fame's holders no longer opt out of the faces"
+    )
+    shame = season.split("function HallOfShame", 1)[1].split("\nfunction ", 1)[0]
+    assert re.search(r"<Holders people=\{a\.holders\}(?![^/>]*faces)", shame), (
+        "the Hall of shame lost its faces too; Grant only asked about the Hall of fame"
+    )
+    assert "hold__faces" in season, "the faces markup is gone, so the Hall of shame cannot draw them"
+
+
+def test_the_trophy_room_lines_up():
+    """Grant, 2026-09-25: "try to make everything uniform, like stuff being lined up ... take
+    off the 'in a week' line on biggest margin of victory so it even".
+
+    Three things hold it: the label is short enough to take two lines in a 178px card, two
+    lines are held open so a one-line award does not ride up, and the two cards on a row are
+    one subgrid so the badge, award, name and detail share a line even when a name wraps.
+    Measured in outputs/harness at 390 and 375: every drift 0.0px, both branches of is-odd."""
+    lib = read("src", "lib", "seasonRecords.js")
+    fame = lib.split("export const FAME", 1)[1].split("]", 1)[0]
+    labels = re.findall(r"label: '([^']+)'", fame)
+    assert labels, "the Hall of fame list moved"
+    # 25 chars is "Biggest margin of victory", the longest that still takes two lines in a
+    # card at 390px. The 35-char version it replaced took three and was the one Grant saw.
+    long = [x for x in labels if len(x) > 26]
+    assert not long, "these award names will run to a third line in a card: %s" % long
+
+    css = re.sub(r"/\*.*?\*/", "", read("src", "app.css"), flags=re.S)
+    sub = re.search(r"@supports \(grid-template-rows: subgrid\)\s*\{\s*\.fame__won > \.award\s*\{(.*?)\}", css, re.S)
+    assert sub, "the trophy room's cards are no longer a subgrid, so a wrapped name breaks the row"
+    rule = sub.group(1)
+    for want in ("grid-template-rows: subgrid", "grid-row: span 4", "row-gap: 0", "align-items: start"):
+        assert want in rule, "the subgrid card lost %s" % want
+
+    award = re.search(r"\n\.award__k\s*\{(.*?)\}", css, re.S).group(1)
+    line = float(re.search(r"line-height:\s*([\d.]+)", award).group(1))
+    hold = float(re.search(r"min-height:\s*([\d.]+)em", award).group(1))
+    assert hold >= line * 2 - 0.01, (
+        "the award name no longer holds two lines open, so Perfect week rides a line up"
+    )
+    grab = re.search(r"\n\.grab p\s*\{(.*?)\}", css, re.S).group(1)
+    assert "min-height" in grab, "the up for grabs cells can step up and down again"

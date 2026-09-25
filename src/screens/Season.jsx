@@ -149,18 +149,24 @@ function Medal({ id, size, open = false }) {
 }
 
 /**
- * Faces and names of whoever holds an award, with a count for anyone who holds it twice:
+ * Names of whoever holds an award, with a count for anyone who holds it twice:
  * "Nicole ×2, Grant & Parker", never "Nicole ×2 & Grant & Parker".
+ *
+ * The Hall of fame passes faces={false} and shows the name alone, Grant's call on
+ * 2026-09-25: under a badge on the lit stage the team logo was a second mark competing
+ * with the one that matters. The Hall of shame keeps its faces.
  */
-function Holders({ people, size = 22 }) {
+function Holders({ people, size = 22, faces = true }) {
   const names = people.map((h) => (h.count > 1 ? `${h.name} ×${h.count}` : h.name))
   return (
     <span className="hold">
-      <span className="hold__faces">
-        {people.map((h) => (
-          <Avatar key={h.id} name={h.name} color={h.color} teamId={h.team_id} size={size} />
-        ))}
-      </span>
+      {faces && (
+        <span className="hold__faces">
+          {people.map((h) => (
+            <Avatar key={h.id} name={h.name} color={h.color} teamId={h.team_id} size={size} />
+          ))}
+        </span>
+      )}
       <span>{ampList(names)}</span>
     </span>
   )
@@ -191,7 +197,7 @@ function HallOfFame({ awards }) {
             <div className="award" key={a.key}>
               <Medal id={a.key} size={104} />
               <p className="award__k">{a.label}</p>
-              <Holders people={a.holders} />
+              <Holders people={a.holders} faces={false} />
               <p className="award__d">{a.detail}</p>
             </div>
           ))}

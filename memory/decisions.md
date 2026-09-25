@@ -374,6 +374,19 @@ Anton on a burst of light, the award names, holders and Up for grabs in the same
 "The record book" line above it. Anton is in index.html's font link; the Hall of shame keeps
 its own lettering. `tests/test_records.py` holds it.
 
+**A trophy-room card is a badge, an award, a name and a detail, and every card on a row
+lines those four up.** Grant, 2026-09-25: "can we drop the logo from our team and just put
+the players name?", then "try to make everything uniform, like stuff being lined up ... take
+off the 'in a week' line on biggest margin of victory so it even", and "only on the big icon
+ones not the everyones numbers tabkles". So: no school logo under a badge, because the badge
+is the mark that card is about; the Hall of shame and the ladders keep theirs. The award
+`margin` is "Biggest margin of victory", the only name that ran to three lines in a 178px
+card, and the week it was won is still in the detail under it. Two lines are held open under
+every badge so a one-line name does not ride up, and the two cards on a row are one subgrid,
+so the name and the detail hold their line even when one name wraps ("Nicole ×2, Grant &
+Parker") and the one beside it does not. Measured at 390 and 375: every drift 0.0px.
+`tests/test_records.py` holds the label length, the subgrid and both two-line minimums.
+
 ## The app's words are the ones Grant marked in the copy audit
 
 Marked 2026-09-14 on a ballot

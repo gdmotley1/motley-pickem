@@ -501,3 +501,26 @@ Two things running in production that no note described, both raised with Grant:
 Also checked: the GitHub sync job ran twelve times from 2026-09-20 16:21Z to 2026-09-22
 07:08Z, all successful, every two to five hours rather than every 15 minutes. Nothing in
 `src/` changed and nothing was deployed.
+
+## 2026-09-25: the trophy room, logos off and every card lined up
+
+Two asks in one sitting. First "can we drop the logo from our team and just put the players
+name?" on the Hall of fame: `Holders` took a `faces` prop and the fame passes `faces={false}`,
+so the Hall of shame and the ladders are untouched. He then scoped it himself, "only on the
+big icon ones not the everyones numbers tabkles".
+
+Then "try to make everything uniform, like stuff being lined up ... take off the 'in a week'
+line on biggest margin of victory so it even". Measured in `outputs/harness` first: at a
+178px card only `margin` ran to three lines, and at 375px `two_td_upset` does too. Three
+changes: the label is now "Biggest margin of victory"; `.award__k` and `.grab p` hold two
+lines open, so Perfect week does not ride up; and each pair of cards is one subgrid
+(`grid-template-rows: subgrid`, `grid-row: span 4`, `align-items: start`), behind an
+`@supports` with the flex column as the fallback.
+
+`align-items: start` is the part that was not obvious. The card's own `align-items: center`,
+left over from the flex layout, applies to the block axis under grid, so a two-line label in
+a three-line row floated half a line down and the pair was out again. Before: 17.4px of drift
+on the name line and 12.3px on the award line at 375. After: 0.0px on all four lines of every
+row, at 390 and 375, including the odd-count branch where the first card takes the whole row.
+
+Gate 410 passed, build clean, each half of the new guard broken in a scratch copy first.
