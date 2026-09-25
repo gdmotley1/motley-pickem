@@ -473,3 +473,31 @@ Deployed on "push and deploy" (commit 2ae750a): GitHub Pages named the new bundl
 seconds; the served index-OGUrciSj.js and index-C32C7qSZ.css are byte-identical to dist, carry
 every new line and none of the old. The live sign-in screen in a throwaway headless profile
 shows all four seats.
+
+## 2026-09-22: memory brought up to what is shipped
+
+"i feel like you need a memory update. youre nto up to speed on whats currently shipped".
+Checked against the served bundle (index-OGUrciSj.js and index-C32C7qSZ.css, from 2ae750a,
+the same as main), the source, and a read-only look at Supabase, then fixed what had drifted:
+
+- `memory/decisions.md` still named "went it alone", said the jumbotron skin was on the
+  Board only, and had "points back" on the standings cards, and the copy audit had no entry.
+  The 2026-09-21 session was interrupted while recording, which is how this and the
+  auto-memory index were left behind.
+- `memory/traps.md` still gave players three tabs and admins four.
+- The auto-memory's redesign note stopped at 2026-09-13, gave the small-text count as 65
+  when it is 10, and said the standings were live from ESPN. They have not been since the
+  Week and Season split: only the Board is. It is now one snapshot of what is live.
+
+Two things running in production that no note described, both raised with Grant:
+
+- **Reminders have no sender.** The scheduler was never built, and `push_log` holds one
+  send ever, a `week_live` to seat 1 on 2026-09-11, by hand. Weeks 3 and 4 were published
+  with no notification. Seats 1 to 3 have a device subscribed; seat 4 has none.
+- **`maybe_publish` auto-publishes** the pre-selected 20 at 18 hours before kickoff if
+  nobody has, and has since 2026-09-03, against "never auto-publish" in decisions.md. Weeks
+  3 and 4 were published by hand, 77 and 101 hours ahead.
+
+Also checked: the GitHub sync job ran twelve times from 2026-09-20 16:21Z to 2026-09-22
+07:08Z, all successful, every two to five hours rather than every 15 minutes. Nothing in
+`src/` changed and nothing was deployed.

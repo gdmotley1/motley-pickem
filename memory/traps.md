@@ -266,8 +266,9 @@ Front the tab, use generous waits, and keep browser scripts short: long ones hit
 
 ## Admin is hidden entirely for non-admins, and gated again in SQL
 
-Seats 1 and 2 see a fourth tab, "Setup". Seats 3 and 4 have a three-tab bar with no
-Setup tab and no route to it.
+Seats 1 and 2 see a fifth tab, "Setup". Seats 3 and 4 have a four-tab bar (Picks, Board,
+Week, Season) with no Setup tab and no route to it. It was four and three until the Week
+and Season split on 2026-09-10.
 
 **Why:** Hiding the tab is only cosmetic. The real gate is that `publish_slate` and
 `get_pool` both raise unless `_player_for(token).is_admin`, so a non-admin calling the

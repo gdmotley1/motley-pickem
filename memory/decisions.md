@@ -41,6 +41,13 @@ keeps the busywork this project exists to kill.
 
 **How to apply:** Every week needs an explicit publish step. Never auto-publish a slate.
 
+**What actually ships is not quite this.** Since 2026-09-03 (commit f9dee99) the GitHub sync
+job's `maybe_publish` publishes the pre-selected 20 when nobody has, 18 hours before the
+first kickoff, so the family is never locked out of a week. It never touches a published
+week or a slate short of 20. Grant has not ruled on whether that squares with the line
+above; it was raised with him on 2026-09-22. Weeks 3 and 4 were published by hand, days
+ahead, so it has not been needed lately.
+
 ## Picks lock per game, at that game's kickoff
 
 A game becomes read-only the moment it kicks off. Games later in the week stay editable.
@@ -210,6 +217,12 @@ guard: without the second, the first run announces every week ever published.
 "Someone passed you" compares against a high-water mark, not your previous rank, which
 caps it at three a week in a four-person pool without any counting.
 
+**Nothing sends them on a schedule yet.** The scheduler, an Edge Function on pg_cron that
+calls `push_due()` and sends, was never built, so every send has been `send_push.py` by
+hand. As of 2026-09-22 the ledger holds one: a `week_live` to seat 1 on 2026-09-11. Weeks 3
+and 4 were published with no notification. Seats 1 to 3 have a device subscribed and seat
+4 has none. Never describe reminders as running until the scheduler exists.
+
 ## A week counts only once it is finished
 
 A week is finished when all 20 of its games are graded, or when a later week has a graded
@@ -229,7 +242,9 @@ over because its graded count is above zero. `tests/recap_check.mjs` and
 Picked 2026-09-12 off two boards: option 2, "Winner's colors" (the athletic department
 FINAL graphic, header included, in the winner's school color on charcoal), then sections
 1, 2, 3, 6, 7, 8, 9 in that order: decided it, upsets, how it unfolded, your week, when
-you all agreed, went it alone, by the numbers. Shipped the same night.
+you all agreed, went at it alone, by the numbers. Shipped the same night.
+"Went at it alone" is Grant's wording from the 2026-09-21 copy audit (below); it was "Went
+it alone".
 
 **Why:** he called the old tab "AI slop", the ranking bars unreadable (90 to 95%, fills
 within 12px) and the text tiny (8.5px). He did not understand "points left on the table"
@@ -258,9 +273,11 @@ the team picked, not the player's avatar, which is a school logo too and read as
 **Why:** he asked for a "real college football scoreboard" look that feels like a "million
 dollar job". The 8-bit arcade direction is saved in `docs/ideas.md` for a theme week.
 
-**How to apply:** the skin is `data-skin="jumbo"` on the Board tab only. Chips name the
-player beside the picked school's mark. The leaderboard reads `weekScore`, as everything
-does; `tests/test_board_jumbo.py` holds the chip logo rule and the hidden unplayed picks.
+**How to apply:** the skin is `data-skin="jumbo"`, on the Board first and on every tab but
+Season since 2026-09-13 (below). Chips name the player beside the picked school's mark. The
+leaderboard reads `weekScore` over live ESPN scores, as the Week tab's final table does over
+graded ones; `tests/test_board_jumbo.py` holds the chip logo rule and the hidden unplayed
+picks.
 
 ## The Picks tab is the jumbotron too: one stadium with the Board
 
@@ -274,7 +291,8 @@ screen, a marquee with a crawl.
 one stadium" and took it over five genuinely different looks
 (https://claude.ai/code/artifact/e7dffb78-ccd0-42f6-bee7-aade8a65f6e3).
 
-**How to apply:** `const jumbo` in App.jsx puts `data-skin="jumbo"` on both tabs. The LED is
+**How to apply:** `const jumbo` in App.jsx puts `data-skin="jumbo"` on both tabs, and since
+that evening on every tab but Season. The LED is
 one component, `src/components/Led.jsx`, and Picks reuses `.jb`, `.jb-wall`, `.jb-empty` and
 `.jb-crawl`. Picks kept its old class names so the old guards still pin the same things
 (`tests/test_preview_cta.py`, `tests/test_qa.py`); the new rules are in
@@ -316,7 +334,9 @@ different, older app wrapped around them.
 stadium is also a token set in theme.css, applied to the skin and to what lives outside
 `.app`: every sheet, sign-in, the toast, the splash. Portalled things (the score strip) name
 their own colors. Gold is the selection and always carries dark lettering; primary buttons
-are `btn btn--led`. `tests/test_jumbotron_everywhere.py` holds it.
+are `btn btn--led`. `tests/test_jumbotron_everywhere.py` holds it. Since 2026-09-14 every
+sheet also has a round X in a top bar that never scrolls (`memory/ui-patterns.md`,
+`tests/test_sheet_close.py`).
 
 ## The Season standings are trading cards
 
@@ -329,8 +349,8 @@ replaced were "dinky compared to everything else".
 **Why:** the matchup sheet's cards, which he had just picked, carried onto the standings.
 
 **How to apply:** `Standings` in `Season.jsx` is one map of `.scard`s, two across: rank badge
-and logo on a lit stage, the name on a bar, points in LED, record and points back on the foot
-(a dash for first). First is the gold card, and a tie for first is two gold cards. The wool
+and logo on a lit stage, the name on a bar, points in LED, and the record and points behind
+on the foot, labelled "Record" and "Behind" (a dash for first). First is the gold card, and a tie for first is two gold cards. The wool
 and the record book below are unchanged. The form chart that sat under the cards went the
 same night: "take the form away dont like it".
 
@@ -353,3 +373,20 @@ his art in `inputs/badges/<key>.png`, the key in both `scripts/build_badges.py` 
 Anton on a burst of light, the award names, holders and Up for grabs in the same type, and no
 "The record book" line above it. Anton is in index.html's font link; the Hall of shame keeps
 its own lettering. `tests/test_records.py` holds it.
+
+## The app's words are the ones Grant marked in the copy audit
+
+Marked 2026-09-14 on a ballot
+(https://claude.ai/code/artifact/6a71d168-1c73-4ee4-82d2-dc7239d89ec9), twelve Change it and
+one Keep it, and built 2026-09-21 after he found "Went it alone" still live. The session that
+published the ballot never got his "done".
+
+**Why:** lines like "Had FAU", "Back" and "2 times" read as broken to the family, and two
+were false. By the numbers credited three people with an upset only one had called, and Your
+week said who "finished next to you", which was wrong for 3rd and 4th.
+
+**How to apply:** `tests/test_copy_audit.py` bans the old wording from every file under
+`src/`. Do not bring a marked line back, or reword one, without asking. Names join with
+commas and one ampersand ("Nicole ×2, Grant & Parker"), and three co-winners of a week join
+the same way. "Decided it" stays, because he kept it. The lines he left unmarked (Picks,
+Board, sign-in, Setup, contractions) were left as they were.
