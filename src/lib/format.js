@@ -31,6 +31,37 @@ export function weekdayLabel(iso) {
   return d.toLocaleDateString([], { weekday: 'long' })
 }
 
+/**
+ * "Sep 17–19": the days a week's games actually ran, for the strip over the final.
+ *
+ * Grant, 2026-09-25, picking it off the options board: "for the week just put those date
+ * ranges in for the smaller week 3 next to final". The cell used to repeat the week's
+ * label, which the pager directly above it already says.
+ *
+ * One date when every game is on the same day, and both months when a week straddles one
+ * ("Sep 30 – Oct 3"). No week of 2026 does: checked against the real calendar, every
+ * week's Thursday and Saturday land in the same month. It is here because the ESPN week
+ * boundary is a Monday, so a week's window always spans two months somewhere in a season
+ * and a Tuesday game would be enough. Local, like every other label here, so it agrees
+ * with the kickoff times the rest of the app shows.
+ */
+export function dateRangeLabel(isos) {
+  const days = (isos || [])
+    // Boolean first: new Date(null) is the epoch, not an invalid date, and a missing
+    // kickoff would come out of here as "Dec 31".
+    .filter(Boolean)
+    .map((x) => new Date(x))
+    .filter((d) => !Number.isNaN(d.getTime()))
+    .sort((a, b) => a - b)
+  if (!days.length) return ''
+  const first = days[0]
+  const last = days[days.length - 1]
+  const mon = (d) => d.toLocaleDateString([], { month: 'short' })
+  if (first.toDateString() === last.toDateString()) return `${mon(first)} ${first.getDate()}`
+  if (mon(first) === mon(last)) return `${mon(first)} ${first.getDate()}–${last.getDate()}`
+  return `${mon(first)} ${first.getDate()} – ${mon(last)} ${last.getDate()}`
+}
+
 /** Sort/group key for dayLabel: the local calendar date, as "2026-09-05". */
 export function dayKey(iso) {
   const d = new Date(iso)

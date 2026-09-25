@@ -116,3 +116,40 @@ def test_there_is_no_back_to_the_latest_week_button():
     assert "wknav__back" not in body and "Back to {" not in body, "the Back to Week button is back"
     assert ".wknav__back" not in read("src", "app.css"), "its styles are back without it"
 
+
+
+def test_the_week_strip_carries_the_dates_not_the_week_name():
+    """Grant, 2026-09-25, off the options board: "for the week just put those date ranges in
+    for the smaller week 3 next to final". The pager directly above the strip already says
+    Week 3, so the cell repeated it. Final and 20/20 stay as they were: he asked for the one
+    cell."""
+    week = read("src", "screens", "Week.jsx")
+    strip = week.split('<div className="jb-strip">', 1)[1].split("</div>", 1)[0]
+    assert "{dates || label}" in strip, "the strip's first cell is not the date range"
+    assert re.search(r"dates=\{dateRangeLabel\(slate\.map\(\(g\) => g\.kickoff\)\)\}", week), (
+        "the range is no longer measured off the whole slate's kickoffs"
+    )
+    assert "dateRangeLabel" in week.split("\n\n", 1)[0] or "dateRangeLabel" in week[:900], (
+        "dateRangeLabel is not imported"
+    )
+    fmt = read("src", "lib", "format.js")
+    body = fmt.split("export function dateRangeLabel", 1)[1].split("\nexport ", 1)[0]
+    assert ".filter(Boolean)" in body, (
+        "a null kickoff becomes new Date(null), the epoch, and the strip reads Dec 31"
+    )
+
+
+def test_the_final_chip_is_steel_in_both_places():
+    """Grant, 2026-09-25: "steel chip for final". It was #e9eef5 with a white glow, twenty of
+    them down the Board and one in the Week strip, the brightest thing on the wall on the
+    least important word. Red LIVE is now the only status that shouts."""
+    css = re.sub(r"/\*.*?\*/", "", read("src", "app.css"), flags=re.S)
+    for sel in (r"\.jb-pill\.is-final", r"\.wf-top__final"):
+        rule = re.search(r"\n%s\s*\{(.*?)\}" % sel, css, re.S).group(1)
+        assert "#e9eef5" not in rule, "%s is the white pill again" % sel
+        assert "inset 0 0 0 1px" in rule, "%s lost the hairline ring" % sel
+        assert "#10141b" in rule, "%s is not the steel fill" % sel
+        glow = re.search(r"box-shadow:\s*([^;]+)", rule).group(1)
+        assert "inset" in glow and "rgba(233" not in glow, "%s still glows" % sel
+    live = re.search(r"\n\.jb-pill\.is-live\s*\{(.*?)\}", css, re.S).group(1)
+    assert "var(--jb-red)" in live, "live is no longer the one bright status"

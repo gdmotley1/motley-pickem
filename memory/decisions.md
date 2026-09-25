@@ -273,6 +273,16 @@ the team picked, not the player's avatar, which is a school logo too and read as
 **Why:** he asked for a "real college football scoreboard" look that feels like a "million
 dollar job". The 8-bit arcade direction is saved in `docs/ideas.md` for a theme week.
 
+**Red is the only status that shouts, and a strip never repeats the line above it.** Off an
+options board on 2026-09-25 ("steel chip for final", and "for the week just put those date
+ranges in for the smaller week 3 next to final"): the FINAL chip on all 20 Board tiles and in
+the Week strip was white #e9eef5 with a white glow, the brightest thing on the wall on the
+least important word. It is now the same build as the amber KICKED OFF chip beside it, in
+grey. The Week strip's first cell carries the days the week ran ("Sep 17–19", from
+`dateRangeLabel`) rather than repeating the pager above it. Light surfaces on the Board, as
+`sweep_shots.ps1` counts them: 21 before, 1 after, and that one is the gold rank badge.
+`tests/test_week_final.py` holds both.
+
 **How to apply:** the skin is `data-skin="jumbo"`, on the Board first and on every tab but
 Season since 2026-09-13 (below). Chips name the player beside the picked school's mark. The
 leaderboard reads `weekScore` over live ESPN scores, as the Week tab's final table does over

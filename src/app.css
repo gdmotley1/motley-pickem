@@ -1972,10 +1972,15 @@
   white-space: nowrap;
 }
 
+/* The steel chip, Grant's pick on 2026-09-25 off a board of five: "steel chip for final".
+   It was a white #e9eef5 pill with a white glow, twenty of them down the Board, and the
+   brightest thing on the wall was the least important word on it. This is the same build
+   as the amber .is-soon chip beside it, in grey, so red LIVE is the only status that
+   shouts. The Week strip's Final (.wf-top__final) matches it. */
 .jb-pill.is-final {
-  background: #e9eef5;
-  color: #07080b;
-  box-shadow: 0 0 12px rgba(233, 238, 245, 0.45);
+  background: #10141b;
+  color: #8b95a4;
+  box-shadow: inset 0 0 0 1px #2a323e;
 }
 
 .jb-pill.is-live {
@@ -4091,9 +4096,9 @@
 .wf-top__final {
   padding: 2px 12px;
   border-radius: 3px;
-  background: #e9eef5;
-  box-shadow: 0 0 12px rgba(233, 238, 245, 0.45);
-  color: #07080b;
+  background: #10141b;
+  box-shadow: inset 0 0 0 1px #2a323e;
+  color: #8b95a4;
 }
 
 /* The winner's panel, lit in their school's colors and ringed in gold. */

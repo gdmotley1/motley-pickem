@@ -3,7 +3,7 @@ import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../components/ui.jsx'
 import { calledLine, headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
-import { ampList } from '../lib/format.js'
+import { ampList, dateRangeLabel } from '../lib/format.js'
 import { weekScore } from '../lib/weekScore.js'
 import { weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
@@ -135,7 +135,8 @@ export default function Week({ me, onSkin }) {
 
   return (
     <div className="wf">
-      <Hero recap={recap} label={nav.current.label} finals={graded.games.length} slateSize={slate.length}
+      <Hero recap={recap} label={nav.current.label} dates={dateRangeLabel(slate.map((g) => g.kickoff))}
+            finals={graded.games.length} slateSize={slate.length}
             teamOf={teamOf} pager={<Pager nav={nav} onGo={setViewId} />} />
       <FinalTable score={score} me={me} teamOf={teamOf} />
       <Decided recap={recap} byId={byId} rows={graded.rows} />
@@ -169,7 +170,7 @@ const ledNameSize = (chars) => (chars <= 6 ? 96 : chars <= 8 ? 72 : chars <= 11 
  * this top are one stadium, and the winner's panel is in their school's colors. A shared
  * week splits the panel between both schools and names both.
  */
-function Hero({ recap, label, finals, slateSize, teamOf, pager }) {
+function Hero({ recap, label, dates, finals, slateSize, teamOf, pager }) {
   const leaders = recap.leaders
   const shared = leaders.length > 1
   const lead = leaders[0]
@@ -184,7 +185,9 @@ function Hero({ recap, label, finals, slateSize, teamOf, pager }) {
       {pager}
       <div className="jb-wall wf-top__wall">
         <div className="jb-strip">
-          <span>{label}</span>
+          {/* The days the week ran, not its name: the pager directly above this already
+              says Week 3. Grant picked it off the options board on 2026-09-25. */}
+          <span>{dates || label}</span>
           <span className="wf-top__final">Final</span>
           <span className="num">
             {finals}/{slateSize}

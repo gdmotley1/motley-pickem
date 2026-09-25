@@ -524,3 +524,29 @@ on the name line and 12.3px on the award line at 375. After: 0.0px on all four l
 row, at 390 and 375, including the odd-count branch where the first card takes the whole row.
 
 Gate 410 passed, build clean, each half of the new guard broken in a scratch copy first.
+
+## 2026-09-25: a polish sweep, then the FINAL chip and the Week strip
+
+"what else could we do to improve the app in terms of polish". Ran `sweep_shots.ps1` over
+eleven states plus the Week tab on real Week 3 data rather than guessing. The app came back
+clean on the things that usually rot: no sideways scroll anywhere, no console errors, no
+light panels left over from the old theme. Six candidates went to Grant, and one thing worth
+recording: the WINNER panel looks half empty in the demo sweep only because the mock seats
+have no team, so the 76px school mark that fills its right side never renders. Checked
+against live data before saying anything.
+
+He picked two, off an options board built from the real markup and the real CSS
+(https://claude.ai/artifact/8LLNWLbGLzAnYycpr9Mb6w, five pill treatments and four strips,
+each on a real Board tile or the real Week 3 hero):
+
+- **Steel chip for FINAL**, the same build as the amber KICKED OFF chip beside it. Board
+  light surfaces 21 to 1, Week 2 to 1, and the survivors are the gold rank badge and the
+  gold WINNER lamp, both of them the selection color.
+- **The Week strip's first cell is the dates**, "SEP 17-19", not a second "Week 3" under a
+  pager that already says it. `dateRangeLabel` in `format.js` measures the whole slate's
+  kickoffs, local like every other label, and handles a single-day week and a month
+  straddle. `.filter(Boolean)` first, because `new Date(null)` is the epoch and a missing
+  kickoff would have rendered the strip as "Dec 31".
+
+Gate 412 passed, build clean, each new guard broken in a scratch copy first.
+
