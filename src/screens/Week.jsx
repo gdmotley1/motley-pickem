@@ -8,7 +8,7 @@ import { ampList, dateRangeLabel } from '../lib/format.js'
 import { weekScore } from '../lib/weekScore.js'
 import { weekNav } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
-import { schoolField, schoolPanel } from '../lib/schoolField.js'
+import { schoolBadge, schoolField, schoolPanel } from '../lib/schoolField.js'
 import { onDark } from '../lib/onDark.js'
 import Led from '../components/Led.jsx'
 import Mark from '../components/Mark.jsx'
@@ -222,9 +222,13 @@ function FinalTable({ score, me, teamOf }) {
   return (
     <section className="wf-sec wf-sec--table" aria-label="Final standings">
       <div className="wf-table">
-        {score.players.map((p) => (
+        {score.players.map((p) => {
+          /* Not the raw second colour. Nineteen schools list a flat white and the rank was
+             then a white number on a white badge; see schoolBadge. */
+          const badge = schoolBadge(teamOf(p.team_id), p.color)
+          return (
           <div className={`wf-row${p.rank === 1 ? ' is-lead' : ''}`} key={p.id}>
-            <span className="wf-rank num" style={{ background: teamOf(p.team_id)?.alt || p.color }}>
+            <span className="wf-rank num" style={{ background: badge.field, color: badge.ink }}>
               {p.rank}
             </span>
             <Avatar name={p.name} color={p.color} teamId={p.team_id} size={34} />
@@ -237,7 +241,8 @@ function FinalTable({ score, me, teamOf }) {
             </span>
             <strong className="num">{p.points}</strong>
           </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )

@@ -18,6 +18,7 @@
 import { useEffect, useState } from 'react'
 import { Portal } from './ui.jsx'
 import { teamById, markUrl } from '../lib/teams.js'
+import { schoolBadge } from '../lib/schoolField.js'
 
 /**
  * How far down the viewport the readable area actually starts.
@@ -56,10 +57,13 @@ export function useHeaderOffset() {
  * and the disc would stop existing. `alt` in teams.json is therefore whichever school
  * colour the disc did not take, which is the same idea and cannot collide. A seat with no
  * school falls back to the player's own colour, exactly as the avatar does.
+ *
+ * Unless that other colour is a white or a pale grey, which nineteen schools list and which
+ * stands for none of them. `schoolBadge` falls through to the disc's colour there.
  */
 function Block({ p, size = 24, skeleton }) {
   const team = teamById(p.team_id)
-  const bg = team?.alt || p.color
+  const bg = schoolBadge(team, p.color).field
   return (
     <span className="bugrow__block" style={{ background: bg }}>
       {/* Nothing to rank before anyone has scored: everyone ties on zero, so a real
@@ -239,7 +243,9 @@ export function ScoreBug({ score, pinned, top }) {
                 className={`wkbug__p${p.points === best ? ' is-leader' : ''}`}
                 key={p.id}
               >
-                <i style={{ background: team?.alt || p.color }} />
+                {/* Same rule as the block: a white lamp on a black strip names no school,
+                    and four of them would look identical. */}
+                <i style={{ background: schoolBadge(team, p.color).field }} />
                 <span className="wkbug__who">{p.name}</span>
                 <b className="num">{p.points}</b>
               </span>

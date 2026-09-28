@@ -162,7 +162,7 @@ check("James's rival is the winner, Grant", hj.rival.name === 'Grant' && hj.gap 
 check('the six games everyone got are named',
   r.sweepGames.map((x) => x.winner).join() === 'MSU,USC,ALA,UGA,ORE,TEX', r.sweepGames.map((x) => x.winner).join())
 
-const { schoolField } = await import(pathToFileURL(join(root, 'src', 'lib', 'schoolField.js')).href)
+const { schoolField, schoolBadge } = await import(pathToFileURL(join(root, 'src', 'lib', 'schoolField.js')).href)
 const teams = Object.fromEntries(JSON.parse(readFileSync(join(root, 'static', 'data', 'teams.json'), 'utf-8')).map((t) => [t.id, t]))
 check('Arkansas paints the week cardinal with white type',
   JSON.stringify(schoolField(teams['8'])) === JSON.stringify({ field: '#a32136', ink: '#ffffff' }), JSON.stringify(schoolField(teams['8'])))
@@ -170,6 +170,40 @@ check('Tulane paints it green', schoolField(teams['2655']).field === '#006747', 
 check('Kennesaw State gold takes dark type', schoolField(teams['338']).ink === '#111111', JSON.stringify(schoolField(teams['338'])))
 check('Georgia paints it red, not charcoal', schoolField(teams['61']).field === '#ba0c2f', schoolField(teams['61']).field)
 check('a seat with no school falls back to its own color', schoolField(undefined, '#8A2E4F').field === '#8A2E4F')
+
+/* The solid block a rank sits on: the school's second colour, unless that is a white or a
+   pale grey. Grant, 2026-09-28: James wears North Texas, whose second colour is #ffffff,
+   "so on the scoreboard it shows as a white square bc the number is white too". */
+const contrast = (a, b) => {
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  const lum = (h) => {
+    const [r, g, bl] = [1, 3, 5].map((i) => lin(parseInt(h.slice(i, i + 2), 16) / 255))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl
+  }
+  const [x, y] = [lum(a) + 0.05, lum(b) + 0.05]
+  return Math.max(x, y) / Math.min(x, y)
+}
+const unt = schoolBadge(teams['249'])
+check('North Texas gets its green, not its white', unt.field === '#068f33' && unt.ink === '#ffffff',
+  JSON.stringify(unt))
+check('a pale grey is no better than white: Ohio State takes scarlet',
+  schoolBadge(teams['194']).field === '#ba0c2f', JSON.stringify(schoolBadge(teams['194'])))
+check('a real school colour is kept: Michigan stays gold and takes dark type',
+  schoolBadge(teams['130']).field === '#ffcb05' && schoolBadge(teams['130']).ink === '#111111',
+  JSON.stringify(schoolBadge(teams['130'])))
+check('a charcoal second colour is not a neutral: Georgia keeps it',
+  schoolBadge(teams['61']).field === '#413f3e' && schoolBadge(teams['61']).ink === '#ffffff',
+  JSON.stringify(schoolBadge(teams['61'])))
+check('a seat with no school still falls back to its own colour',
+  schoolBadge(undefined, '#8A2E4F').field === '#8A2E4F')
+
+/* The whole library, because the bug was invisible until one player picked one school. */
+const badges = Object.values(teams).map((t) => [t.school, schoolBadge(t)])
+const unreadable = badges.filter(([, b]) => contrast(b.field, b.ink) < 3)
+check('every school in the library carries a readable rank', unreadable.length === 0,
+  unreadable.map(([s, b]) => `${s} ${b.field}/${b.ink} ${contrast(b.field, b.ink).toFixed(2)}`).join(' | '))
+const white = badges.filter(([, b]) => b.field.toLowerCase() === '#ffffff')
+check('no school is painted flat white', white.length === 0, white.map(([s]) => s).join(' | '))
 
 /* A week nobody could have swung with one result must come back empty rather than
    inventing a nearest miss. Forty points clear is out of reach of any single game. */

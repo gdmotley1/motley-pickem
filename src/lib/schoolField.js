@@ -28,6 +28,50 @@ function luminance(hex) {
 
 const valid = (c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)
 
+/**
+ * A pale, unsaturated colour: a white or a light grey.
+ *
+ * Schools list these as a second colour and they identify nobody. Nineteen of the 139 have
+ * a flat #ffffff and five more a pale grey, so a block painted with one is the same block
+ * for Alabama, Duke, Texas A&M and North Texas alike.
+ *
+ * Only the pale end. A charcoal or a black second colour is just as unsaturated and is a
+ * perfectly good block, because the lettering on it is white and reads.
+ */
+const neutral = (hex) => saturation(hex) < 0.25 && luminance(hex) > 0.3
+
+const contrast = (a, b) => {
+  const [x, y] = [luminance(a) + 0.05, luminance(b) + 0.05]
+  return Math.max(x, y) / Math.min(x, y)
+}
+
+/**
+ * The colour of a solid block standing for a school, and the lettering that reads on it.
+ *
+ * The block takes the school's SECOND colour, so it does not repeat the disc beside it.
+ * Grant, 2026-09-28: James wears North Texas, whose second colour is white, "so on the
+ * scoreboard it shows as a white square bc the number is white too". A neutral is not a
+ * school colour, so it falls through to the first one: North Texas is green.
+ *
+ * The ink is measured rather than left white, which is the same bug one step milder on
+ * every school whose second colour is a gold: white on Michigan's #ffcb05 is 1.5:1 and on
+ * Oregon's #fff41b 1.15:1. White while it clears 3.2:1, dark below that. The threshold is
+ * a measurement and not a taste: under it the dark alternative is always above 5.7:1,
+ * because a colour pale enough to fail white is pale enough to carry black easily.
+ *
+ * The whole library is walked in tests/recap_check.mjs, because this was invisible until
+ * one player happened to pick one school.
+ */
+export function schoolBadge(team, fallback = '#28313d') {
+  const alt = valid(team?.alt) ? team.alt : null
+  const bg = valid(team?.bg) ? team.bg : null
+  const field =
+    alt && !neutral(alt) ? alt
+      : bg && !neutral(bg) ? bg
+        : alt || bg || (valid(fallback) ? fallback : '#28313d')
+  return { field, ink: contrast(field, '#ffffff') >= 3.2 ? '#ffffff' : '#111111' }
+}
+
 export function schoolField(team, fallback = '#28313d') {
   const options = [team?.bg, team?.alt].filter(valid)
   const field = options.length ? options.reduce((a, b) => (saturation(b) > saturation(a) ? b : a)) : valid(fallback) ? fallback : '#28313d'

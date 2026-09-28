@@ -374,6 +374,30 @@ made for the Week tab's strip on 2026-09-25: the pager directly above already sa
 `outputs/harness/tools/board_shots.ps1` renders `#now`, `#back` and `#jump` off a two-week
 stub.
 
+## A school's second colour is not always a school colour
+
+`teams.json` keeps two colours per school, the disc's (`bg`) and the other one (`alt`).
+Anything painting a solid block for a player takes `alt`, so the block does not repeat the
+disc sitting next to it: the rank badge on the Week tab's final table, the strip that pins
+on the Board, the scorebug's colour block.
+
+**Nineteen of the 139 schools list a flat `#ffffff` as their second colour and five more a
+pale grey.** Grant found it on 2026-09-28 when James moved to North Texas: the rank badge
+became a white parallelogram with a white number in it, invisible. The same colour would
+also have made Alabama, Duke, Texas A&M and North Texas the identical block.
+
+**How to apply:** never read `team.alt` straight for a block. `schoolBadge` in
+`src/lib/schoolField.js` returns `{ field, ink }`: `alt` unless it is a light neutral (low
+saturation, high luminance), in which case `bg`; then the lettering measured against it,
+white while it clears 3.2:1 and dark below. A dark neutral is fine and is kept, because
+white reads on a charcoal. The whole library is walked in `tests/recap_check.mjs`, since
+this was invisible until one player happened to pick one school; `#unt` in
+`outputs/harness/week_stub.js` puts James on North Texas to look at it.
+
+Related but separate: `schoolField` answers "what colour is this school" for a whole field
+(the finished week's skin) and `schoolPanel` darkens one until white type reads on it (the
+Board's rows). Three functions, three jobs.
+
 ## Do not use framer-motion AnimatePresence in this app
 
 Screen transitions animate in on a fresh `key` with no exit. Sheets and toasts are the
