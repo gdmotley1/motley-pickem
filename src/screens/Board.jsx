@@ -4,13 +4,15 @@ import { friendly } from '../lib/errors.js'
 import PickNudge from '../components/PickNudge.jsx'
 import Led from '../components/Led.jsx'
 import Mark from '../components/Mark.jsx'
+import WeekPager from '../components/WeekPager.jsx'
 import { Avatar, IconLock, Rank, Spinner } from '../components/ui.jsx'
 import { ScoreBug, useHeaderOffset } from '../components/WeekScore.jsx'
 import { withLive } from '../lib/espn.js'
 import { weekScore } from '../lib/weekScore.js'
 import { useLiveScores } from '../lib/useLiveScores.js'
 import { rankOf, useRanks } from '../lib/useRanks.js'
-import { kickoffLabel } from '../lib/format.js'
+import { boardNav, isComplete } from '../lib/weekNav.js'
+import { dateRangeLabel, kickoffLabel } from '../lib/format.js'
 import { useTeams } from '../lib/teams.js'
 import { schoolPanel } from '../lib/schoolField.js'
 
@@ -25,17 +27,46 @@ import { schoolPanel } from '../lib/schoolField.js'
  * The server decides what is visible: get_board only returns rows for games where
  * kickoff has passed. Nothing here filters for secrecy, so there is no way for the
  * client to leak an unplayed pick.
+ *
+ * Since 2026-09-28 it steps back through the weeks that have been played, which Grant
+ * asked for. The week being viewed is local to this screen, never App's `weekId`: that one
+ * is shared with Picks and Setup, and dragging them back a week would mean settling an
+ * argument on the Board and then finding the whole slate locked on Picks. It resets on its
+ * own when the tab changes, because App unmounts the screen.
  */
-export default function Board({ me, weekId, week, onNavigate }) {
+export default function Board({ me, weekId, week, onNavigate, onWeek }) {
   const [slate, setSlate] = useState(null)
   const [rows, setRows] = useState(null)
   const [roster, setRoster] = useState(null)
+  const [weeks, setWeeks] = useState(null)
   const [error, setError] = useState(null)
   const teams = useTeams()
 
+  /* Null until somebody steps, so the current week keeps flowing down from App until then.
+     It has to: App opens on a remembered week id and replaces it once get_current_week
+     answers, and a viewId seeded from the first render would pin the Board to the stale
+     one. */
+  const [viewId, setViewId] = useState(null)
+  const view = viewId ?? weekId
+
+  /* The week list is the pager's and nothing else's, so a failure leaves the Board itself
+     working with both arrows dead rather than putting an error over the home screen. */
   useEffect(() => {
     let alive = true
-    Promise.all([api.getSlate(weekId), api.getBoard(weekId), api.listSeats()])
+    api
+      .listWeeks()
+      .then((w) => alive && setWeeks(w))
+      .catch(() => alive && setWeeks([]))
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  useEffect(() => {
+    let alive = true
+    setSlate(null)
+    setRows(null)
+    Promise.all([api.getSlate(view), api.getBoard(view), api.listSeats()])
       .then(([s, b, seats]) => {
         if (!alive) return
         setSlate(s)
@@ -46,10 +77,23 @@ export default function Board({ me, weekId, week, onNavigate }) {
     return () => {
       alive = false
     }
-  }, [weekId])
+  }, [view])
 
   const live = useLiveScores(slate)
   const ranks = useRanks()
+
+  const nav = useMemo(() => boardNav(weeks, weekId, view), [weeks, weekId, view])
+
+  /* Tell App which week is on screen, so its header cannot say Week 4 over a board
+     showing Week 3. Reported rather than read, because the week being viewed is this
+     screen's and App's `weekId` has to go on meaning the week being played: Picks and
+     Setup are still on it. Cleared when the tab changes and this unmounts. */
+  const viewedId = nav.current?.id ?? null
+  useEffect(() => {
+    onWeek?.(nav.current || null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewedId, onWeek])
+  useEffect(() => () => onWeek?.(null), [onWeek])
 
   /* Score, status and winner all come from ESPN once a game is under way, so a final
      marks the loser and fills in everyone's points the moment it happens rather than
@@ -87,6 +131,10 @@ export default function Board({ me, weekId, week, onNavigate }) {
   const [pinned, setPinned] = useState(false)
   useEffect(() => {
     const el = cardRef.current
+    /* Stepping to another week unmounts the leaderboard while the new one loads. Without
+       this the strip would come back pinned over the top of a board scrolled to its
+       first tile, until the observer's first callback corrected it a frame later. */
+    if (!el) setPinned(false)
     if (!el || typeof IntersectionObserver === 'undefined') return undefined
     const io = new IntersectionObserver(([e]) => setPinned(!e.isIntersecting), {
       rootMargin: `-${headerH}px 0px 0px 0px`,
@@ -96,9 +144,29 @@ export default function Board({ me, weekId, week, onNavigate }) {
   }, [showScore, headerH])
 
   if (error) return <p className="err">{error}</p>
-  if (!games || !rows || !roster) return <Spinner />
 
-  const label = week?.label || 'This week'
+  const label = nav.current?.label || week?.label || 'This week'
+
+  /* Rendered above everything the week itself draws, so stepping from a full board to a
+     loading one does not take the control you just used off the screen. `finished` is what
+     stops the jump list naming a leader as if they had won; see WeekPager. */
+  const pager = (
+    <WeekPager
+      nav={nav}
+      onGo={setViewId}
+      noNext="This is the week being played"
+      finished={new Set(nav.list.filter(isComplete).map((w) => w.id))}
+    />
+  )
+
+  if (!games || !rows || !roster)
+    return (
+      <div className="jb">
+        {pager}
+        <Spinner />
+      </div>
+    )
+
   const teamOf = (id) => teams?.find((t) => t.id === id)
 
   /* This is the screen the app opens on, so a week with nothing published has to say so.
@@ -106,6 +174,7 @@ export default function Board({ me, weekId, week, onNavigate }) {
   if (!games.length)
     return (
       <div className="jb">
+        {pager}
         <div className="jb-wall">
           <div className="jb-strip"><span>{label}</span></div>
           <section className="jb-empty">
@@ -117,16 +186,23 @@ export default function Board({ me, weekId, week, onNavigate }) {
     )
 
   const finals = games.filter((g) => g.winner_abbr)
+  const dates = dateRangeLabel(games.map((g) => g.kickoff))
 
   return (
     <div className="jb">
       {/* Above the score on purpose. Whatever this week has already become, the thing
-          you can still do about it comes first. */}
+          you can still do about it comes first. A week already played has no pending
+          picks, so this draws nothing there. */}
       <PickNudge games={games} onGo={() => onNavigate?.('picks')} />
+
+      {pager}
 
       <div className="jb-wall">
         <div className="jb-strip">
-          <span>{label}</span>
+          {/* The days the week ran, not its name: the pager right above already says
+              Week 3. Grant's call for the Week tab's strip on 2026-09-25, and the same
+              repetition would be here. */}
+          <span>{dates || label}</span>
           {score.playing > 0 && (
             <span className="jb-onair">
               <i />

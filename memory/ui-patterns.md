@@ -345,6 +345,35 @@ ask for 36px and the global `button { min-height: var(--tap) }` gives them 44. T
 right height for a thumb; the padding was trimmed instead of fighting it. See
 `memory/traps.md`.
 
+## The Board steps back too, and the two pagers are one component
+
+Grant, 2026-09-28: "can we make it we can see the previous week's boards?" The Board grew
+the same control, so `WeekPager` moved out of Week.jsx into `src/components/WeekPager.jsx`
+and its jumbotron styling moved from `.wf-top .wknav--hero` to `.jb .wknav--hero`.
+
+**Which weeks each one reaches is the only difference, and it lives in weekNav.js.**
+`recapWeeks` for the Week tab, finished weeks only. `boardWeeks` for the Board: every
+published week with a slate, up to and including the week being played, which is also where
+it opens. A week mid-flight is a real destination here, because the Board IS the scoreboard.
+
+**Forward stops at the week being played.** The sync job's T-18h net can publish next week's
+slate while this one is still on. That week has no score and every pick hidden, so one tap
+forward would land on what reads as a broken screen.
+
+**The viewed week is local to the Board, like the Week tab's**, and for the same reason:
+`weekId` in App is shared with Picks and Setup. It is reported back up through `onWeek` so
+the header names the week on screen, which is the one thing the Week tab still does not do.
+
+**The jump list may not name a leader as a winner.** `WeekPager`'s `finished` prop is the
+set of ids that are actually over; anything else prints its status ("in progress"). The Week
+tab passes nothing, because every week it can reach is finished.
+
+The strip's first cell then carries the dates rather than the week name, the same call Grant
+made for the Week tab's strip on 2026-09-25: the pager directly above already says Week 3.
+`tests/test_board_weeks.py` and the boardNav block in `tests/recap_check.mjs` hold all of it;
+`outputs/harness/tools/board_shots.ps1` renders `#now`, `#back` and `#jump` off a two-week
+stub.
+
 ## Do not use framer-motion AnimatePresence in this app
 
 Screen transitions animate in on a fresh `key` with no exit. Sheets and toasts are the

@@ -89,6 +89,10 @@ export default function App() {
   const [stale, setStale] = useState(false)
   /* The finished week's colors, reported by the Week screen: { field, ink } or null. */
   const [weekSkin, setWeekSkin] = useState(null)
+  /* The week the Board is looking at, which is its own since 2026-09-28 and is not
+     necessarily the one being played. Reported back so the header follows it instead of
+     printing one week number over a board showing another. Null on every other tab. */
+  const [boardWeek, setBoardWeek] = useState(null)
 
   useEffect(() => {
     loadTeams() // 18KB, wanted before the first avatar renders
@@ -233,6 +237,10 @@ export default function App() {
      header, same amber tab. Season keeps the book it was built as. */
   const jumbo = tab !== 'season'
 
+  /* The header names the week on screen. Everywhere but the Board that is the week being
+     played; there it is whichever one the pager is parked on. */
+  const shownWeek = (tab === 'board' && boardWeek) || week
+
   return (
     <div className="app" data-mode={mode} data-skin={jumbo ? 'jumbo' : undefined}
          style={skin ? { '--wf-field': skin.field, '--wf-ink': skin.ink } : undefined}>
@@ -240,7 +248,7 @@ export default function App() {
         <div>
           <span className="apphdr__title">Motley Pick&apos;em</span>
           <span className="apphdr__week">
-            {week ? `${week.label} · ${week.slate_size} games` : ' '}
+            {shownWeek ? `${shownWeek.label}· ${shownWeek.slate_size} games` : ' '}
           </span>
         </div>
         <button className="apphdr__me" onClick={() => setMenu(true)}>
@@ -268,7 +276,7 @@ export default function App() {
             <Picks me={me} weekId={weekId} week={week} onNavigate={setTab} />
           )}
           {tab === 'board' && (
-            <Board me={me} weekId={weekId} week={week} onNavigate={setTab} />
+            <Board me={me} weekId={weekId} week={week} onNavigate={setTab} onWeek={setBoardWeek} />
           )}
           {tab === 'week' && <Week me={me} onSkin={setWeekSkin} />}
           {tab === 'season' && <Season />}

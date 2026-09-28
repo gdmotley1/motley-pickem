@@ -4045,19 +4045,20 @@
 /* Direction 1 of four Grant was shown on 2026-09-13, minus the line naming the runner-up
    ("take out the over james by 7"). The Board's own wall and LED lettering (.jb, .jb-wall,
    .jb-strip, .jb-led), so the result sits on the same wall as the Board and Picks, and the
-   header over it is the jumbotron's. Scoped under .wf-top: the base .wknav rules sit further
-   down this file and would otherwise win on order alone (memory/traps.md). */
+   header over it is the jumbotron's. The pager below is scoped under .jb rather than
+   .wf-top because the Board grew the same control on 2026-09-28: the base .wknav rules sit
+   further down this file and would otherwise win on order alone (memory/traps.md). */
 .jb.wf-top {
   padding: 0 0 12px;
 }
 
-.wf-top .wknav--hero {
+.jb .wknav--hero {
   padding: 10px 12px 2px;
   background: transparent;
   border-bottom: 0;
 }
 
-.wf-top .wknav--hero .wknav__arrow {
+.jb .wknav--hero .wknav__arrow {
   width: 44px;
   height: 44px;
   border-radius: 4px;
@@ -4066,15 +4067,15 @@
   color: var(--jb-amber);
 }
 
-.wf-top .wknav--hero .wknav__arrow:active {
+.jb .wknav--hero .wknav__arrow:active {
   background: #1d222b;
 }
 
-.wf-top .wknav--hero .wknav__mid:active {
+.jb .wknav--hero .wknav__mid:active {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.wf-top .wknav--hero .wknav__mid b {
+.jb .wknav--hero .wknav__mid b {
   gap: 6px;
   font-family: 'Big Shoulders Display', var(--display);
   font-size: 24px;
@@ -4084,7 +4085,7 @@
   color: var(--jb-white);
 }
 
-.wf-top .wknav--hero .wknav__mid b svg {
+.jb .wknav--hero .wknav__mid b svg {
   color: var(--jb-amber);
 }
 

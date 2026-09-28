@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
-import { Avatar, Chevron, Empty, IconTrophy, Screen, Sheet, Spinner } from '../components/ui.jsx'
+import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
+import WeekPager from '../components/WeekPager.jsx'
 import { calledLine, headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
 import { ampList, dateRangeLabel } from '../lib/format.js'
 import { weekScore } from '../lib/weekScore.js'
-import { weekNav, weekStatus, winnersByWeek } from '../lib/weekNav.js'
+import { weekNav } from '../lib/weekNav.js'
 import { useTeams } from '../lib/teams.js'
 import { schoolField, schoolPanel } from '../lib/schoolField.js'
 import { onDark } from '../lib/onDark.js'
@@ -137,7 +138,8 @@ export default function Week({ me, onSkin }) {
     <div className="wf">
       <Hero recap={recap} label={nav.current.label} dates={dateRangeLabel(slate.map((g) => g.kickoff))}
             finals={graded.games.length} slateSize={slate.length}
-            teamOf={teamOf} pager={<Pager nav={nav} onGo={setViewId} />} />
+            teamOf={teamOf}
+            pager={<WeekPager nav={nav} onGo={setViewId} noNext="No later finished week" />} />
       <FinalTable score={score} me={me} teamOf={teamOf} />
       <Decided recap={recap} byId={byId} rows={graded.rows} />
       <Upsets recap={recap} byId={byId} rows={graded.rows} />
@@ -618,109 +620,6 @@ function InNumbers({ recap }) {
   )
 }
 
-/**
- * The week pager, inside the hero: an arrow either side, and a label that opens a jump
- * list of every finished week.
- *
- * Option C from the board Grant chose on 2026-09-10, moved into the winner's color field
- * on 2026-09-12 and onto the jumbotron on 2026-09-13. The arrows only ever step between
- * finished weeks, so the week being played is never one tap away. An edge is a null in
- * `nav`, so a disabled arrow is a fact from weekNav rather than a condition restated here.
- *
- * There is no "Back to Week N" button under it any more. Grant had it taken out on
- * 2026-09-13: the right arrow and the jump list already get you there.
- */
-function Pager({ nav, onGo }) {
-  const [open, setOpen] = useState(false)
-  const [season, setSeason] = useState(null)
-  const viewing = nav.current
-
-  /* The winners are only ever read by the sheet, so they load on first open and stay.
-     The pager itself never needs them, and the screen already makes three calls. */
-  const openPicker = useCallback(() => {
-    setOpen(true)
-    setSeason((prev) => {
-      if (prev) return prev
-      api.getSeason().then(setSeason).catch(() => setSeason([]))
-      return prev
-    })
-  }, [])
-
-  return (
-    <>
-      <div className="wknav wknav--hero">
-        <button
-          className="wknav__arrow"
-          onClick={() => nav.prev && onGo(nav.prev.id)}
-          disabled={!nav.prev}
-          aria-label={nav.prev ? `Go to ${nav.prev.label}` : 'No earlier week'}
-        >
-          <Chevron dir="left" size={17} />
-        </button>
-
-        <button className="wknav__mid" onClick={openPicker} aria-label="Choose a week">
-          <b>
-            {viewing?.label}
-            <Chevron dir="down" size={13} />
-          </b>
-        </button>
-
-        <button
-          className="wknav__arrow"
-          onClick={() => nav.next && onGo(nav.next.id)}
-          disabled={!nav.next}
-          aria-label={nav.next ? `Go to ${nav.next.label}` : 'No later finished week'}
-        >
-          <Chevron dir="right" size={17} />
-        </button>
-      </div>
-
-      <Sheet open={open} onClose={() => setOpen(false)} label="Choose a week">
-        <div className="screen">
-          <h3 className="h2">Jump to a week</h3>
-        </div>
-        <WeekList
-          weeks={nav.list}
-          season={season}
-          viewId={viewing?.id}
-          onGo={(id) => {
-            onGo(id)
-            setOpen(false)
-          }}
-        />
-      </Sheet>
-    </>
-  )
-}
-
-/** Finished weeks, newest first, each with who took it. */
-function WeekList({ weeks, season, viewId, onGo }) {
-  const winners = useMemo(() => winnersByWeek(season), [season])
-
-  return (
-    <div className="wklist">
-      {[...weeks].reverse().map((w) => {
-        const won = winners.get(w.week_no)
-        const status = weekStatus(w)
-        return (
-          <button
-            key={w.id}
-            className={`wkrow${w.id === viewId ? ' is-on' : ''}${status ? ' is-quiet' : ''}`}
-            onClick={() => onGo(w.id)}
-          >
-            <span className="wkrow__n">{w.label}</span>
-            <span className="wkrow__v">
-              {won ? (
-                <>
-                  {ampList(won.names)} <b className="num">{won.points}</b>
-                </>
-              ) : (
-                status || (season === null ? '…' : 'no result')
-              )}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
+/* The pager that steps between weeks is src/components/WeekPager.jsx, shared with the
+   Board since 2026-09-28. Which weeks it can reach from here is weekNav's `recapWeeks`:
+   finished ones only. */

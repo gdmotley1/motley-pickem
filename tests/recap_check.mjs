@@ -377,7 +377,7 @@ check('and then it has a winner',
    The arrows on the Week tab. Since 2026-09-12 the tab shows finished weeks only and opens
    on the newest one, so the edge that matters is the week being played: never reachable. */
 
-const { recapWeeks, weekStatus, isComplete, weekNav, winnersByWeek } = await import(
+const { recapWeeks, weekStatus, isComplete, weekNav, boardWeeks, boardNav, winnersByWeek } = await import(
   pathToFileURL(join(root, 'src', 'lib', 'weekNav.js')).href
 )
 
@@ -442,6 +442,46 @@ check('the week winner is found', wins.get(1).names.join() === 'Grant' && wins.g
 check('a tied week names both', wins.get(2).names.sort().join(' & ') === 'Grant & James')
 check('a week with nothing graded has no winner', wins.get(3) === undefined)
 
+/* ==========================================================================
+   src/lib/weekNav.js, the Board's half
+
+   Grant asked for the previous weeks' boards on 2026-09-28. Different rule from the Week
+   tab's: the Board is the scoreboard, so the week being played is where it opens and a
+   week mid-flight is a real destination. The edge that matters here is the other one,
+   forward: a week published early must never be one tap away with every pick hidden. */
+
+// WEEKS again: 101 final, 102 being played, 103 unpublished, 104 published with no slate,
+// 105 published with a slate and nothing graded.
+const board = boardNav(WEEKS, 102, null)
+check('the Board opens on the week being played', board.current && board.current.id === 102)
+check('it can step back to Week 1', board.prev && board.prev.id === 101)
+check('and never forward past the week being played', board.next === null && board.isLatest === true)
+check('a week nobody published is not a destination',
+  boardWeeks(WEEKS, 102).map((w) => w.week_no).join(',') === '1,2')
+
+/* The T-18h auto-publish net can put next week's slate up while this one is still being
+   played. It carries no picks anyone may see and no score, so the arrow stops short. */
+const EARLY = [wk(101, 1), wk(102, 2, { graded: 7 }), wk(107, 3, { graded: 0 })]
+check('a week published early is still not reachable', boardNav(EARLY, 102, null).next === null)
+check('and it is not in the jump list either',
+  boardWeeks(EARLY, 102).map((w) => w.week_no).join(',') === '1,2')
+
+const stepped = boardNav(WEEKS, 102, 101)
+check('stepped back, the Board is on Week 1', stepped.current.id === 101)
+check('back is then dead and forward returns to the week being played',
+  stepped.prev === null && stepped.next.id === 102)
+check('an unpublished current week is still where the Board sits, with its own empty state',
+  (() => { const n = boardNav([wk(101, 1), wk(103, 3, { published: false, slate_size: 0, graded: 0 })], 103, null)
+           return n.current && n.current.id === 103 && n.prev.id === 101 })())
+check('the Board does not throw before the week list arrives',
+  (() => { const n = boardNav(null, 102, null); return n.list.length === 0 && !n.current })())
+check('a week the pager cannot place leaves both arrows dead rather than guessing',
+  (() => { const n = boardNav(WEEKS, 102, 999); return !n.current && !n.prev && !n.next })())
+
+/* What the jump list is allowed to call a result. The Board can reach a week in progress,
+   and printing its leader in the same place a winner goes would read as a won week. */
+check('the week being played is not complete, so it shows its status',
+  isComplete(WEEKS[1]) === false && weekStatus(WEEKS[1]) === 'in progress')
 
 console.log(failed ? `\n${failed} check(s) failed` : '\nall checks passed')
 process.exit(failed ? 1 : 0)

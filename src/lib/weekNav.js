@@ -1,9 +1,13 @@
 /**
- * Which weeks the Week tab can step to, and what each one is called.
+ * Which weeks a pager can step to, and what each one is called.
  *
- * Kept out of the screen so the gate can check the edges, which is where this kind of
+ * Kept out of the screens so the gate can check the edges, which is where this kind of
  * control goes wrong: an arrow that stays live at week 1, or one that walks into a week
  * that is not over.
+ *
+ * Two lists, because the two tabs are for different things. `recapWeeks` is the Week
+ * tab's: finished weeks only, because it lags a week on purpose. `boardWeeks` is the
+ * Board's: every published week up to and including the one being played.
  */
 
 /**
@@ -49,14 +53,42 @@ export const isComplete = (week) =>
   !!week && Number(week.slate_size) > 0 && Number(week.graded) === Number(week.slate_size)
 
 /**
+ * The weeks the Board can step back through: published weeks with a slate, up to and
+ * including the week being played.
+ *
+ * Grant asked for the previous weeks' boards on 2026-09-28. Deliberately a different rule
+ * from recapWeeks. The Week tab lags a week because a recap of half a week is half built;
+ * the Board IS the scoreboard, so a week mid-flight is exactly what it is for, and the
+ * newest entry is always the one being played.
+ *
+ * Nothing past the current week. A week the sync job published early on its T-18h net
+ * would otherwise sit one tap forward with every pick hidden and no score, which reads as
+ * a broken screen rather than as a week that has not started.
+ *
+ * The current week is in the list whether or not it is published, because it is the screen
+ * the app opens on and it has its own "No slate yet" state to show.
+ */
+export function boardWeeks(weeks, currentId) {
+  const all = weeks || []
+  const current = all.find((w) => w.id === currentId) || null
+  const upto = current ? Number(current.week_no) : Infinity
+  return all
+    .filter(
+      (w) =>
+        w.id === currentId ||
+        (w.published && Number(w.slate_size) > 0 && Number(w.week_no) <= upto),
+    )
+    .sort((a, b) => a.week_no - b.week_no)
+}
+
+/**
  * The pager's state for one viewed week: where the arrows go, and whether they are live.
  *
  * `prev` and `next` are the week rows to move to, or null at an edge. Nulls are what the
  * screen disables on, so an edge is a fact here rather than a condition restated in JSX.
- * `latest` is the newest finished week, which is where the tab opens.
+ * `latest` is the newest week in the list, which is where the tab opens.
  */
-export function weekNav(weeks, viewId) {
-  const list = recapWeeks(weeks)
+function navIn(list, viewId) {
   const latest = list.length ? list[list.length - 1] : null
   const at = list.findIndex((w) => w.id === viewId)
   const current = at === -1 ? null : list[at]
@@ -69,6 +101,19 @@ export function weekNav(weeks, viewId) {
     next: at !== -1 && at < list.length - 1 ? list[at + 1] : null,
     isLatest: !!current && current.id === latest.id,
   }
+}
+
+/** The Week tab's pager: finished weeks only. */
+export function weekNav(weeks, viewId) {
+  return navIn(recapWeeks(weeks), viewId)
+}
+
+/**
+ * The Board's pager. Falls back to the week being played, so a screen that has not been
+ * stepped anywhere is sitting on the current week rather than nowhere.
+ */
+export function boardNav(weeks, currentId, viewId) {
+  return navIn(boardWeeks(weeks, currentId), viewId ?? currentId)
 }
 
 /**
