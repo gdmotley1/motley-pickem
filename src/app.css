@@ -2813,11 +2813,19 @@
 }
 
 /* Name over score, so six-letter names (Parker, Nicole) fit a quarter of a phone whole. On
-   one line they cut to "GRA..." at 17px. */
+   one line they cut to "GRA..." at 17px.
+
+   The score sits in the NAME's column, not across both. Spanning them put it 14 to 17px
+   left of the name it belongs to, which Grant spotted on 2026-09-28. The cause is not
+   obvious: the second column is `minmax(0, auto)`, so its MINIMUM is a fixed 0 and it
+   cannot take any of a spanning item's min-content contribution. All of it lands on the
+   dot's `auto` column instead, which grew from 7px to 23 and pushed the name right while
+   the score stayed centred on the pair. Leaving the first cell of the row empty keeps the
+   dot column at the dot. */
 .wkbug__p {
   display: grid;
   grid-template-columns: auto minmax(0, auto);
-  grid-template-areas: 'dot who' 'pts pts';
+  grid-template-areas: 'dot who' '. pts';
   justify-content: center;
   align-items: center;
   column-gap: 5px;
@@ -2847,6 +2855,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* The column is as wide as the wider of the two, so a three-digit score under a short
+     name would otherwise leave the name flush left inside it. */
+  text-align: center;
 }
 
 .wkbug__p b {

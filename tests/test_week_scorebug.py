@@ -79,6 +79,39 @@ def test_no_row_column_is_sized_by_its_own_content():
             )
 
 
+def test_the_pinned_strip_centres_each_score_on_its_own_name():
+    """Grant, 2026-09-28, on the strip that pins as you scroll the Board: "the numbers are
+    off center from the names". They were, by 14 to 17px in every cell.
+
+    The cause is a grid-sizing rule that bites silently. `.wkbug__p`'s second column is
+    `minmax(0, auto)`, so its MINIMUM is a fixed 0 and it can take no part of a spanning
+    item's min-content contribution. A score spanning both columns landed entirely on the
+    dot's `auto` column, which grew from 7px to 23 and pushed the name right while the score
+    stayed centred on the pair. Putting the score in the name's column alone measured every
+    drift at 0.0px.
+
+    Asserted as a relationship rather than a string, so any rewrite of the cell still has to
+    keep the two in one column.
+    """
+    css = rules(read("src", "app.css"))
+    cell = [body for sel, body in css if sel == ".wkbug__p"]
+    assert cell, "the pinned strip's cell has no rule; has it been renamed?"
+    areas = re.findall(r"'([^']*)'", cell[0].split("grid-template-areas:")[1].split(";")[0])
+    rows = [row.split() for row in areas]
+    assert len(rows) == 2 and "who" in rows[0], "the strip's cell is no longer name over score: %s" % areas
+    who = rows[0].index("who")
+    pts = [i for i, name in enumerate(rows[1]) if name == "pts"]
+    assert pts == [who], (
+        "the score is not in the name's column (name at %d, score at %s). Spanning the dot's "
+        "column is what put it 14 to 17px off centre." % (who, pts)
+    )
+    name = [body for sel, body in css if sel == ".wkbug__who"]
+    assert name and "text-align: center" in name[0], (
+        "the column is as wide as the wider of name and score, so without this a long score "
+        "under a short name leaves the name flush left in it"
+    )
+
+
 def test_the_rail_can_be_seen_and_keeps_its_stripe():
     """Grant on the old 2px strip, 2026-09-12: "you can hardly see it. It looks bad." He
     picked the broadcast rail. It quietly goes back to looking broken two ways: somebody
