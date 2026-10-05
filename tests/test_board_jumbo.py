@@ -65,3 +65,34 @@ def test_nothing_on_the_jumbotron_is_under_13px():
     block = css[start: css.index("/* ====================================================== the pick nudge ===== */", start)]
     small = [s for s in re.findall(r"font-size:\s*(\d+(?:\.\d+)?)px", block) if float(s) < 13]
     assert not small, "under 13px on the jumbotron: %s" % small
+
+
+def test_the_leaderboard_row_shows_max_points_not_points_in_play():
+    """Grant, 2026-10-05: "can we change points in play to max points? they mean the same
+    thing right?" They do not. In play is what is still undecided; max is banked plus that.
+    The row shows max, computed in weekScore so the screen cannot do its own arithmetic,
+    and the old wording stays out of the app."""
+    body = read("src", "screens", "Board.jsx")
+    assert "{p.correct}-{p.played - p.correct} · {p.max} max" in body, (
+        "the leaderboard row no longer shows max points"
+    )
+    assert "in play" not in body, "the Board says 'in play' again"
+    lib = read("src", "lib", "weekScore.js")
+    assert "max: s.points + live" in lib, "weekScore stopped computing max as banked plus live"
+
+
+def test_max_is_banked_plus_in_play():
+    """The arithmetic, against the real module under node."""
+    import shutil
+    import subprocess
+
+    node = shutil.which("node")
+    if node is None:
+        import pytest
+        pytest.skip("node is not on PATH")
+    r = subprocess.run(
+        [node, os.path.join(ROOT, "tests", "weekscore_check.mjs")],
+        capture_output=True, text=True, cwd=ROOT, timeout=60,
+    )
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "weekscore_check: 6 checks passed" in r.stdout, r.stdout

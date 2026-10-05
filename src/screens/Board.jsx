@@ -258,7 +258,7 @@ function Leaderboard({ score, me, teamOf, cardRef }) {
               {p.id === me?.id && <i className="jb-you">You</i>}
             </b>
             <span className="num">
-              {p.correct}-{p.played - p.correct} · {p.live} in play
+              {p.correct}-{p.played - p.correct} · {p.max} max
             </span>
           </span>
           <Led className="jb-pts">{p.points}</Led>

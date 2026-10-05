@@ -9,11 +9,16 @@
  * Everyone's week so far: points banked, record, and the most they can still finish on.
  *
  * The ceiling is the part worth explaining. A week is always worth the same total,
- * because confidence 1 to 20 is spent exactly once, so what a player has left is that
- * total minus every confidence value already revealed, plus whatever sits on a game that
- * has kicked off but is not final. Deriving it that way is what keeps it legal: an
+ * because confidence 1 to 20 is spent exactly once, so what a player has left (`live`) is
+ * that total minus every confidence value already revealed, plus whatever sits on a game
+ * that has kicked off but is not final. Deriving it that way is what keeps it legal: an
  * unplayed game contributes its points to the ceiling without anyone learning which game
  * holds which number, which is exactly what get_board refuses to tell us.
+ *
+ * `max` is the finish that is still reachable: banked plus live, which comes to the
+ * week's total minus every confidence value lost so far. It is what the Board's
+ * leaderboard rows show (Grant, 2026-10-05, in place of "N in play"); `live` on its own
+ * stays for the scorebug's "still to play for" line.
  *
  * Winners come off the game rows, which the caller has already laid the live ESPN score
  * over, so a final counts here the moment it happens rather than when the sync job runs.
@@ -64,7 +69,10 @@ export function weekScore(games, rows, roster) {
   }
 
   const players = [...by.values()]
-    .map((s) => ({ ...s, live: Math.max(0, total - s.spent) + s.open }))
+    .map((s) => {
+      const live = Math.max(0, total - s.spent) + s.open
+      return { ...s, live, max: s.points + live }
+    })
     // Same order the standings use: points, then games called right.
     .sort((a, b) => b.points - a.points || b.correct - a.correct)
 
