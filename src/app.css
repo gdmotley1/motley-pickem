@@ -394,30 +394,226 @@
   letter-spacing: 0.02em;
 }
 
+/* THE SPLASH
+   Static markup in index.html, outside #root, removed by App once the session check has
+   answered. Fixed and full-screen so it covers the page's own light background from the
+   first paint; nothing here reads a token that app.css might not have loaded, except the
+   wall colour, which theme.css hands .splash in the jumbotron block. */
 .splash {
-  flex: 1;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 34px;
+  background: var(--page, #07080b);
+}
+
+.splash__stage {
+  position: relative;
+  width: 240px;
+  height: 150px;
   display: grid;
   place-items: center;
-  min-height: 100dvh;
-  background: var(--field);
+}
+
+.splash__streak {
+  position: absolute;
+  left: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 214, 90, 0.9));
+  animation: splash-streak 0.55s linear infinite;
+}
+
+.splash__streak:nth-child(2) {
+  top: 48px;
+  width: 120px;
+}
+
+.splash__streak:nth-child(3) {
+  top: 72px;
+  width: 160px;
+  animation-delay: -0.2s;
+}
+
+.splash__streak:nth-child(4) {
+  top: 96px;
+  width: 110px;
+  animation-delay: -0.4s;
+}
+
+@keyframes splash-streak {
+  from {
+    transform: translateX(-60px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    transform: translateX(60px);
+    opacity: 0;
+  }
 }
 
 .splash__ball {
-  width: 42px;
-  height: 27px;
-  border-radius: 50% / 58%;
-  background: var(--accent-bright);
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
-  animation: bob 1s ease-in-out infinite;
+  position: relative;
+  transform: rotate(-24deg);
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 26px rgba(255, 176, 32, 0.28));
 }
 
-@keyframes bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-12deg);
+/* The sign-in title's lettering, so the splash hands off to it without a change of face. */
+.splash__wm {
+  font-family: 'Big Shoulders Display', var(--display);
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.3);
+}
+
+/* THE BALL
+   A prolate body with four panel seams along its length, spinning about that axis. A seam
+   is the top outline curve scaled vertically by sin(theta) about the ball's axis, so
+   scaleY does the whole projection and no path is rewritten. The laces ride the first
+   seam; their loops stand across it and shorten by cos(theta) as it nears either edge.
+   Two groups for the loops, because slide and shrink have different easings over the
+   same half turn. --fb-t offsets a paused copy to one frame of the turn. */
+.fb {
+  display: block;
+  overflow: visible;
+  --fb-spin: 1.1s;
+  --fb-t: 0s;
+}
+
+.fb__seam,
+.fb__lace,
+.fb__loops {
+  transform-box: view-box;
+  transform-origin: 150px 100px;
+}
+
+.fb__seam {
+  animation: fb-seam var(--fb-spin) linear infinite;
+  animation-delay: var(--fb-t);
+}
+
+.fb__seam--2 {
+  animation-delay: calc(var(--fb-t) + var(--fb-spin) * -0.25);
+}
+
+.fb__seam--3 {
+  animation-delay: calc(var(--fb-t) + var(--fb-spin) * -0.5);
+}
+
+.fb__seam--4 {
+  animation-delay: calc(var(--fb-t) + var(--fb-spin) * -0.75);
+}
+
+.fb__lace {
+  animation: fb-lace var(--fb-spin) linear infinite;
+  animation-delay: var(--fb-t);
+}
+
+.fb__loops {
+  animation: fb-loops var(--fb-spin) linear infinite;
+  animation-delay: var(--fb-t);
+}
+
+.fb--paused .fb__seam,
+.fb--paused .fb__lace,
+.fb--paused .fb__loops {
+  animation-play-state: paused;
+}
+
+/* A seam goes from the bottom edge (s = -1), across the face, to the top edge (s = 1) in
+   the first half turn, then is behind the ball. sin(theta) is slow at the edges and fast
+   in the middle, which ease-in then ease-out gives. */
+@keyframes fb-seam {
+  0% {
+    transform: scaleY(-1);
+    opacity: 1;
+    animation-timing-function: ease-in;
+  }
+  25% {
+    transform: scaleY(0.001);
+    opacity: 1;
+    animation-timing-function: ease-out;
   }
   50% {
-    transform: translateY(-9px) rotate(8deg);
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The loops ride the first seam, so they slide with its easing (sin) ... */
+@keyframes fb-lace {
+  0% {
+    transform: translateY(86px);
+    opacity: 1;
+    animation-timing-function: ease-in;
+  }
+  25% {
+    transform: translateY(0);
+    opacity: 1;
+    animation-timing-function: ease-out;
+  }
+  50% {
+    transform: translateY(-86px);
+    opacity: 1;
+  }
+  50.01%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ... and stand across it, so they shorten as it nears either edge: scaleY by cos(theta),
+   ease-out then ease-in. */
+@keyframes fb-loops {
+  0% {
+    transform: scaleY(0.001);
+    animation-timing-function: ease-out;
+  }
+  25% {
+    transform: scaleY(1);
+    animation-timing-function: ease-in;
+  }
+  50%,
+  100% {
+    transform: scaleY(0.001);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fb__seam,
+  .fb__lace,
+  .fb__loops {
+    animation: none;
+  }
+
+  .fb__seam {
+    opacity: 0;
+  }
+
+  .fb__seam--1 {
+    opacity: 1;
+    transform: scaleY(0.001);
+  }
+
+  .fb__lace,
+  .fb__loops {
+    opacity: 1;
+    transform: none;
   }
 }
 

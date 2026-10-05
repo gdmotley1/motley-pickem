@@ -22,6 +22,65 @@
     />
   </head>
   <body>
+    <!--
+      The splash. Static, outside #root, so it paints the moment the HTML and stylesheet
+      arrive and before the 650KB bundle has run; App removes it once the session check
+      has answered (see App.jsx). A real football thrown in a spiral: the laces ride one
+      of four seams across the face and go behind, in two CSS keyframes on SVG groups.
+      Styles are .splash and .fb in src/app.css. Grant picked it off a board of six on
+      2026-10-05 and asked for the ball to look real.
+    -->
+    <div id="splash" class="splash" aria-hidden="true">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <clipPath id="fb-clip"><path d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100 C 270,170 200,186 150,186 C 100,186 30,170 8,100 Z"/></clipPath>
+    <radialGradient id="fb-leather" cx="0.36" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#c98a52"/>
+      <stop offset="0.35" stop-color="#9a5a2b"/>
+      <stop offset="0.75" stop-color="#6b3814"/>
+      <stop offset="1" stop-color="#3a1a06"/>
+    </radialGradient>
+    <radialGradient id="fb-sheen" cx="0.3" cy="0.22" r="0.5">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="fb-vignette" cx="0.5" cy="0.5" r="0.55">
+      <stop offset="0.55" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.6"/>
+    </radialGradient>
+    <filter id="fb-pebble" x="0" y="0" width="1" height="1">
+      <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="7" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.4 0.4 0.4 0 -0.18"/>
+    </filter>
+  </defs>
+</svg>
+      <div class="splash__stage">
+        <i class="splash__streak"></i><i class="splash__streak"></i><i class="splash__streak"></i>
+        <svg class="fb splash__ball" style="" width="200" viewBox="0 0 300 200" aria-hidden="true">
+  <g clip-path="url(#fb-clip)">
+    <path d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100 C 270,170 200,186 150,186 C 100,186 30,170 8,100 Z" fill="url(#fb-leather)"/>
+    <rect width="300" height="200" filter="url(#fb-pebble)" opacity="0.55"/>
+    <!-- the two white bands a college ball wears near each tip -->
+    <rect x="58" y="0" width="13" height="200" fill="#f4f0e6" opacity="0.92"/>
+    <rect x="229" y="0" width="13" height="200" fill="#f4f0e6" opacity="0.92"/>
+    <g fill="none" stroke="#2a1104" stroke-width="2.2" stroke-opacity="0.85" stroke-linecap="round">
+      <path class="fb__seam fb__seam--2" d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100"/><path class="fb__seam fb__seam--3" d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100"/><path class="fb__seam fb__seam--4" d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100"/>
+      <g class="fb__seam fb__seam--1">
+        <path d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100"/>
+        <path d="M 112,15 Q 150,13.5 188,15" stroke="#f4f0e6" stroke-width="3" stroke-opacity="1"/>
+      </g>
+    </g>
+    <g class="fb__lace" fill="none" stroke="#f4f0e6" stroke-width="3.4" stroke-linecap="round">
+      <g class="fb__loops"><line x1="118" y1="90" x2="118" y2="110"/><line x1="127" y1="90" x2="127" y2="110"/><line x1="136" y1="90" x2="136" y2="110"/><line x1="145" y1="90" x2="145" y2="110"/><line x1="154" y1="90" x2="154" y2="110"/><line x1="163" y1="90" x2="163" y2="110"/><line x1="172" y1="90" x2="172" y2="110"/><line x1="181" y1="90" x2="181" y2="110"/></g>
+    </g>
+    <path d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100 C 270,170 200,186 150,186 C 100,186 30,170 8,100 Z" fill="url(#fb-sheen)"/>
+    <path d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100 C 270,170 200,186 150,186 C 100,186 30,170 8,100 Z" fill="url(#fb-vignette)"/>
+  </g>
+  <path d="M 8,100 C 30,30 100,14 150,14 C 200,14 270,30 292,100 C 270,170 200,186 150,186 C 100,186 30,170 8,100 Z" fill="none" stroke="#1d0b02" stroke-width="2"/>
+</svg>
+      </div>
+      <div class="splash__wm">Motley<br />Pick'em</div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

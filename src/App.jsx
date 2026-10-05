@@ -102,6 +102,14 @@ export default function App() {
     })
   }, [])
 
+  /* The splash is static markup in index.html, outside #root, so it is on screen from the
+     first paint and the bundle never has to draw a loading state. It is removed here, in an
+     effect, so the sign-in or the app has painted under it before it goes. whoami never
+     rejects (it answers null on any failure), so `me` always resolves and this always runs. */
+  useEffect(() => {
+    if (me !== undefined) document.getElementById('splash')?.remove()
+  }, [me])
+
   /* Keep the stored subscription pointing at whoever is actually signed in here.
      Two things make this necessary rather than tidy. Browsers rotate a subscription on
      their own schedule and the worker posts `resubscribe` when they do. And this app is
@@ -202,7 +210,10 @@ export default function App() {
     setTab('board')
   }, [])
 
-  if (me === undefined) return <Splash />
+  /* Still checking: index.html's static splash is on screen, so there is nothing to draw
+     yet. It comes down in the effect above once `me` is known, after the first real screen
+     has painted under it. */
+  if (me === undefined) return null
   /* Optimistic on purpose: the avatar is the whole feedback, and waiting on a round trip
      to see your own logo appear feels broken. api.setMyTeam throws on failure and the
      picker surfaces it, so a rejected save is not silent. */
@@ -399,10 +410,3 @@ function TeamNudge({ open, onDismiss, onPick }) {
   )
 }
 
-function Splash() {
-  return (
-    <div className="splash">
-      <div className="splash__ball" />
-    </div>
-  )
-}
