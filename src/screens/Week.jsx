@@ -3,7 +3,7 @@ import * as api from '../lib/api.js'
 import { friendly } from '../lib/errors.js'
 import { Avatar, Empty, IconTrophy, Screen, Spinner } from '../components/ui.jsx'
 import WeekPager from '../components/WeekPager.jsx'
-import { calledLine, headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
+import { headToHead, stakes, weekRecap } from '../lib/weekRecap.js'
 import { ampList, dateRangeLabel } from '../lib/format.js'
 import { weekScore } from '../lib/weekScore.js'
 import { weekNav } from '../lib/weekNav.js'
@@ -597,28 +597,22 @@ function Alone({ list: players, byId }) {
   )
 }
 
+/* The big number and its name, centred, nothing under it. Grant, 2026-10-09: "lose the
+   subtitles and listing them out just keep the big text and center it". */
 function InNumbers({ recap }) {
-  const called = recap.upsets.filter((u) => u.calledBy.length)
   const rows = [
-    [recap.chalk.won, 'Favorites won', `of ${recap.chalk.of} games with a line`],
-    [
-      recap.upsets.length,
-      recap.upsets.length === 1 ? 'Upset' : 'Upsets',
-      called.length ? calledLine(called) : 'Nobody called one',
-    ],
-    [recap.sweeps, 'All four got it right', recap.sweepGames.map((g) => g.winner).join(', ') || 'None this week'],
-    [recap.whiffs.length, 'Nobody got it right', recap.whiffs.map((w) => w.winner).join(', ') || 'None this week'],
+    [recap.chalk.won, 'Favorites won'],
+    [recap.upsets.length, recap.upsets.length === 1 ? 'Upset' : 'Upsets'],
+    [recap.sweeps, 'All four got it right'],
+    [recap.whiffs.length, 'Nobody got it right'],
   ]
   return (
     <section className="wf-sec">
       <Title>By the numbers</Title>
-      {rows.map(([v, k, s]) => (
+      {rows.map(([v, k]) => (
         <div className="wf-nrow" key={k}>
           <strong className="num">{v}</strong>
-          <span className="wf-who">
-            <b>{k}</b>
-            <span>{s}</span>
-          </span>
+          <b>{k}</b>
         </div>
       ))}
     </section>

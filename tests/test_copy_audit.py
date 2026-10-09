@@ -85,7 +85,6 @@ def test_the_new_wording_is_what_grant_picked():
         "{held.length} won",
         "{burned.length} lost",
         "Cost you {a.total} points combined",
-        "calledLine(called)",
     ):
         assert phrase in week, "the Week tab lost %r" % phrase
     season = read("src", "screens", "Season.jsx")
@@ -94,6 +93,20 @@ def test_the_new_wording_is_what_grant_picked():
     records = read("src", "lib", "seasonRecords.js")
     assert "worst_miss: 'No misses yet'" in records
     assert "detail: w.team }" in records
+
+
+def test_by_the_numbers_is_the_number_and_its_name_only():
+    """Grant, 2026-10-09: lose the subtitles and the lists, keep the big text, centre it."""
+    week = read("src", "screens", "Week.jsx")
+    body = week[week.index("function InNumbers"):]
+    body = body[:body.index("\n}\n") + 3]
+    for gone in ("calledLine", "games with a line", "Nobody called one", "None this week",
+                 ".join(", "wf-who"):
+        assert gone not in body, "By the numbers is listing things again: %r" % gone
+    css = read("src", "app.css")
+    rule = css[css.index(".wf-nrow {"):]
+    rule = rule[:rule.index("}")]
+    assert "justify-items: center" in rule and "text-align: center" in rule
 
 
 def test_the_line_grant_kept_is_still_there():

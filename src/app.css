@@ -4942,12 +4942,13 @@
 }
 
 /* --- by the numbers ------------------------------------------------------------------ */
+/* The number over its name, centred, and nothing else (Grant, 2026-10-09). */
 .wf-nrow {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  align-items: center;
-  column-gap: 12px;
-  min-height: 78px;
+  justify-items: center;
+  row-gap: 6px;
+  padding: 16px 0;
+  text-align: center;
   border-top: 1px solid var(--wf-rule);
 }
 
@@ -4956,7 +4957,6 @@
 }
 
 .wf-nrow strong {
-  justify-self: end;
   font-size: 62px;
   font-weight: 900;
   font-style: italic;
@@ -4964,8 +4964,14 @@
   line-height: 0.9;
 }
 
-.wf-nrow .wf-who > span {
-  white-space: normal;
+.wf-nrow b {
+  font-size: 24px;
+  font-weight: 900;
+  font-style: italic;
+  font-stretch: 72%;
+  line-height: 1.02;
+  text-transform: uppercase;
+  color: var(--wf-text);
 }
 
 
