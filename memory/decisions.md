@@ -48,6 +48,13 @@ week or a slate short of 20. Grant has not ruled on whether that squares with th
 above; it was raised with him on 2026-09-22. Weeks 3 and 4 were published by hand, days
 ahead, so it has not been needed lately.
 
+**Nothing kicking off Monday to Thursday is pre-selected** (Grant, 2026-10-16). Those games
+stay in the pool, so Dad can still add one by hand. Weeks 6 and 7 each had a Wednesday
+Conference USA game kick off before anyone opened the app; three seats were auto-picked
+and the game was swapped out by hand both times. Grant added Thursday himself. The days
+are `MIDWEEK_DAYS` in `suggest_slate.py`, decided in Eastern time;
+`tests/test_slate.py` spells Mon to Thu out on its own, so narrowing the constant fails it.
+
 ## Picks lock per game, at that game's kickoff
 
 A game becomes read-only the moment it kicks off. Games later in the week stay editable.

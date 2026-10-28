@@ -296,6 +296,86 @@ def test_every_auto_selected_game_still_has_a_line(pool):
         assert suggest_slate.tier_of(g) is not None, g["short_name"]
 
 
+# ------------------------------------------------- midweek games are never pre-selected
+# Week 6 (JXST @ KENN, Wed 2026-10-07) and Week 7 (KENN @ MOST, Wed 2026-10-14) each had
+# a Wednesday game pre-selected. It kicked off before anyone opened the app, three seats
+# were auto-picked on it, and it was swapped out of the published week by hand. Grant
+# added Thursday on 2026-10-16. The fixture week opens on a Thursday with 11 games, and
+# these also move real selected games onto Tue, Wed and Thu.
+
+@pytest.mark.parametrize("kickoff,midweek", [
+    ("2026-09-01T23:30Z", True),    # Tue 7:30pm ET
+    ("2026-09-03T02:00Z", True),    # Wed 10pm ET, already Thursday in UTC
+    ("2026-08-31T23:00Z", True),    # Mon 7pm ET
+    ("2026-09-03T23:30Z", True),    # Thu 7:30pm ET
+    ("2026-09-04T03:30Z", True),    # Thu 11:30pm ET, already Friday in UTC
+    ("2026-09-05T00:00Z", False),   # Fri 8pm ET
+    ("2026-09-07T00:00Z", False),   # Sun 8pm ET, already Monday in UTC
+    ("2026-09-05T16:00Z", False),   # Sat noon ET
+])
+def test_midweek_is_decided_in_eastern_time(kickoff, midweek):
+    assert suggest_slate.is_midweek({"kickoff_utc": kickoff}) is midweek
+
+
+def _midweek_week(games):
+    """The fixture week with eight of its pre-selected games moved to Tue, Wed and Thu.
+
+    Georgia is left where it is: it is forced in, so moving it would test the always-
+    include rule rather than this one. Everything else the default 20 chose is fair game,
+    SEC games included, so the SEC top-up has to find replacements too.
+    """
+    doctored = copy.deepcopy(games)
+    picked, _ = suggest_slate.select_slate(doctored)
+    movable = [g for g in picked if not suggest_slate.has_team(g, "UGA")][:8]
+    days = ("2026-09-01T23:30Z", "2026-09-02T23:00Z",     # Tue 7:30pm, Wed 7pm ET
+            "2026-09-03T23:30Z")                          # Thu 7:30pm ET
+    for i, g in enumerate(movable):
+        g["kickoff_utc"] = days[i % len(days)]
+    return doctored, {suggest_slate.gid(g) for g in movable}
+
+
+def test_a_midweek_game_is_never_pre_selected(games):
+    doctored, moved = _midweek_week(games)
+    assert len(moved) == 8 and any(suggest_slate.is_sec(g) for g in doctored
+                                   if suggest_slate.gid(g) in moved), \
+        "the doctored week should move SEC games too"
+
+    # Mon to Thu is spelled out here rather than read from MIDWEEK_DAYS, so narrowing
+    # the constant fails this test instead of quietly agreeing with it.
+    built = build_from(doctored)
+    bad = [g["short_name"] for g in built["slate"]
+           if fetch_slate.et(g["kickoff_utc"]).weekday() in (0, 1, 2, 3)]
+    assert not bad, "pre-selected a Mon-Thu kickoff: %s" % bad
+
+
+def test_midweek_games_stay_in_the_pool_for_dad(games):
+    doctored, moved = _midweek_week(games)
+    built = build_from(doctored)
+    spare = {suggest_slate.gid(g) for g in built["alternates"]}
+    assert moved <= spare, "a midweek game must still be one Dad can add by hand"
+
+
+def test_the_twenty_survive_midweek_games_dropping_out(games):
+    doctored, _ = _midweek_week(games)
+    picked, _ = suggest_slate.select_slate(doctored)
+    assert len(picked) == suggest_slate.SLATE_SIZE
+    assert any(suggest_slate.has_team(g, "UGA") for g in picked)
+    assert sum(1 for g in picked if suggest_slate.is_sec(g)) >= suggest_slate.SEC_MINIMUM
+    # Each tier is filled as far as the games left in it allow. The fixture has only
+    # eight close games and this moves most of them, so the target itself cannot be met.
+    def tally(gs):
+        out = {}
+        for g in gs:
+            out[suggest_slate.tier_of(g)] = out.get(suggest_slate.tier_of(g), 0) + 1
+        return out
+    counts = tally(picked)
+    left = tally(g for g in doctored if not suggest_slate.is_midweek(g))
+    for label, _, want in suggest_slate.TIERS:
+        floor = min(want, left.get(label, 0))
+        assert counts.get(label, 0) >= floor, \
+            "tier %s had %d, could have had %d" % (label, counts.get(label, 0), floor)
+
+
 # ------------------------------------------------- the moneyline fallback for a favourite
 
 def _ml(home_odds, away_odds, extra=None):

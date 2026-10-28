@@ -16,6 +16,7 @@ final, so a pool rebuilt mid-weekend loses every game already played.
 Dad has to be able to find a game the family cares about, whatever Vegas thinks of it.
 
 Selection order, per Grant on 2026-09-03:
+  0. (2026-10-16) Nothing kicking off Monday to Thursday Eastern. See MIDWEEK_DAYS.
   1. Georgia's game. Always, no matter the spread.
   2. Enough more SEC games to reach 5 SEC games total.
   3. Fill to 20 across certainty tiers so confidence points stay meaningful.
@@ -62,6 +63,14 @@ TIERS = (
     ("blowout", 999.0, 3),
 )
 
+# Kickoff days, Eastern, never pre-selected into the 20. Dad can still add these games
+# by hand. Twice a Wednesday Conference USA game (JXST @ KENN on 2026-10-07, KENN @ MOST
+# on 2026-10-14) kicked off before anyone had opened the app for the week, three seats
+# were auto-picked on it, and it had to be swapped out of the published week by hand.
+# Grant added Thursday on 2026-10-16, with LIB @ KENN on Thu 2026-10-22 in view.
+# Python weekday(): Monday is 0.
+MIDWEEK_DAYS = (0, 1, 2, 3)     # Mon, Tue, Wed, Thu
+
 
 def featured_ids() -> list:
     """ESPN's curated top games, in their own editorial order."""
@@ -107,14 +116,24 @@ def gid(g: dict) -> str:
     return str(g["espn_id"])
 
 
+def is_midweek(g: dict) -> bool:
+    """Kicks off on a day the family has not opened the app for the week yet."""
+    k = g.get("kickoff_utc")
+    return bool(k) and et(k).weekday() in MIDWEEK_DAYS
+
+
 def rank_key(g: dict):
     """Featured games win ties; interest score orders the rest."""
     return (not g.get("featured"), -g["interest"])
 
 
 def select_slate(games: list):
-    """Return (slate of 20, why each game is in it)."""
-    usable = [g for g in games if tier_of(g)]
+    """Return (slate of 20, why each game is in it).
+
+    Midweek games are cut here, before every step, so Georgia, the SEC top-up, the tiers
+    and the backfill all draw from the same eligible games and the backfill keeps it at 20.
+    """
+    usable = [g for g in games if tier_of(g) and not is_midweek(g)]
     chosen, reasons = [], {}
 
     def take(g, why):
@@ -180,8 +199,9 @@ def build(start: dt.date, end: dt.date, week: dict | None = None) -> dict:
     slate, reasons = select_slate(games)
     picked = {gid(g) for g in slate}
 
-    # Everything else, uncut. A game with no line stays in: it cannot be tiered and so
-    # can never be auto-selected into the 20, but Dad can still add it by hand.
+    # Everything else, uncut. A game with no line, or one kicking off Monday to
+    # Thursday, stays in: it can never be auto-selected into the 20, but Dad can still
+    # add it by hand.
     alternates = sorted((g for g in games if gid(g) not in picked), key=rank_key)
 
     for g in slate:
