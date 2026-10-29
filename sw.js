@@ -1,0 +1,259 @@
+/**
+ * Motley Pick'em service worker.
+ *
+ * The app had a manifest and icons from the start, so it installed to a home screen and
+ * got an icon and a splash, and then it was a shell around a page that needed the
+ * network. Every cold launch re-fetched the bundle and the logos, and at a tailgate on
+ * two bars it simply did not open. This is the piece that makes it an app.
+ *
+ * Ships from static/, which vite copies to the site root verbatim. That means no
+ * bundling and no import.meta.env in here: the base path is read off this file's own
+ * location instead, so a move from /motley-pickem/ to a custom domain needs no edit.
+ *
+ * ---------------------------------------------------------------------------
+ * THE RULE THAT OUTRANKS EVERYTHING, RESTATED FOR CACHING
+ *
+ * Locking and pick visibility are enforced by Postgres RLS. A cache must never be able
+ * to soften that, so nothing that talks to Supabase is touched here: every request that
+ * is not a same-origin GET is passed straight through and never stored. That covers
+ * every RPC, which are POSTs, and it covers ESPN, whose whole value is being live.
+ *
+ * The consequence is deliberate. Offline you get the app, instantly, and its own error
+ * states where data would be. You do not get yesterday's scores dressed up as today's.
+ * ------------------------------------------------------------------------- */
+
+// Bump to invalidate the shell and the assets. Logos are excluded on purpose, below.
+//
+// v2 on 2026-09-11, with the push handlers. It had never moved off v1 through every
+// deploy of the build, which is half of why an installed instance could sit on a stale
+// mix for a day in September (see memory/traps.md). A deploy that changes the WORKER is
+// exactly the one that has to drop the old caches, or the activate handler keeps them.
+const VERSION = 'v2'
+
+const SHELL = `pickem-shell-${VERSION}`
+const ASSETS = `pickem-assets-${VERSION}`
+
+/**
+ * Logos are NOT versioned with the rest.
+ *
+ * A team's mark does not change when the app deploys, and there are 276 of them at about
+ * 12MB. Tying them to VERSION would re-download a week's worth on every deploy for no
+ * reason. They are also never precached: only about 40 teams appear in a given week, so
+ * they arrive on first use and stay.
+ */
+const LOGOS = 'pickem-logos'
+
+const KEEP = new Set([SHELL, ASSETS, LOGOS])
+
+/** "/motley-pickem/" here, "/" on a custom domain. Derived, never hard-coded. */
+const BASE = new URL('./', self.location).pathname
+const INDEX = BASE + 'index.html'
+
+self.addEventListener('install', (event) => {
+  // The shell only. Everything else arrives on first use, which keeps the install cheap
+  // and means a failed fetch here can never block the worker from taking over.
+  event.waitUntil(
+    caches
+      .open(SHELL)
+      .then((cache) => cache.add(new Request(INDEX, { cache: 'reload' })))
+      .catch(() => {})
+      .then(() => self.skipWaiting()),
+  )
+})
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((n) => !KEEP.has(n)).map((n) => caches.delete(n))))
+      // Claiming immediately is safe here specifically because the build emits ONE
+      // bundle with no code splitting. With lazy chunks, swapping assets under a running
+      // page can ask for a chunk the new deploy renamed. Without them there is nothing
+      // to miss, and the alternative is worse: a home-screen app is never really closed,
+      // so a worker that waits for that would leave the family on an old build for days.
+      .then(() => self.clients.claim()),
+  )
+})
+
+/** Only ever store a real, complete, same-origin response. */
+async function keep(cacheName, request, response) {
+  if (!response || response.status !== 200 || response.type !== 'basic') return response
+  const cache = await caches.open(cacheName)
+  cache.put(request, response.clone())
+  return response
+}
+
+/** Immutable by content hash, so the cached copy is always the right one. */
+async function cacheFirst(cacheName, request) {
+  const hit = await caches.match(request)
+  if (hit) return hit
+  return keep(cacheName, request, await fetch(request))
+}
+
+/**
+ * The document, and only the document.
+ *
+ * index.html carries no content hash, so it is the one file that has to come from the
+ * network when there is one, or a deploy would never be picked up. Falling back to the
+ * cached copy is what makes the app open on a bad signal.
+ */
+async function networkFirstDocument(request) {
+  try {
+    const fresh = await fetch(request);
+    // Keyed on INDEX rather than the request: a deep link would otherwise store itself
+    // as a second, identical shell.
+    keep(SHELL, new Request(INDEX), fresh.clone());
+    return fresh
+  } catch {
+    const cached = (await caches.match(INDEX)) || (await caches.match(request))
+    if (cached) return cached
+    throw new Error('offline and no cached shell')
+  }
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+
+  // Anything that is not a plain same-origin GET is none of this worker's business.
+  // Supabase RPCs are POSTs and ESPN is cross-origin, so both fall out here.
+  if (request.method !== 'GET') return
+  const url = new URL(request.url)
+  if (url.origin !== self.location.origin) return
+
+  // Any request for the document, not just navigations. Something in the wild asks for
+  // index.html with mode "no-cors" rather than "navigate", and the fallthrough below was
+  // filing a second copy of the shell in the assets cache. Matching on the path as well
+  // keeps exactly one shell under exactly one policy.
+  if (request.mode === 'navigate' || url.pathname === INDEX || url.pathname === BASE) {
+    event.respondWith(networkFirstDocument(request))
+    return
+  }
+
+  if (url.pathname.startsWith(BASE + 'logos/')) {
+    event.respondWith(cacheFirst(LOGOS, request))
+    return
+  }
+
+  // Hashed bundles, icons and the manifest: all immutable or near enough.
+  if (
+    url.pathname.startsWith(BASE + 'assets/') ||
+    url.pathname.startsWith(BASE + 'icons/') ||
+    url.pathname.endsWith('.webmanifest')
+  ) {
+    event.respondWith(cacheFirst(ASSETS, request))
+    return
+  }
+
+  // Everything else same-origin (the offline demo week, say): network, then whatever
+  // was stored last.
+  event.respondWith(
+    fetch(request)
+      .then((res) => keep(ASSETS, request, res))
+      .catch(async () => {
+        const hit = await caches.match(request)
+        if (hit) return hit
+        throw new Error('offline and uncached: ' + url.pathname)
+      }),
+  )
+})
+
+/* ---------------------------------------------------------------------------
+ * PUSH
+ *
+ * This is the half of the worker that has nothing to do with caching. The family
+ * installs the app to a home screen, which on iOS is the only way Safari will deliver
+ * a push at all, and this is what turns a delivered message into a notification.
+ *
+ * The payload is already decrypted by the time it arrives: the browser does that with
+ * the keys it generated when the device subscribed. It is small JSON, written by
+ * push_due() in migrations/012_push.sql, and it is never trusted for anything beyond
+ * text and a same-origin path.
+ * ------------------------------------------------------------------------- */
+
+/* iOS requires a notification for every push it delivers. A push handled silently gets
+   the subscription revoked after a few offences, so this must always show something,
+   even for a payload it cannot read.
+
+   The title must NOT be the app's name. iOS already draws that as the notification's
+   header, from the Home Screen install, so a title of "Motley Pick'em" renders the name
+   twice. Grant caught that on the very first test push that reached a phone. Every title
+   here and in push_due() is the MESSAGE, never the sender. */
+const FALLBACK = { title: 'Something new in the pool', body: 'Open the app for the latest.' }
+
+const payloadOf = (event) => {
+  try {
+    const data = event.data ? event.data.json() : null
+    if (!data || typeof data.title !== 'string') return FALLBACK
+    return data
+  } catch {
+    return FALLBACK // malformed or plain text: still has to become a notification
+  }
+}
+
+self.addEventListener('push', (event) => {
+  const data = payloadOf(event)
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: typeof data.body === 'string' ? data.body : '',
+      icon: BASE + 'icons/icon-192.png',
+      badge: BASE + 'icons/icon-192.png',
+      /* Same tag replaces rather than stacks, so four reminders across a Saturday are
+         one line in the shade instead of four. */
+      tag: typeof data.kind === 'string' ? data.kind : 'pickem',
+      renotify: true,
+      data: { url: sameOriginPath(data.url) },
+    }),
+  )
+})
+
+/* The payload names where to land. It comes from our own database, but a notification
+   click opens a window, so this refuses to take an absolute URL from it under any
+   circumstances and keeps only a path within the app's own scope. */
+function sameOriginPath(url) {
+  if (typeof url !== 'string') return BASE
+  try {
+    const resolved = new URL(url, self.location.origin)
+    if (resolved.origin !== self.location.origin) return BASE
+    if (!resolved.pathname.startsWith(BASE)) return BASE
+    return resolved.pathname + resolved.search
+  } catch {
+    return BASE
+  }
+}
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = event.notification.data?.url || BASE
+  event.waitUntil(
+    (async () => {
+      /* Focus the app if it is already open rather than stacking a second copy, which
+         on a home-screen install is the difference between "it came back" and "it
+         reloaded and lost what I was doing". */
+      const open = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      })
+      for (const client of open) {
+        if (new URL(client.url).pathname.startsWith(BASE)) {
+          await client.focus()
+          if ('navigate' in client) await client.navigate(target)
+          return
+        }
+      }
+      await self.clients.openWindow(target)
+    })(),
+  )
+})
+
+/* Safari and Chrome both rotate a subscription occasionally, and the old one stops
+   working the moment they do. The page cannot know it happened, so the worker tells it:
+   any open client re-reads its subscription and saves the new one. If nothing is open,
+   the next launch does it anyway. */
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      const open = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      for (const client of open) client.postMessage({ type: 'resubscribe' })
+    })(),
+  )
+})
