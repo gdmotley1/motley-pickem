@@ -429,6 +429,7 @@ function ChoosePhase({
             game={preview}
             ranks={ranks}
             picked={winners[preview.game_id] || preview.my_pick}
+            onChoose={preview.locked ? undefined : onChoose}
           />
         )}
       </Sheet>

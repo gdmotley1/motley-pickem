@@ -100,9 +100,12 @@ def test_both_cards_are_one_template():
     body = cards_component()
     assert body.count('className="mu__cardname"') == 1
     assert body.count("<Mark ") == 1, "each card must draw its logo from the same line"
-    assert re.search(r"sides\.map\(\(s\) => \(\s*<div key=\{s\.side\} className=\{`mu__card", body), (
+    # A block body since 2026-10-28, because a card is a button when it can pick.
+    assert re.search(r"sides\.map\(\(s\) => \{[^}]*?<Card key=\{s\.side\} className=\{`mu__card", body, re.S) or \
+        re.search(r"sides\.map\(\(s\) => \{.*?return \(\s*<Card key=\{s\.side\} className=\{`mu__card", body, re.S), (
         "the cards are no longer one map over the two sides"
     )
+    assert body.count("className={`mu__card") == 1
 
 
 def test_the_cards_carry_no_school_color():
@@ -216,3 +219,21 @@ def test_none_of_the_rejected_options_shipped():
     for gone in (".mu__head--", ".mu__plate2", ".mu__poster", ".mu__half", ".mu__bank",
                  ".mu__mod", ".mu__tile", ".mu__team", ".pbar", ".form__"):
         assert gone not in sheet, f"a rejected option's rule is still in app.css: {gone}"
+
+
+def test_a_card_picks_its_team_until_kickoff():
+    """Grant, 2026-10-28: tapping a team's card on the matchup sheet picks that team.
+
+    The card is a button only when Picks hands the sheet a chooser, and Picks hands it none
+    for a game that has kicked off. Postgres still owns the lock; this is the UX half.
+    """
+    cards = cards_component()
+    assert "onChoose ? 'button' : 'div'" in cards
+    assert "onChoose(game, s.abbr)" in cards
+    assert "'aria-pressed': s.mine" in cards
+    picks = read("src", "screens", "Picks.jsx")
+    assert re.search(r"<Matchup[^>]*onChoose=\{preview\.locked \? undefined : onChoose\}", picks, re.S)
+    # The button is the same card: the browser's own button chrome is undone.
+    body = rule(css(), "button.mu__card")
+    for prop in ("border: 0", "padding: 0", "font: inherit", "color: inherit", "width: 100%"):
+        assert prop in body, prop

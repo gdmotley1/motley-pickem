@@ -47,7 +47,7 @@ const Check = () => (
   </svg>
 )
 
-export default function Matchup({ game, ranks, picked }) {
+export default function Matchup({ game, ranks, picked, onChoose }) {
   const [data, setData] = useState(null)
   // Only ever a yes/no: the render below says one fixed sentence, so keeping the
   // exception's text here just looked like something that reaches the screen.
@@ -77,7 +77,15 @@ export default function Matchup({ game, ranks, picked }) {
       </div>
 
       <div className="jb-wall">
-        <Cards game={game} ranks={ranks} data={data} failed={failed} picked={picked} teams={teams} />
+        <Cards
+          game={game}
+          ranks={ranks}
+          data={data}
+          failed={failed}
+          picked={picked}
+          teams={teams}
+          onChoose={onChoose}
+        />
 
         {/* The three things you check before a pick, each labelled, each the same size. */}
         <div className="mu__stats">
@@ -197,11 +205,15 @@ export default function Matchup({ game, ranks, picked }) {
  * the other: the logo on a lit stage, the school on a name bar, AP rank and record along
  * the foot. Your pick is the gold card.
  *
+ * With `onChoose` each card is a button that picks that team, the same as its panel on
+ * the Picks list (Grant, 2026-10-28). Without it, which is how a kicked-off game opens,
+ * the cards are display only. The lock itself is still Postgres's.
+ *
  * Both names share one size. If either would wrap, both step down together, twice at most,
  * and a name still too long after that wraps, balanced. The test is the text's own line
  * boxes: a range over a text node returns one rect per line.
  */
-function Cards({ game, ranks, data, failed, picked, teams }) {
+function Cards({ game, ranks, data, failed, picked, teams, onChoose }) {
   const sides = ['away', 'home'].map((side) => {
     const id = game[`${side}_id`]
     const abbr = game[`${side}_abbr`]
@@ -247,42 +259,53 @@ function Cards({ game, ranks, data, failed, picked, teams }) {
 
   return (
     <div ref={ref} className={`mu__head${fit ? ` is-fit${fit}` : ''}`}>
-      {sides.map((s) => (
-        <div key={s.side} className={`mu__card${s.mine ? ' is-mine' : ''}`}>
-          <span className="mu__stage">
-            <Mark id={s.id} abbr={s.abbr} size={100} />
-            {s.mine && (
-              <span className="mu__ribbon">
-                <Check />
-                Your pick
+      {sides.map((s) => {
+        const Card = onChoose ? 'button' : 'div'
+        const tap = onChoose
+          ? {
+              type: 'button',
+              onClick: () => onChoose(game, s.abbr),
+              'aria-pressed': s.mine,
+              'aria-label': `Pick ${s.school}`,
+            }
+          : {}
+        return (
+          <Card key={s.side} className={`mu__card${s.mine ? ' is-mine' : ''}`} {...tap}>
+            <span className="mu__stage">
+              <Mark id={s.id} abbr={s.abbr} size={100} />
+              {s.mine && (
+                <span className="mu__ribbon">
+                  <Check />
+                  Your pick
+                </span>
+              )}
+            </span>
+            <span className="mu__cardname">{s.school}</span>
+            <span className="mu__cardstats">
+              <span>
+                <i>AP rank</i>
+                {s.rank ? (
+                  <b>
+                    <Rank n={s.rank} />
+                  </b>
+                ) : (
+                  <b className="mu__nil">-</b>
+                )}
               </span>
-            )}
-          </span>
-          <span className="mu__cardname">{s.school}</span>
-          <span className="mu__cardstats">
-            <span>
-              <i>AP rank</i>
-              {s.rank ? (
-                <b>
-                  <Rank n={s.rank} />
-                </b>
-              ) : (
-                <b className="mu__nil">-</b>
-              )}
+              <span>
+                <i>Record</i>
+                {/* Reserved while the fetch is out, so the card does not grow when it lands.
+                    Week 1 records are legitimately "0-0". */}
+                {s.record ? (
+                  <b className="num">{s.record}</b>
+                ) : (
+                  <b className={failed || data ? 'mu__nil' : undefined}>{failed || data ? '-' : ' '}</b>
+                )}
+              </span>
             </span>
-            <span>
-              <i>Record</i>
-              {/* Reserved while the fetch is out, so the card does not grow when it lands.
-                  Week 1 records are legitimately "0-0". */}
-              {s.record ? (
-                <b className="num">{s.record}</b>
-              ) : (
-                <b className={failed || data ? 'mu__nil' : undefined}>{failed || data ? '-' : ' '}</b>
-              )}
-            </span>
-          </span>
-        </div>
-      ))}
+          </Card>
+        )
+      })}
       <span className="mu__at">{game.neutral_site ? 'vs' : '@'}</span>
     </div>
   )
